@@ -1,0 +1,26 @@
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Undefined variable $ProfilePicture in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 37
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Undefined variable $NAME in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 40
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Undefined variable $Position in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 41
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Undefined variable $NOTIFICATION_COUNT in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 53
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Undefined variable $NOTIFICATION_COUNT in /home3/xuwl9qaw/public_html/includes/header.php on line 54
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Undefined variable $NOTIFICATION_COUNT in /home3/xuwl9qaw/public_html/includes/header.php on line 54
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Undefined variable $USERID in /home3/xuwl9qaw/public_html/includes/header.php on line 74
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Undefined variable $USERID in /home3/xuwl9qaw/public_html/includes/header.php on line 83
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Undefined variable $ProfilePicture in /home3/xuwl9qaw/public_html/includes/header.php on line 129
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Undefined variable $FromDate in /home3/xuwl9qaw/public_html/includes/header.php on line 147
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Undefined variable $ToDate in /home3/xuwl9qaw/public_html/includes/header.php on line 147
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Undefined variable $USER_DATA in /home3/xuwl9qaw/public_html/src/profile/index.php on line 174
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Attempt to read property "ProfileImage" on null in /home3/xuwl9qaw/public_html/src/profile/index.php on line 174
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Undefined variable $USER_DATA in /home3/xuwl9qaw/public_html/src/profile/index.php on line 177
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Attempt to read property "Name" on null in /home3/xuwl9qaw/public_html/src/profile/index.php on line 177
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Undefined variable $USER_DATA in /home3/xuwl9qaw/public_html/src/profile/index.php on line 178
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Attempt to read property "Position" on null in /home3/xuwl9qaw/public_html/src/profile/index.php on line 178
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Undefined variable $USER_DATA in /home3/xuwl9qaw/public_html/src/profile/index.php on line 197
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Attempt to read property "Email" on null in /home3/xuwl9qaw/public_html/src/profile/index.php on line 197
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Undefined variable $USER_DATA in /home3/xuwl9qaw/public_html/src/profile/index.php on line 204
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Attempt to read property "Department" on null in /home3/xuwl9qaw/public_html/src/profile/index.php on line 204
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Undefined variable $USER_DATA in /home3/xuwl9qaw/public_html/src/profile/index.php on line 250
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Attempt to read property "Name" on null in /home3/xuwl9qaw/public_html/src/profile/index.php on line 250
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Undefined variable $USER_DATA in /home3/xuwl9qaw/public_html/src/profile/index.php on line 254
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Attempt to read property "Position" on null in /home3/xuwl9qaw/public_html/src/profile/index.php on line 254
+[12-Dec-2024 15:47:43 Europe/London] PHP Warning:  Undefined variable $PageURL in /home3/xuwl9qaw/public_html/includes/js.php on line 26

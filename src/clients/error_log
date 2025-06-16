@@ -1,0 +1,67 @@
+[17-Aug-2024 11:26:05 Europe/London] PHP Warning:  Undefined variable $clients_status in /home3/xuwl9qaw/public_html/src/clients/edit.php on line 154
+[17-Aug-2024 11:26:05 Europe/London] PHP Warning:  foreach() argument must be of type array|object, null given in /home3/xuwl9qaw/public_html/src/clients/edit.php on line 154
+[28-Aug-2024 10:56:12 Europe/London] PHP Warning:  Undefined variable $ProfilePicture in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 37
+[28-Aug-2024 10:56:12 Europe/London] PHP Warning:  Undefined variable $NAME in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 40
+[28-Aug-2024 10:56:12 Europe/London] PHP Warning:  Undefined variable $Position in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 41
+[28-Aug-2024 10:56:12 Europe/London] PHP Warning:  Undefined variable $NOTIFICATION_COUNT in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 53
+[28-Aug-2024 10:56:12 Europe/London] PHP Warning:  Undefined variable $NOTIFICATION_COUNT in /home3/xuwl9qaw/public_html/includes/header.php on line 54
+[28-Aug-2024 10:56:12 Europe/London] PHP Warning:  Undefined variable $NOTIFICATION_COUNT in /home3/xuwl9qaw/public_html/includes/header.php on line 54
+[28-Aug-2024 10:56:12 Europe/London] PHP Warning:  Undefined variable $USERID in /home3/xuwl9qaw/public_html/includes/header.php on line 74
+[28-Aug-2024 10:56:12 Europe/London] PHP Warning:  Undefined variable $USERID in /home3/xuwl9qaw/public_html/includes/header.php on line 83
+[28-Aug-2024 10:56:12 Europe/London] PHP Warning:  Undefined variable $ProfilePicture in /home3/xuwl9qaw/public_html/includes/header.php on line 129
+[28-Aug-2024 10:56:12 Europe/London] PHP Warning:  Undefined variable $FromDate in /home3/xuwl9qaw/public_html/includes/header.php on line 147
+[28-Aug-2024 10:56:12 Europe/London] PHP Warning:  Undefined variable $ToDate in /home3/xuwl9qaw/public_html/includes/header.php on line 147
+[28-Aug-2024 10:56:12 Europe/London] PHP Fatal error:  Uncaught Error: Call to undefined function DeniedAccess() in /home3/xuwl9qaw/public_html/src/clients/index.php:259
+Stack trace:
+#0 {main}
+  thrown in /home3/xuwl9qaw/public_html/src/clients/index.php on line 259
+[28-Sep-2024 15:42:23 Europe/London] PHP Warning:  Undefined variable $ProfilePicture in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 37
+[28-Sep-2024 15:42:23 Europe/London] PHP Warning:  Undefined variable $NAME in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 40
+[28-Sep-2024 15:42:23 Europe/London] PHP Warning:  Undefined variable $Position in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 41
+[28-Sep-2024 15:42:23 Europe/London] PHP Warning:  Undefined variable $NOTIFICATION_COUNT in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 53
+[28-Sep-2024 15:42:23 Europe/London] PHP Warning:  Undefined variable $NOTIFICATION_COUNT in /home3/xuwl9qaw/public_html/includes/header.php on line 54
+[28-Sep-2024 15:42:23 Europe/London] PHP Warning:  Undefined variable $NOTIFICATION_COUNT in /home3/xuwl9qaw/public_html/includes/header.php on line 54
+[28-Sep-2024 15:42:23 Europe/London] PHP Warning:  Undefined variable $USERID in /home3/xuwl9qaw/public_html/includes/header.php on line 74
+[28-Sep-2024 15:42:23 Europe/London] PHP Warning:  Undefined variable $USERID in /home3/xuwl9qaw/public_html/includes/header.php on line 83
+[28-Sep-2024 15:42:23 Europe/London] PHP Warning:  Undefined variable $ProfilePicture in /home3/xuwl9qaw/public_html/includes/header.php on line 129
+[28-Sep-2024 15:42:23 Europe/London] PHP Warning:  Undefined variable $FromDate in /home3/xuwl9qaw/public_html/includes/header.php on line 147
+[28-Sep-2024 15:42:23 Europe/London] PHP Warning:  Undefined variable $ToDate in /home3/xuwl9qaw/public_html/includes/header.php on line 147
+[28-Sep-2024 15:42:23 Europe/London] PHP Fatal error:  Uncaught Error: Call to undefined function DeniedAccess() in /home3/xuwl9qaw/public_html/src/clients/index.php:259
+Stack trace:
+#0 {main}
+  thrown in /home3/xuwl9qaw/public_html/src/clients/index.php on line 259
+[22-Oct-2024 16:21:22 Europe/London] PHP Warning:  Undefined variable $ProfilePicture in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 37
+[22-Oct-2024 16:21:22 Europe/London] PHP Warning:  Undefined variable $NAME in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 40
+[22-Oct-2024 16:21:22 Europe/London] PHP Warning:  Undefined variable $Position in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 41
+[22-Oct-2024 16:21:22 Europe/London] PHP Warning:  Undefined variable $NOTIFICATION_COUNT in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 53
+[22-Oct-2024 16:21:22 Europe/London] PHP Warning:  Undefined variable $NOTIFICATION_COUNT in /home3/xuwl9qaw/public_html/includes/header.php on line 54
+[22-Oct-2024 16:21:22 Europe/London] PHP Warning:  Undefined variable $NOTIFICATION_COUNT in /home3/xuwl9qaw/public_html/includes/header.php on line 54
+[22-Oct-2024 16:21:22 Europe/London] PHP Warning:  Undefined variable $USERID in /home3/xuwl9qaw/public_html/includes/header.php on line 74
+[22-Oct-2024 16:21:22 Europe/London] PHP Warning:  Undefined variable $USERID in /home3/xuwl9qaw/public_html/includes/header.php on line 83
+[22-Oct-2024 16:21:22 Europe/London] PHP Warning:  Undefined variable $ProfilePicture in /home3/xuwl9qaw/public_html/includes/header.php on line 129
+[22-Oct-2024 16:21:22 Europe/London] PHP Warning:  Undefined variable $FromDate in /home3/xuwl9qaw/public_html/includes/header.php on line 147
+[22-Oct-2024 16:21:22 Europe/London] PHP Warning:  Undefined variable $ToDate in /home3/xuwl9qaw/public_html/includes/header.php on line 147
+[22-Oct-2024 16:21:22 Europe/London] PHP Fatal error:  Uncaught Error: Call to undefined function DeniedAccess() in /home3/xuwl9qaw/public_html/src/clients/index.php:259
+Stack trace:
+#0 {main}
+  thrown in /home3/xuwl9qaw/public_html/src/clients/index.php on line 259
+[12-Dec-2024 15:41:26 Europe/London] PHP Warning:  Undefined array key "Number" in /home3/xuwl9qaw/public_html/src/clients/index.php on line 35
+[12-Dec-2024 15:41:26 Europe/London] PHP Warning:  Undefined array key "Postcode" in /home3/xuwl9qaw/public_html/src/clients/index.php on line 37
+[12-Dec-2024 15:41:46 Europe/London] PHP Warning:  Undefined array key "Number" in /home3/xuwl9qaw/public_html/src/clients/index.php on line 35
+[12-Dec-2024 15:41:46 Europe/London] PHP Warning:  Undefined array key "Postcode" in /home3/xuwl9qaw/public_html/src/clients/index.php on line 37
+[17-Feb-2025 10:27:16 Europe/London] PHP Warning:  Undefined array key "Number" in /home3/xuwl9qaw/public_html/src/clients/index.php on line 35
+[17-Feb-2025 10:27:16 Europe/London] PHP Warning:  Undefined array key "Postcode" in /home3/xuwl9qaw/public_html/src/clients/index.php on line 37
+[17-Feb-2025 10:27:31 Europe/London] PHP Warning:  Undefined array key "Number" in /home3/xuwl9qaw/public_html/src/clients/index.php on line 35
+[17-Feb-2025 10:27:31 Europe/London] PHP Warning:  Undefined array key "Postcode" in /home3/xuwl9qaw/public_html/src/clients/index.php on line 37
+[17-Feb-2025 10:28:55 Europe/London] PHP Warning:  Undefined array key "Number" in /home3/xuwl9qaw/public_html/src/clients/index.php on line 35
+[17-Feb-2025 10:28:55 Europe/London] PHP Warning:  Undefined array key "Postcode" in /home3/xuwl9qaw/public_html/src/clients/index.php on line 37
+[17-Feb-2025 10:28:58 Europe/London] PHP Warning:  Undefined array key "Number" in /home3/xuwl9qaw/public_html/src/clients/index.php on line 35
+[17-Feb-2025 10:28:58 Europe/London] PHP Warning:  Undefined array key "Postcode" in /home3/xuwl9qaw/public_html/src/clients/index.php on line 37
+[17-Feb-2025 10:29:03 Europe/London] PHP Warning:  Undefined array key "Number" in /home3/xuwl9qaw/public_html/src/clients/index.php on line 35
+[17-Feb-2025 10:29:03 Europe/London] PHP Warning:  Undefined array key "Postcode" in /home3/xuwl9qaw/public_html/src/clients/index.php on line 37
+[19-May-2025 15:20:28 Europe/London] PHP Warning:  Attempt to read property "ProfileImage" on bool in /home3/xuwl9qaw/public_html/src/clients/i/details.php on line 151
+[19-May-2025 15:20:28 Europe/London] PHP Warning:  Attempt to read property "Name" on bool in /home3/xuwl9qaw/public_html/src/clients/i/details.php on line 153
+[22-May-2025 10:24:09 Europe/London] PHP Warning:  Undefined array key "Number" in /home3/xuwl9qaw/public_html/src/clients/index.php on line 35
+[22-May-2025 10:24:09 Europe/London] PHP Warning:  Undefined array key "Postcode" in /home3/xuwl9qaw/public_html/src/clients/index.php on line 37
+[22-May-2025 14:03:45 Europe/London] PHP Warning:  Undefined array key "Number" in /home3/xuwl9qaw/public_html/src/clients/index.php on line 35
+[22-May-2025 14:03:45 Europe/London] PHP Warning:  Undefined array key "Postcode" in /home3/xuwl9qaw/public_html/src/clients/index.php on line 37

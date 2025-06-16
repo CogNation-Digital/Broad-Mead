@@ -1,0 +1,25 @@
+[13-May-2025 10:38:23 Europe/London] PHP Warning:  Undefined variable $NAME in /home3/xuwl9qaw/public_html/includes/config.php on line 598
+[13-May-2025 10:38:23 Europe/London] PHP Warning:  Undefined variable $USERID in /home3/xuwl9qaw/public_html/includes/config.php on line 599
+[13-May-2025 10:38:23 Europe/London] PHP Warning:  Undefined variable $ClientKeyID in /home3/xuwl9qaw/public_html/includes/config.php on line 599
+[13-May-2025 10:38:23 Europe/London] PHP Fatal error:  Uncaught PDOException: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'ClientKeyID' cannot be null in /home3/xuwl9qaw/public_html/includes/config.php:194
+Stack trace:
+#0 /home3/xuwl9qaw/public_html/includes/config.php(194): PDOStatement->execute()
+#1 /home3/xuwl9qaw/public_html/includes/config.php(599): Notify(NULL, NULL, ' has logged out...')
+#2 /home3/xuwl9qaw/public_html/src/kja/index.php(1): include('/home3/xuwl9qaw...')
+#3 {main}
+  thrown in /home3/xuwl9qaw/public_html/includes/config.php on line 194
+[13-May-2025 15:52:30 Europe/London] PHP Warning:  Undefined variable $ProfilePicture in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 37
+[13-May-2025 15:52:30 Europe/London] PHP Warning:  Undefined variable $NAME in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 40
+[13-May-2025 15:52:30 Europe/London] PHP Warning:  Undefined variable $Position in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 41
+[13-May-2025 15:52:30 Europe/London] PHP Warning:  Undefined variable $NOTIFICATION_COUNT in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 53
+[13-May-2025 15:52:30 Europe/London] PHP Warning:  Undefined variable $NOTIFICATION_COUNT in /home3/xuwl9qaw/public_html/includes/header.php on line 54
+[13-May-2025 15:52:30 Europe/London] PHP Warning:  Undefined variable $NOTIFICATION_COUNT in /home3/xuwl9qaw/public_html/includes/header.php on line 54
+[13-May-2025 15:52:30 Europe/London] PHP Warning:  Undefined variable $USERID in /home3/xuwl9qaw/public_html/includes/header.php on line 74
+[13-May-2025 15:52:30 Europe/London] PHP Warning:  Undefined variable $USERID in /home3/xuwl9qaw/public_html/includes/header.php on line 83
+[13-May-2025 15:52:30 Europe/London] PHP Warning:  Undefined variable $ProfilePicture in /home3/xuwl9qaw/public_html/includes/header.php on line 129
+[13-May-2025 15:52:30 Europe/London] PHP Warning:  Undefined variable $FromDate in /home3/xuwl9qaw/public_html/includes/header.php on line 147
+[13-May-2025 15:52:30 Europe/London] PHP Warning:  Undefined variable $ToDate in /home3/xuwl9qaw/public_html/includes/header.php on line 147
+[13-May-2025 15:52:30 Europe/London] PHP Fatal error:  Uncaught Error: Call to undefined function DeniedAccess() in /home3/xuwl9qaw/public_html/src/kja/index.php:193
+Stack trace:
+#0 {main}
+  thrown in /home3/xuwl9qaw/public_html/src/kja/index.php on line 193

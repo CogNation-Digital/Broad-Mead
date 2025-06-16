@@ -1,0 +1,30 @@
+[28-Jul-2024 11:15:48 America/Chicago] PHP Warning:  Undefined variable $ProfilePicture in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 37
+[28-Jul-2024 11:15:48 America/Chicago] PHP Warning:  Undefined variable $NAME in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 40
+[28-Jul-2024 11:15:48 America/Chicago] PHP Warning:  Undefined variable $Position in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 41
+[28-Jul-2024 11:15:48 America/Chicago] PHP Warning:  Undefined variable $NOTIFICATION_COUNT in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 53
+[28-Jul-2024 11:15:48 America/Chicago] PHP Warning:  Undefined variable $NOTIFICATION_COUNT in /home3/xuwl9qaw/public_html/includes/header.php on line 54
+[28-Jul-2024 11:15:48 America/Chicago] PHP Warning:  Undefined variable $NOTIFICATION_COUNT in /home3/xuwl9qaw/public_html/includes/header.php on line 54
+[28-Jul-2024 11:15:48 America/Chicago] PHP Warning:  Undefined variable $USERID in /home3/xuwl9qaw/public_html/includes/header.php on line 74
+[28-Jul-2024 11:15:48 America/Chicago] PHP Warning:  Undefined variable $USERID in /home3/xuwl9qaw/public_html/includes/header.php on line 83
+[28-Jul-2024 11:15:48 America/Chicago] PHP Warning:  Undefined variable $ProfilePicture in /home3/xuwl9qaw/public_html/includes/header.php on line 129
+[28-Jul-2024 11:15:48 America/Chicago] PHP Warning:  Undefined variable $FromDate in /home3/xuwl9qaw/public_html/includes/header.php on line 147
+[28-Jul-2024 11:15:48 America/Chicago] PHP Warning:  Undefined variable $ToDate in /home3/xuwl9qaw/public_html/includes/header.php on line 147
+[28-Jul-2024 11:15:48 America/Chicago] PHP Fatal error:  Uncaught Error: Call to undefined function DeniedAccess() in /home3/xuwl9qaw/public_html/src/reports/index.php:107
+Stack trace:
+#0 {main}
+  thrown in /home3/xuwl9qaw/public_html/src/reports/index.php on line 107
+[16-Sep-2024 21:11:30 Europe/London] PHP Warning:  Undefined variable $ProfilePicture in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 37
+[16-Sep-2024 21:11:30 Europe/London] PHP Warning:  Undefined variable $NAME in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 40
+[16-Sep-2024 21:11:30 Europe/London] PHP Warning:  Undefined variable $Position in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 41
+[16-Sep-2024 21:11:30 Europe/London] PHP Warning:  Undefined variable $NOTIFICATION_COUNT in /home3/xuwl9qaw/public_html/includes/sidebar.php on line 53
+[16-Sep-2024 21:11:30 Europe/London] PHP Warning:  Undefined variable $NOTIFICATION_COUNT in /home3/xuwl9qaw/public_html/includes/header.php on line 54
+[16-Sep-2024 21:11:30 Europe/London] PHP Warning:  Undefined variable $NOTIFICATION_COUNT in /home3/xuwl9qaw/public_html/includes/header.php on line 54
+[16-Sep-2024 21:11:30 Europe/London] PHP Warning:  Undefined variable $USERID in /home3/xuwl9qaw/public_html/includes/header.php on line 74
+[16-Sep-2024 21:11:30 Europe/London] PHP Warning:  Undefined variable $USERID in /home3/xuwl9qaw/public_html/includes/header.php on line 83
+[16-Sep-2024 21:11:30 Europe/London] PHP Warning:  Undefined variable $ProfilePicture in /home3/xuwl9qaw/public_html/includes/header.php on line 129
+[16-Sep-2024 21:11:30 Europe/London] PHP Warning:  Undefined variable $FromDate in /home3/xuwl9qaw/public_html/includes/header.php on line 147
+[16-Sep-2024 21:11:30 Europe/London] PHP Warning:  Undefined variable $ToDate in /home3/xuwl9qaw/public_html/includes/header.php on line 147
+[16-Sep-2024 21:11:30 Europe/London] PHP Fatal error:  Uncaught Error: Call to undefined function DeniedAccess() in /home3/xuwl9qaw/public_html/src/reports/index.php:107
+Stack trace:
+#0 {main}
+  thrown in /home3/xuwl9qaw/public_html/src/reports/index.php on line 107
