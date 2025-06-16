@@ -1,0 +1,108 @@
+RewriteEngine on
+
+# Prevent directory listing
+Options -Indexes
+
+# Set PHP configuration values
+php_value upload_max_filesize 300M
+php_value post_max_size 300M
+php_value memory_limit 512M
+
+# APIS
+# USERS APIS
+# ADD THIS LINE FOR YOUR MEAD LANDING PAGE
+RewriteRule ^mead/?$ landing/index.php [NC,L,QSA]
+RewriteRule ^index landing/index.php [L]
+RewriteRule ^login landing/login.php [L]
+
+# Other Rewrite Rules
+RewriteRule ^forgot-password landing/forgot-password.php [L]
+RewriteRule ^password-reset/?$ landing/recovery.php?token=$1 [NC,L,QSA]
+RewriteRule ^auth/code landing/auth.php?auth_code=code [L]
+RewriteRule ^auth/verify/?$ landing/auth.php [NC,L,QSA]
+RewriteRule ^home src/dashboard/index.php [L]
+
+# KEY JOB AREA
+RewriteRule ^key_job_area src/kja/index.php [L]
+RewriteRule ^create_key_job_area src/kja/new.php [L]
+RewriteRule ^view_key_job_area/?$ src/kja/view.php [NC,L,QSA]
+RewriteRule ^edit_key_job_area/?$ src/kja/edit.php [NC,L,QSA]
+
+# WEEKLY KPIS
+RewriteRule ^weekly_kpis src/kpis/index.php [L]
+RewriteRule ^create_weekly_kpis src/kpis/new.php [L]
+RewriteRule ^view_weekly_kpis/?$ src/kpis/view.php [NC,L,QSA]
+RewriteRule ^edit_weekly_kpis/?$ src/kpis/edit.php [NC,L,QSA]
+
+# CALENDAR
+RewriteRule ^calendar/?$ src/calender/index.php [NC,L,QSA]
+
+# CLIENTS
+RewriteRule ^clients/?$ src/clients/index.php [NC,L,QSA]
+RewriteRule ^create_client/?$ src/clients/new.php [NC,L,QSA]
+RewriteRule ^view_client/?$ src/clients/view.php [NC,L,QSA]
+RewriteRule ^edit_client/?$ src/clients/edit.php [NC,L,QSA]
+RewriteRule ^view_branches/?$ src/clients/branches.php [NC,L,QSA]
+
+# INTERVIEWS
+RewriteRule ^create_interview/?$ src/interviews/new.php [NC,L,QSA]
+RewriteRule ^interviews/?$ src/interviews/index.php [NC,L,QSA]
+
+# LOGS
+RewriteRule ^create_log/?$ src/logs/new.php [NC,L,QSA]
+
+# VACANCY
+RewriteRule ^create_vacancy/?$ src/vacancy/new.php [NC,L,QSA]
+RewriteRule ^view_vacancy/?$ src/vacancy/view.php [NC,L,QSA]
+RewriteRule ^vacancies/?$ src/vacancy/index.php [NC,L,QSA]
+
+# SHIFTS
+RewriteRule ^shifts/?$ src/shifts/index.php [NC,L,QSA]
+
+# REPORT
+RewriteRule ^report/?$ src/reports/index.php [NC,L,QSA]
+
+# EXPIRED DOCUMENTS
+RewriteRule ^expired_documents/?$ src/dashboard/expired.php [NC,L,QSA]
+
+# INVOICES
+RewriteRule ^invoices/?$ src/invoices/index.php [NC,L,QSA]
+
+# TIMESHEETS
+RewriteRule ^generate_timesheet/?$ src/timesheets/_timesheet.php [NC,L,QSA]
+RewriteRule ^timesheets/?$ src/timesheets/index.php [NC,L,QSA]
+
+# CANDIDATES
+RewriteRule ^candidates/?$ src/candidates/index.php [NC,L,QSA]
+RewriteRule ^create_candidate/?$ src/candidates/new.php [NC,L,QSA]
+RewriteRule ^edit_candidate/?$ src/candidates/edit.php [NC,L,QSA]
+RewriteRule ^view_candidate/?$ src/candidates/view.php [NC,L,QSA]
+
+# TEMPLATES
+RewriteRule ^templates/invoice/?$ templates/invoice.php [NC,L,QSA]
+RewriteRule ^templates/email/?$ templates/index.php [NC,L,QSA]
+
+# ACTIVITY LOG
+RewriteRule ^activity_log/?$ src/activity_log/index.php [NC,L,QSA]
+
+# PROFILE
+RewriteRule ^profile/?$ src/profile/index.php [NC,L,QSA]
+
+# NOTIFICATIONS
+RewriteRule ^notifications/?$ src/notifications/index.php [NC,L,QSA]
+
+# EMAILS
+RewriteRule ^emails/?$ src/emails/index.php [NC,L,QSA]
+RewriteRule ^email_list/?$ src/emails/email_list.php [NC,L,QSA]
+RewriteRule ^view_email_list/?$ src/emails/list.php [NC,L,QSA]
+RewriteRule ^email_template/?$ src/emails/generate_template.php [NC,L,QSA]
+RewriteRule ^compose_email/?$ src/emails/compose_email.php [NC,L,QSA]
+RewriteRule ^sending_email/?$ src/emails/sending_email.php [NC,L,QSA]
+RewriteRule ^api/v1/check_email_status/?$ apis/emails/check.php [NC,L,QSA]
+RewriteRule ^api/v1/send_email/?$ apis/emails/send.php [NC,L,QSA]
+
+# USERS
+RewriteRule ^users/?$ src/users/index.php [NC,L,QSA]
+RewriteRule ^create_user/?$ src/users/new.php [NC,L,QSA]
+RewriteRule ^edit_user/?$ src/users/edit.php [NC,L,QSA]
+RewriteRule ^update_permissions/?$ src/users/roles.php [NC,L,QSA]

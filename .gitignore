@@ -1,0 +1,36 @@
+# Create .gitignore first
+@"
+# Large document files - NEVER commit these
+*.pdf
+*.docx
+*.doc
+*.xlsx
+*.xls
+*.ppt
+*.pptx
+
+# Large media files
+*.mp4
+*.mov
+*.avi
+*.zip
+*.rar
+*.7z
+
+# Large assets folder content
+assets/*.pdf
+assets/*.docx
+assets/documents/
+assets/uploads/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+"@ | Out-File -FilePath .gitignore -Encoding UTF8
+
+# Add .gitignore first
+git add .gitignore
+git commit -m "Add gitignore to prevent large files"
