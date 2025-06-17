@@ -3,15 +3,23 @@ if (!isset($_COOKIE['USERID'])) {
     header("location: $LINK/login ");
 }
 
-// Email Configuration Class
+// Include PHPMailer
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require_once '../../PHPMailer/src/Exception.php';
+require_once '../../PHPMailer/src/PHPMailer.php';
+require_once '../../PHPMailer/src/SMTP.php';
+
+// Email Configuration Class - Updated to use your SMTP settings
 class EmailConfig {
-    const SMTP_HOST = '$host';
+    const SMTP_HOST = 'mail.nocturnalrecruitment.co.uk';
     const SMTP_PORT = 587;
-    const SMTP_USERNAME = '$user';
-    const SMTP_PASSWORD = '$pass'; // Use app password for Gmail
+    const SMTP_USERNAME = 'info@nocturnalrecruitment.co.uk';
+    const SMTP_PASSWORD = '@Michael1693250341';
     const FROM_EMAIL = 'info@nocturnalrecruitment.co.uk';
     const FROM_NAME = 'Nocturnal Recruitment';
-    const USE_SMTP = false; // Set to true to use SMTP, false for PHP mail()
+    const USE_SMTP = true; // Now using SMTP with PHPMailer
 }
 
 // Email Templates Class
@@ -30,8 +38,6 @@ class EmailTemplates {
                                 <p>{$custom_content}</p>
                             </div>
                             <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
-                            <hr style='border: none; border-top: 1px solid #eee; margin: 30px 0;'>
-                            <small style='color: #666;'>This email was sent from Nocturnal Recruitment. If you wish to unsubscribe, please contact us.</small>
                         </div>
                     </body>
                     </html>
@@ -49,8 +55,6 @@ class EmailTemplates {
                                 <p>{$custom_content}</p>
                             </div>
                             <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
-                            <hr style='border: none; border-top: 1px solid #eee; margin: 30px 0;'>
-                            <small style='color: #666;'>This email was sent from Nocturnal Recruitment. If you wish to unsubscribe, please contact us.</small>
                         </div>
                     </body>
                     </html>
@@ -68,8 +72,6 @@ class EmailTemplates {
                                 <p>{$custom_content}</p>
                             </div>
                             <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
-                            <hr style='border: none; border-top: 1px solid #eee; margin: 30px 0;'>
-                            <small style='color: #666;'>This email was sent from Nocturnal Recruitment. If you wish to unsubscribe, please contact us.</small>
                         </div>
                     </body>
                     </html>
@@ -87,8 +89,6 @@ class EmailTemplates {
                                 <p>{$custom_content}</p>
                             </div>
                             <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
-                            <hr style='border: none; border-top: 1px solid #eee; margin: 30px 0;'>
-                            <small style='color: #666;'>This email was sent from Nocturnal Recruitment. If you wish to unsubscribe, please contact us.</small>
                         </div>
                     </body>
                     </html>
@@ -100,14 +100,12 @@ class EmailTemplates {
                     <html>
                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
                         <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-                            <h2 style='color: #2c3e50;'>Welcome {$candidate_name}!</h2>
+                            <h2 style='color: #2c3e50;'>Hello {$candidate_name}!</h2>
                             <p>Thank you for joining Nocturnal Recruitment. We're excited to help you find your next opportunity.</p>
                             <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
                                 <p>{$custom_content}</p>
                             </div>
                             <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
-                            <hr style='border: none; border-top: 1px solid #eee; margin: 30px 0;'>
-                            <small style='color: #666;'>This email was sent from Nocturnal Recruitment. If you wish to unsubscribe, please contact us.</small>
                         </div>
                     </body>
                     </html>
@@ -117,9 +115,43 @@ class EmailTemplates {
         
         return $templates[$template_name] ?? $templates['job_alert'];
     }
+    
+    public static function getEmailSignature() {
+        return '
+<div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #f0f0f0; font-family: Arial, sans-serif;">
+    <table style="width: 100%; max-width: 600px;">
+        <tr>
+            <td style="text-align: center; padding-bottom: 20px;">
+                <img src="https://nocturnalrecruitment.co.uk/logo.png" alt="Nocturnal Recruitment" style="max-width: 200px; height: auto;">
+            </td>
+        </tr>
+        <tr>
+            <td style="text-align: center; color: #333; font-size: 14px; line-height: 1.6;">
+                <strong>Nocturnal Recruitment</strong><br>
+                Office 16, 321 High Road, RM6 6AX<br><br>
+                
+                <div style="margin: 15px 0;">
+                    <a href="tel:02080502708" style="color: #007bff; text-decoration: none;">0208 050 2708</a> &nbsp;&nbsp;
+                    <a href="tel:07553570871" style="color: #007bff; text-decoration: none;">0755 357 0871</a><br>
+                    <a href="mailto:chax@nocturnalrecruitment.co.uk" style="color: #007bff; text-decoration: none;">chax@nocturnalrecruitment.co.uk</a><br>
+                    <a href="https://www.nocturnalrecruitment.co.uk" style="color: #007bff; text-decoration: none;">www.nocturnalrecruitment.co.uk</a>
+                </div>
+                
+                <div style="margin: 20px 0; font-size: 12px; color: #666;">
+                    <strong>Company Registration – 11817091</strong>
+                </div>
+                
+                <div style="margin-top: 25px; padding: 15px; background-color: #f8f9fa; border-radius: 5px; font-size: 11px; color: #666; text-align: left;">
+                    <strong>Disclaimer*</strong> This email is intended only for the use of the addressee named above and may be confidential or legally privileged. If you are not the addressee, you must not read it and must not use any information contained in nor copy it nor inform any person other than Nocturnal Recruitment or the addressee of its existence or contents. If you have received this email in error, please delete it and notify our team at <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #007bff;">info@nocturnalrecruitment.co.uk</a>
+                </div>
+            </td>
+        </tr>
+    </table>
+</div>';
+    }
 }
 
-// Email Sender Class
+// UPDATED Email Sender Class - Now using PHPMailer
 class EmailSender {
     private $conn;
     private $sent_count = 0;
@@ -150,7 +182,7 @@ class EmailSender {
                 $this->sent_count++;
                 
                 // Add small delay to prevent overwhelming the email server
-                usleep(100000); // 0.1 second delay
+                usleep(500000); // 0.5 second delay for SMTP
                 
             } catch (Exception $e) {
                 $this->failed_count++;
@@ -184,35 +216,42 @@ class EmailSender {
         $email_subject = !empty($subject) ? $subject : $template['subject'];
         $email_body = $template['body'];
         
-        if (EmailConfig::USE_SMTP) {
-            return $this->sendViaSMTP($candidate['Email'], $candidate['Name'], $email_subject, $email_body);
-        } else {
-            return $this->sendViaPHPMail($candidate['Email'], $candidate['Name'], $email_subject, $email_body);
-        }
+        // Add professional signature
+        $email_body .= EmailTemplates::getEmailSignature();
+        
+        return $this->sendViaPHPMailer($candidate['Email'], $candidate['Name'], $email_subject, $email_body);
     }
     
-    private function sendViaPHPMail($to_email, $to_name, $subject, $body) {
-        $headers = [
-            'MIME-Version: 1.0',
-            'Content-type: text/html; charset=UTF-8',
-            'From: ' . EmailConfig::FROM_NAME . ' <' . EmailConfig::FROM_EMAIL . '>',
-            'Reply-To: ' . EmailConfig::FROM_EMAIL,
-            'X-Mailer: PHP/' . phpversion()
-        ];
+    private function sendViaPHPMailer($to_email, $to_name, $subject, $body) {
+        $mail = new PHPMailer(true);
         
-        $success = mail($to_email, $subject, $body, implode("\r\n", $headers));
-        
-        if (!$success) {
-            throw new Exception("Failed to send email via PHP mail()");
+        try {
+            // Server settings
+            $mail->isSMTP();
+            $mail->Host = EmailConfig::SMTP_HOST;
+            $mail->SMTPAuth = true;
+            $mail->Username = EmailConfig::SMTP_USERNAME;
+            $mail->Password = EmailConfig::SMTP_PASSWORD;
+            $mail->SMTPSecure = 'tls';
+            $mail->Port = EmailConfig::SMTP_PORT;
+            
+            // Recipients
+            $mail->setFrom(EmailConfig::FROM_EMAIL, EmailConfig::FROM_NAME);
+            $mail->addReplyTo(EmailConfig::FROM_EMAIL, EmailConfig::FROM_NAME);
+            $mail->addAddress($to_email, $to_name);
+            
+            // Content
+            $mail->isHTML(true);
+            $mail->Subject = $subject;
+            $mail->Body = $body;
+            $mail->AltBody = strip_tags($body);
+            
+            $mail->send();
+            return true;
+            
+        } catch (Exception $e) {
+            throw new Exception("PHPMailer Error: " . $mail->ErrorInfo);
         }
-        
-        return true;
-    }
-    
-    private function sendViaSMTP($to_email, $to_name, $subject, $body) {
-        // For SMTP, you would typically use PHPMailer or similar library
-        // This is a simplified version - you should use PHPMailer for production
-        throw new Exception("SMTP sending not implemented. Please use PHP mail() or implement PHPMailer.");
     }
     
     private function logEmailSent($candidate_id, $subject, $template, $sender_id) {
@@ -234,7 +273,7 @@ class EmailSender {
             $this->conn->exec($create_table);
             
             $query = "INSERT INTO email_log (CandidateID, Subject, Template, SentBy, SentAt, Status) VALUES (?, ?, ?, ?, NOW(), 'sent')";
-            $stmt = $this->conn->prepare($query);
+            $stmt = $conn->prepare($query);
             $stmt->execute([$candidate_id, $subject, $template, $sender_id]);
         } catch (Exception $e) {
             // Log error but don't fail the email sending
@@ -439,12 +478,18 @@ if (isset($_POST['Search'])) {
     }
 }
 
-// UPDATED MAILSHOT HANDLING - This replaces the old section
+// UPDATED MAILSHOT HANDLING - Now using PHPMailer
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates'])) {
+    error_log("=== MAILSHOT PROCESSING START ===");
+    
     $selected_candidates = $_POST['selected_candidates'];
     $subject = trim($_POST['subject']);
     $template = $_POST['template'];
     $custom_content = isset($_POST['custom_content']) ? trim($_POST['custom_content']) : '';
+    
+    error_log("Subject: " . $subject);
+    error_log("Template: " . $template);
+    error_log("Selected candidates count: " . count($selected_candidates));
     
     // Validation
     $errors = [];
@@ -460,6 +505,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates']
     
     if (empty($errors)) {
         try {
+            error_log("Starting PHPMailer email sending process...");
+            
             $emailSender = new EmailSender($conn);
             $result = $emailSender->sendMailshot($selected_candidates, $subject, $template, $custom_content, $USERID);
             
@@ -473,8 +520,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates']
                 $NOTIFICATION = "$NAME sent a mailshot with subject '$subject' to " . $result['sent'] . " candidates.";
                 Notify($USERID, $ClientKeyID, $NOTIFICATION);
                 
+                error_log("Mailshot completed: " . $result['sent'] . " sent, " . $result['failed'] . " failed");
+                
             } else {
                 $error_message = "Failed to send mailshot. " . implode('; ', $result['errors']);
+                error_log("Mailshot failed: " . $error_message);
             }
             
         } catch (Exception $e) {
@@ -483,7 +533,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates']
         }
     } else {
         $error_message = implode('<br>', $errors);
+        error_log("Mailshot validation errors: " . implode(', ', $errors));
     }
+    
+    error_log("=== MAILSHOT PROCESSING END ===");
 }
 
 $SearchID = isset($_GET['q']) ? $_GET['q'] : '';
@@ -1093,13 +1146,14 @@ if ($mode === 'kpi') {
 
                     <?php elseif ($mode === 'mailshot'): ?>
                     <div class="mailshot-info">
-                        <h6><i class="ti ti-info-circle"></i> Mailshot Mode</h6>
+                        <h6><i class="ti ti-info-circle"></i> Mailshot Mode - Now Using Professional SMTP</h6>
                         <p><strong>Enhanced filtering for targeted campaigns:</strong></p>
                         <ul>
-                            <li>Filter by keywords from uploaded emails and CVs</li>
-                            <li>Location-based filtering with distance radius</li>
-                            <li>Position and skill-based targeting</li>
-                            <li>Bulk selection and email template customization</li>
+                            <li>✅ Professional SMTP email delivery via mail.nocturnalrecruitment.co.uk</li>
+                            <li>✅ Company branded email templates with signature</li>
+                            <li>✅ Email logging and tracking</li>
+                            <li>✅ Location-based filtering with distance radius</li>
+                            <li>✅ Position and skill-based targeting</li>
                         </ul>
                     </div>
                     <?php endif; ?>
@@ -1294,7 +1348,7 @@ if ($mode === 'kpi') {
                                     
                                     // Enhanced filtering - FIXED EMAIL KEYWORDS ISSUE
                                     if (!empty($keyword_filter)) {
-                                        $query .= " AND (Name LIKE :keyword OR Email LIKE :keyword OR JobTitle LIKE :keyword  LIKE :keyword)";
+                                        $query .= " AND (Name LIKE :keyword OR Email LIKE :keyword OR JobTitle LIKE :keyword OR CVContent LIKE :keyword)";
                                         $params[':keyword'] = '%' . $keyword_filter . '%';
                                     }
                                     
@@ -1310,7 +1364,7 @@ if ($mode === 'kpi') {
                                     
                                     // FIXED: Changed EmailContent to Email and Notes
                                     if (!empty($email_keywords)) {
-                                        $query .= " AND (Email LIKE :email_keywords LIKE :email_keywords LIKE :email_keywords)";
+                                        $query .= " AND (Email LIKE :email_keywords OR Notes LIKE :email_keywords OR CVContent LIKE :email_keywords)";
                                         $params[':email_keywords'] = '%' . $email_keywords . '%';
                                     }
                                     
