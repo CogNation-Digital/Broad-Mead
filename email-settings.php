@@ -78,6 +78,7 @@ function configureNocturnalMailer($mail) {
     $mail->SMTPSecure = 'tls';
     $mail->Port = 587;
     
+    
     // Default sender
     $mail->setFrom(EMAIL_FROM, EMAIL_FROM_NAME);
     $mail->addReplyTo(EMAIL_REPLY_TO, EMAIL_FROM_NAME);

@@ -3,6 +3,246 @@ if (!isset($_COOKIE['USERID'])) {
     header("location: $LINK/login ");
 }
 
+// Email Configuration Class
+class EmailConfig {
+    const SMTP_HOST = 'smtp.gmail.com';
+    const SMTP_PORT = 587;
+    const SMTP_USERNAME = 'info@nocturnalrecruitment.co.uk';
+    const SMTP_PASSWORD = 'your-app-password'; // Use app password for Gmail
+    const FROM_EMAIL = 'info@nocturnalrecruitment.co.uk';
+    const FROM_NAME = 'Nocturnal Recruitment';
+    const USE_SMTP = false; // Set to true to use SMTP, false for PHP mail()
+}
+
+// Email Templates Class
+class EmailTemplates {
+    public static function getTemplate($template_name, $candidate_name = '', $custom_content = '') {
+        $templates = [
+            'job_alert' => [
+                'subject' => 'New Job Opportunities Available',
+                'body' => "
+                    <html>
+                    <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+                        <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
+                            <h2 style='color: #2c3e50;'>Hello {$candidate_name},</h2>
+                            <p>We have exciting new job opportunities that match your profile!</p>
+                            <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
+                                <p>{$custom_content}</p>
+                            </div>
+                            <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
+                            <hr style='border: none; border-top: 1px solid #eee; margin: 30px 0;'>
+                            <small style='color: #666;'>This email was sent from Nocturnal Recruitment. If you wish to unsubscribe, please contact us.</small>
+                        </div>
+                    </body>
+                    </html>
+                "
+            ],
+            'newsletter' => [
+                'subject' => 'Nocturnal Recruitment Newsletter',
+                'body' => "
+                    <html>
+                    <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+                        <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
+                            <h2 style='color: #2c3e50;'>Hello {$candidate_name},</h2>
+                            <p>Here's our latest newsletter with industry updates and opportunities.</p>
+                            <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
+                                <p>{$custom_content}</p>
+                            </div>
+                            <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
+                            <hr style='border: none; border-top: 1px solid #eee; margin: 30px 0;'>
+                            <small style='color: #666;'>This email was sent from Nocturnal Recruitment. If you wish to unsubscribe, please contact us.</small>
+                        </div>
+                    </body>
+                    </html>
+                "
+            ],
+            'event_invitation' => [
+                'subject' => 'You\'re Invited to Our Event',
+                'body' => "
+                    <html>
+                    <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+                        <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
+                            <h2 style='color: #2c3e50;'>Hello {$candidate_name},</h2>
+                            <p>We'd like to invite you to our upcoming event!</p>
+                            <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
+                                <p>{$custom_content}</p>
+                            </div>
+                            <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
+                            <hr style='border: none; border-top: 1px solid #eee; margin: 30px 0;'>
+                            <small style='color: #666;'>This email was sent from Nocturnal Recruitment. If you wish to unsubscribe, please contact us.</small>
+                        </div>
+                    </body>
+                    </html>
+                "
+            ],
+            'follow_up' => [
+                'subject' => 'Following Up on Your Application',
+                'body' => "
+                    <html>
+                    <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+                        <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
+                            <h2 style='color: #2c3e50;'>Hello {$candidate_name},</h2>
+                            <p>We wanted to follow up regarding your recent application.</p>
+                            <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
+                                <p>{$custom_content}</p>
+                            </div>
+                            <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
+                            <hr style='border: none; border-top: 1px solid #eee; margin: 30px 0;'>
+                            <small style='color: #666;'>This email was sent from Nocturnal Recruitment. If you wish to unsubscribe, please contact us.</small>
+                        </div>
+                    </body>
+                    </html>
+                "
+            ],
+            'welcome' => [
+                'subject' => 'Welcome to Nocturnal Recruitment',
+                'body' => "
+                    <html>
+                    <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+                        <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
+                            <h2 style='color: #2c3e50;'>Welcome {$candidate_name}!</h2>
+                            <p>Thank you for joining Nocturnal Recruitment. We're excited to help you find your next opportunity.</p>
+                            <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
+                                <p>{$custom_content}</p>
+                            </div>
+                            <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
+                            <hr style='border: none; border-top: 1px solid #eee; margin: 30px 0;'>
+                            <small style='color: #666;'>This email was sent from Nocturnal Recruitment. If you wish to unsubscribe, please contact us.</small>
+                        </div>
+                    </body>
+                    </html>
+                "
+            ]
+        ];
+        
+        return $templates[$template_name] ?? $templates['job_alert'];
+    }
+}
+
+// Email Sender Class
+class EmailSender {
+    private $conn;
+    private $sent_count = 0;
+    private $failed_count = 0;
+    private $errors = [];
+    
+    public function __construct($database_connection) {
+        $this->conn = $database_connection;
+    }
+    
+    public function sendMailshot($selected_candidates, $subject, $template, $custom_content = '', $sender_id = null) {
+        $this->sent_count = 0;
+        $this->failed_count = 0;
+        $this->errors = [];
+        
+        // Get candidate details
+        $candidate_emails = $this->getCandidateEmails($selected_candidates);
+        
+        if (empty($candidate_emails)) {
+            throw new Exception("No valid candidate emails found.");
+        }
+        
+        // Send emails
+        foreach ($candidate_emails as $candidate) {
+            try {
+                $this->sendSingleEmail($candidate, $subject, $template, $custom_content);
+                $this->logEmailSent($candidate['CandidateID'], $subject, $template, $sender_id);
+                $this->sent_count++;
+                
+                // Add small delay to prevent overwhelming the email server
+                usleep(100000); // 0.1 second delay
+                
+            } catch (Exception $e) {
+                $this->failed_count++;
+                $this->errors[] = "Failed to send to {$candidate['Email']}: " . $e->getMessage();
+                error_log("Mailshot error for {$candidate['Email']}: " . $e->getMessage());
+            }
+        }
+        
+        return [
+            'sent' => $this->sent_count,
+            'failed' => $this->failed_count,
+            'errors' => $this->errors,
+            'total' => count($candidate_emails)
+        ];
+    }
+    
+    private function getCandidateEmails($candidate_ids) {
+        $placeholders = str_repeat('?,', count($candidate_ids) - 1) . '?';
+        $query = "SELECT CandidateID, Name, Email FROM _candidates WHERE CandidateID IN ($placeholders) AND Email IS NOT NULL AND Email != ''";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute($candidate_ids);
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    private function sendSingleEmail($candidate, $subject, $template_name, $custom_content = '') {
+        $template = EmailTemplates::getTemplate($template_name, $candidate['Name'], $custom_content);
+        
+        // Use custom subject if provided, otherwise use template subject
+        $email_subject = !empty($subject) ? $subject : $template['subject'];
+        $email_body = $template['body'];
+        
+        if (EmailConfig::USE_SMTP) {
+            return $this->sendViaSMTP($candidate['Email'], $candidate['Name'], $email_subject, $email_body);
+        } else {
+            return $this->sendViaPHPMail($candidate['Email'], $candidate['Name'], $email_subject, $email_body);
+        }
+    }
+    
+    private function sendViaPHPMail($to_email, $to_name, $subject, $body) {
+        $headers = [
+            'MIME-Version: 1.0',
+            'Content-type: text/html; charset=UTF-8',
+            'From: ' . EmailConfig::FROM_NAME . ' <' . EmailConfig::FROM_EMAIL . '>',
+            'Reply-To: ' . EmailConfig::FROM_EMAIL,
+            'X-Mailer: PHP/' . phpversion()
+        ];
+        
+        $success = mail($to_email, $subject, $body, implode("\r\n", $headers));
+        
+        if (!$success) {
+            throw new Exception("Failed to send email via PHP mail()");
+        }
+        
+        return true;
+    }
+    
+    private function sendViaSMTP($to_email, $to_name, $subject, $body) {
+        // For SMTP, you would typically use PHPMailer or similar library
+        // This is a simplified version - you should use PHPMailer for production
+        throw new Exception("SMTP sending not implemented. Please use PHP mail() or implement PHPMailer.");
+    }
+    
+    private function logEmailSent($candidate_id, $subject, $template, $sender_id) {
+        try {
+            // Create email_log table if it doesn't exist
+            $create_table = "CREATE TABLE IF NOT EXISTS email_log (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                CandidateID VARCHAR(50) NOT NULL,
+                Subject VARCHAR(255) NOT NULL,
+                Template VARCHAR(50) NOT NULL,
+                SentBy INT NULL,
+                SentAt DATETIME NOT NULL,
+                Status ENUM('sent', 'failed', 'bounced') DEFAULT 'sent',
+                ErrorMessage TEXT NULL,
+                INDEX idx_candidate (CandidateID),
+                INDEX idx_sent_at (SentAt),
+                INDEX idx_sent_by (SentBy)
+            )";
+            $this->conn->exec($create_table);
+            
+            $query = "INSERT INTO email_log (CandidateID, Subject, Template, SentBy, SentAt, Status) VALUES (?, ?, ?, ?, NOW(), 'sent')";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute([$candidate_id, $subject, $template, $sender_id]);
+        } catch (Exception $e) {
+            // Log error but don't fail the email sending
+            error_log("Failed to log email: " . $e->getMessage());
+        }
+    }
+}
+
 $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : 'all';
 $mode = isset($_GET['mode']) ? $_GET['mode'] : 'candidates'; // candidates, mailshot, or kpi
 
@@ -199,13 +439,51 @@ if (isset($_POST['Search'])) {
     }
 }
 
-// Handle mailshot submission
+// UPDATED MAILSHOT HANDLING - This replaces the old section
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates'])) {
     $selected_candidates = $_POST['selected_candidates'];
-    $subject = $_POST['subject'];
+    $subject = trim($_POST['subject']);
     $template = $_POST['template'];
+    $custom_content = isset($_POST['custom_content']) ? trim($_POST['custom_content']) : '';
     
-    $success_message = "Mailshot with subject '" . htmlspecialchars($subject) . "' sent to " . count($selected_candidates) . " candidates successfully!";
+    // Validation
+    $errors = [];
+    if (empty($selected_candidates)) {
+        $errors[] = "No candidates selected.";
+    }
+    if (empty($subject)) {
+        $errors[] = "Email subject is required.";
+    }
+    if (empty($template)) {
+        $errors[] = "Email template is required.";
+    }
+    
+    if (empty($errors)) {
+        try {
+            $emailSender = new EmailSender($conn);
+            $result = $emailSender->sendMailshot($selected_candidates, $subject, $template, $custom_content, $USERID);
+            
+            if ($result['sent'] > 0) {
+                $success_message = "Mailshot sent successfully! " . $result['sent'] . " emails sent";
+                if ($result['failed'] > 0) {
+                    $success_message .= ", " . $result['failed'] . " failed.";
+                }
+                
+                // Log the successful mailshot
+                $NOTIFICATION = "$NAME sent a mailshot with subject '$subject' to " . $result['sent'] . " candidates.";
+                Notify($USERID, $ClientKeyID, $NOTIFICATION);
+                
+            } else {
+                $error_message = "Failed to send mailshot. " . implode('; ', $result['errors']);
+            }
+            
+        } catch (Exception $e) {
+            $error_message = "Error sending mailshot: " . $e->getMessage();
+            error_log("Mailshot error: " . $e->getMessage());
+        }
+    } else {
+        $error_message = implode('<br>', $errors);
+    }
 }
 
 $SearchID = isset($_GET['q']) ? $_GET['q'] : '';
@@ -381,6 +659,15 @@ if ($mode === 'kpi') {
     border-radius: 5px;
     margin-bottom: 20px;
     border: 1px solid #c3e6cb;
+}
+
+.error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    border: 1px solid #f5c6cb;
 }
 
 .mailshot-info {
@@ -572,6 +859,18 @@ if ($mode === 'kpi') {
                         </a>
                         <?php endif; ?>
                     </div>
+
+                    <?php if (isset($success_message)): ?>
+                        <div class="success-message">
+                            <i class="ti ti-check-circle"></i> <?php echo $success_message; ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if (isset($error_message)): ?>
+                        <div class="error-message">
+                            <i class="ti ti-alert-circle"></i> <?php echo $error_message; ?>
+                        </div>
+                    <?php endif; ?>
 
                     <?php if ($mode === 'kpi'): ?>
                     <div class="kpi-info">
@@ -805,12 +1104,6 @@ if ($mode === 'kpi') {
                     </div>
                     <?php endif; ?>
 
-                    <?php if (isset($success_message)): ?>
-                        <div class="success-message">
-                            <i class="ti ti-check-circle"></i> <?php echo $success_message; ?>
-                        </div>
-                    <?php endif; ?>
-
                     <?php if ($mode !== 'kpi'): ?>
                     <!-- Enhanced Filter Section -->
                     <div class="filter-section <?php echo (!empty($keyword_filter) || !empty($location_filter) || !empty($position_filter) || !empty($center_postcode)) ? 'filter-active' : ''; ?>">
@@ -999,7 +1292,7 @@ if ($mode === 'kpi') {
                                         $params[':status'] = $isTab;
                                     }
                                     
-                                    // Enhanced filtering
+                                    // Enhanced filtering - FIXED EMAIL KEYWORDS ISSUE
                                     if (!empty($keyword_filter)) {
                                         $query .= " AND (Name LIKE :keyword OR Email LIKE :keyword OR JobTitle LIKE :keyword OR CVContent LIKE :keyword)";
                                         $params[':keyword'] = '%' . $keyword_filter . '%';
@@ -1015,8 +1308,9 @@ if ($mode === 'kpi') {
                                         $params[':position'] = '%' . $position_filter . '%';
                                     }
                                     
+                                    // FIXED: Changed EmailContent to Email and Notes
                                     if (!empty($email_keywords)) {
-                                        $query .= " AND (EmailContent LIKE :email_keywords OR Notes LIKE :email_keywords)";
+                                        $query .= " AND (Email LIKE :email_keywords OR Notes LIKE :email_keywords OR CVContent LIKE :email_keywords)";
                                         $params[':email_keywords'] = '%' . $email_keywords . '%';
                                     }
                                     
@@ -1196,7 +1490,7 @@ if ($mode === 'kpi') {
                                                                             <g fill="currentColor">
                                                                                 <path d="M6.5 12a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1zm0 3a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1z" />
                                                                                 <path fill-rule="evenodd" d="M11.185 1H4.5A1.5 1.5 0 0 0 3 2.5v15A1.5 1.5 0 0 0 4.5 19h11a1.5 1.5 0 0 0 1.5-1.5V7.202a1.5 1.5 0 0 0-.395-1.014l-4.314-4.702A1.5 1.5 0 0 0 11.185 1M4 2.5a.5.5 0 0 1 .5-.5h6.685a.5.5 0 0 1 .369.162l4.314 4.702a.5.5 0 0 1 .132.338V17.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5z" clip-rule="evenodd" />
-                                                                                <path d="M11 7h5.5a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5v-6a.5.5 0                                                                                 <path d="M11 7h5.5a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5v-6a.5.5 0 0 1 1 0z" />
+                                                                                <path d="M11 7h5.5a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5v-6a.5.5 0 0 1 1 0z" />
                                                                             </g>
                                                                         </svg>
                                                                     </span>
@@ -1223,19 +1517,20 @@ if ($mode === 'kpi') {
                             </div>
                             
                             <?php if ($mode === 'mailshot' && $total_results > 0): ?>
-                            <!-- Mailshot Actions -->
+                            <!-- UPDATED Mailshot Actions -->
                             <div class="mailshot-actions">
                                 <h6>Mailshot Configuration</h6>
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="mailshot-subject" class="form-label">Email Subject</label>
-                                            <input type="text" name="subject" id="mailshot-subject" class="form-control" required>
+                                            <label for="mailshot-subject" class="form-label">Email Subject *</label>
+                                            <input type="text" name="subject" id="mailshot-subject" class="form-control" required 
+                                                   placeholder="Enter email subject">
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="mailshot-template" class="form-label">Email Template</label>
+                                            <label for="mailshot-template" class="form-label">Email Template *</label>
                                             <select name="template" id="mailshot-template" class="form-control" required>
                                                 <option value="">Select a template</option>
                                                 <option value="job_alert">Job Alert</option>
@@ -1248,7 +1543,12 @@ if ($mode === 'kpi') {
                                     </div>
                                 </div>
                                 <div class="mb-3">
-                                    <button type="submit" class="btn btn-primary">
+                                    <label for="custom-content" class="form-label">Custom Content (Optional)</label>
+                                    <textarea name="custom_content" id="custom-content" class="form-control" rows="4" 
+                                              placeholder="Add any custom content to include in the email..."></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <button type="submit" class="btn btn-primary" id="send-mailshot-btn">
                                         <i class="ti ti-mail"></i> Send Mailshot
                                     </button>
                                     <span class="text-muted ms-3">
@@ -1426,6 +1726,42 @@ $(document).ready(function() {
         var row = $(this).closest('tr');
         var checkbox = row.find('.checkbox-item');
         checkbox.prop('checked', true);
+    });
+
+    // UPDATED: Mailshot form validation and loading state
+    $('#send-mailshot-btn').on('click', function(e) {
+        const selectedCandidates = document.querySelectorAll('input[name="selected_candidates[]"]:checked');
+        const subject = document.getElementById('mailshot-subject').value.trim();
+        const template = document.getElementById('mailshot-template').value;
+        
+        if (selectedCandidates.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one candidate.');
+            return;
+        }
+        
+        if (!subject) {
+            e.preventDefault();
+            alert('Please enter an email subject.');
+            return;
+        }
+        
+        if (!template) {
+            e.preventDefault();
+            alert('Please select an email template.');
+            return;
+        }
+        
+        // Show loading state
+        this.innerHTML = '<i class="ti ti-loader"></i> Sending...';
+        this.disabled = true;
+        
+        // Confirm before sending
+        if (!confirm(`Are you sure you want to send this mailshot to ${selectedCandidates.length} candidates?`)) {
+            e.preventDefault();
+            this.innerHTML = '<i class="ti ti-mail"></i> Send Mailshot';
+            this.disabled = false;
+        }
     });
 });
 
