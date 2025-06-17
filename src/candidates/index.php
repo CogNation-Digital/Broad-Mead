@@ -46,6 +46,7 @@ class EmailConfig {
     public static $FROM_NAME = 'Nocturnal Recruitment';
     public static $USE_SMTP = true;
     
+
     public static function getHost() {
         return self::$SMTP_HOST;
     }
@@ -121,6 +122,13 @@ class EmailTemplates {
                 'subject' => 'You\'re Invited to Our Event',
                 'body' => "
                     <html>
+
+
+
+
+
+
+
                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
                         <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
                             <h2 style='color: #2c3e50;'>Hello {$candidate_name},</h2>
@@ -176,7 +184,9 @@ class EmailTemplates {
     public static function getEmailSignature() {
         return '
 <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #f0f0f0; font-family: Arial, sans-serif;">
-    <table style="width: 100%; max-width: 600px;">
+    <table style="wi
+    
+    dth: 100%; max-width: 600px;">
         <tr>
             <td style="text-align: center; padding-bottom: 20px;">
                 <img src="https://nocturnalrecruitment.co.uk/logo.png" alt="Nocturnal Recruitment" style="max-width: 200px; height: auto;">
@@ -1449,7 +1459,7 @@ if ($mode === 'kpi') {
                                     
                                     // FIXED: Changed EmailContent to Email and Notes
                                     if (!empty($email_keywords)) {
-                                        $query .= " AND (Email LIKE :email_keywords OR Notes LIKE :email_keywords OR CVContent LIKE :email_keywords)";
+                                        $query .= " AND (Email LIKE :email_keywords  LIKE :email_keywords LIKE :email_keywords)";
                                         $params[':email_keywords'] = '%' . $email_keywords . '%';
                                     }
                                     
