@@ -1443,7 +1443,7 @@ if ($mode === 'kpi') {
                                     
                                     // Enhanced filtering - FIXED EMAIL KEYWORDS ISSUE
                                     if (!empty($keyword_filter)) {
-                                        $query .= " AND (Name LIKE :keyword OR Email LIKE :keyword OR JobTitle LIKE :keyword OR CVContent LIKE :keyword)";
+                                        $query .= " AND (Name LIKE :keyword OR Email LIKE :keyword OR JobTitle LIKE :keyword  LIKE :keyword)";
                                         $params[':keyword'] = '%' . $keyword_filter . '%';
                                     }
                                     
