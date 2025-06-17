@@ -1397,7 +1397,7 @@ if ($mode === 'kpi') {
                                     
                                     // FIXED: Changed EmailContent to Email and Notes
                                     if (!empty($email_keywords)) {
-                                        $query .= " AND (Email LIKE :email_keywords OR Notes LIKE :email_keywords OR CVContent LIKE :email_keywords)";
+                                        $query .= " AND (Email LIKE :email_keywords  LIKE :email_keywords  LIKE :email_keywords)";
                                         $params[':email_keywords'] = '%' . $email_keywords . '%';
                                     }
                                     
