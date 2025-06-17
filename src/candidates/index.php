@@ -35,15 +35,48 @@ if (!$phpmailer_found) {
     error_log("PHPMailer not found - falling back to basic mail() function");
 }
 
-// Email Configuration Class - Updated to use your SMTP settings
+// Email Configuration Class - Compatible with older PHP versions
 class EmailConfig {
-    const SMTP_HOST = 'mail.nocturnalrecruitment.co.uk';
-    const SMTP_PORT = 587;
-    const SMTP_USERNAME = 'info@nocturnalrecruitment.co.uk';
-    const SMTP_PASSWORD = '@Michael1693250341';
-    const FROM_EMAIL = 'info@nocturnalrecruitment.co.uk';
-    const FROM_NAME = 'Nocturnal Recruitment';
-    const USE_SMTP = true; // Now using SMTP with PHPMailer
+    public static $SMTP_HOST = 'mail.nocturnalrecruitment.co.uk';
+    public static $SMTP_PORT = 587;
+    public static $SMTP_SECURE = 'tls';
+    public static $SMTP_USERNAME = 'info@nocturnalrecruitment.co.uk';
+    public static $SMTP_PASSWORD = '@Michael1693250341';
+    public static $FROM_EMAIL = 'info@nocturnalrecruitment.co.uk';
+    public static $FROM_NAME = 'Nocturnal Recruitment';
+    public static $USE_SMTP = true;
+    
+    public static function getHost() {
+        return self::$SMTP_HOST;
+    }
+    
+    public static function getPort() {
+        return self::$SMTP_PORT;
+    }
+    
+    public static function getSecure() {
+        return self::$SMTP_SECURE;
+    }
+    
+    public static function getUsername() {
+        return self::$SMTP_USERNAME;
+    }
+    
+    public static function getPassword() {
+        return self::$SMTP_PASSWORD;
+    }
+    
+    public static function getFromEmail() {
+        return self::$FROM_EMAIL;
+    }
+    
+    public static function getFromName() {
+        return self::$FROM_NAME;
+    }
+    
+    public static function useSmtp() {
+        return self::$USE_SMTP;
+    }
 }
 
 // Email Templates Class
@@ -245,7 +278,7 @@ class EmailSender {
         
         // Try PHPMailer first if available, fall back to mail() if not
         global $phpmailer_found;
-        if ($phpmailer_found && EmailConfig::USE_SMTP) {
+        if ($phpmailer_found && EmailConfig::useSmtp()) {
             return $this->sendViaPHPMailer($candidate['Email'], $candidate['Name'], $email_subject, $email_body);
         } else {
             return $this->sendViaPHPMail($candidate['Email'], $candidate['Name'], $email_subject, $email_body);
@@ -258,16 +291,16 @@ class EmailSender {
         
             // Server settings
             $mail->isSMTP();
-            $mail->Host = EmailConfig::SMTP_HOST;
+            $mail->Host = EmailConfig::getHost();
             $mail->SMTPAuth = true;
-            $mail->Username = EmailConfig::SMTP_USERNAME;
-            $mail->Password = EmailConfig::SMTP_PASSWORD;
-            $mail->SMTPSecure = 'tls';
-            $mail->Port = EmailConfig::SMTP_PORT;
+            $mail->Username = EmailConfig::getUsername();
+            $mail->Password = EmailConfig::getPassword();
+            $mail->SMTPSecure = EmailConfig::getSecure();
+            $mail->Port = EmailConfig::getPort();
         
             // Recipients
-            $mail->setFrom(EmailConfig::FROM_EMAIL, EmailConfig::FROM_NAME);
-            $mail->addReplyTo(EmailConfig::FROM_EMAIL, EmailConfig::FROM_NAME);
+            $mail->setFrom(EmailConfig::getFromEmail(), EmailConfig::getFromName());
+            $mail->addReplyTo(EmailConfig::getFromEmail(), EmailConfig::getFromName());
             $mail->addAddress($to_email, $to_name);
         
             // Content
@@ -285,6 +318,25 @@ class EmailSender {
             // Fall back to regular mail function
             return $this->sendViaPHPMail($to_email, $to_name, $subject, $body);
         }
+    }
+
+    private function sendViaPHPMail($to_email, $to_name, $subject, $body) {
+        $headers = [
+            'MIME-Version: 1.0',
+            'Content-type: text/html; charset=UTF-8',
+            'From: ' . EmailConfig::getFromName() . ' <' . EmailConfig::getFromEmail() . '>',
+            'Reply-To: ' . EmailConfig::getFromEmail(),
+            'X-Mailer: PHP/' . phpversion()
+        ];
+        
+        $success = mail($to_email, $subject, $body, implode("\r\n", $headers));
+        
+        if (!$success) {
+            throw new Exception("Failed to send email via PHP mail()");
+        }
+        
+        error_log("Email sent successfully to: $to_email via PHP mail()");
+        return true;
     }
     
     private function logEmailSent($candidate_id, $subject, $template, $sender_id) {
@@ -1381,7 +1433,7 @@ if ($mode === 'kpi') {
                                     
                                     // Enhanced filtering - FIXED EMAIL KEYWORDS ISSUE
                                     if (!empty($keyword_filter)) {
-                                        $query .= " AND (Name LIKE :keyword OR Email LIKE :keyword OR JobTitle LIKE :keyword  LIKE :keyword)";
+                                        $query .= " AND (Name LIKE :keyword OR Email LIKE :keyword OR JobTitle LIKE :keyword OR CVContent LIKE :keyword)";
                                         $params[':keyword'] = '%' . $keyword_filter . '%';
                                     }
                                     
@@ -1397,7 +1449,7 @@ if ($mode === 'kpi') {
                                     
                                     // FIXED: Changed EmailContent to Email and Notes
                                     if (!empty($email_keywords)) {
-                                        $query .= " AND (Email LIKE :email_keywords  LIKE :email_keywords  LIKE :email_keywords)";
+                                        $query .= " AND (Email LIKE :email_keywords OR Notes LIKE :email_keywords OR CVContent LIKE :email_keywords)";
                                         $params[':email_keywords'] = '%' . $email_keywords . '%';
                                     }
                                     
