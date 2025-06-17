@@ -3,13 +3,37 @@ if (!isset($_COOKIE['USERID'])) {
     header("location: $LINK/login ");
 }
 
-// Include PHPMailer
+// Include PHPMailer - adjust path as needed
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require_once '../../PHPMailer/src/Exception.php';
-require_once '../../PHPMailer/src/PHPMailer.php';
-require_once '../../PHPMailer/src/SMTP.php';
+// Try different possible paths to find PHPMailer
+$phpmailer_paths = [
+    // Path from your send_email.php
+    'PHPMailer/src/',
+    // Common alternative paths
+    '../PHPMailer/src/',
+    '../../PHPMailer/src/',
+    $_SERVER['DOCUMENT_ROOT'] . '/PHPMailer/src/',
+    $_SERVER['DOCUMENT_ROOT'] . '/broadmead/PHPMailer/src/',
+    'C:/xampppppp/htdocs/broadmead/PHPMailer/src/'
+];
+
+$phpmailer_found = false;
+foreach ($phpmailer_paths as $base_path) {
+    if (file_exists($base_path . 'Exception.php')) {
+        require_once $base_path . 'Exception.php';
+        require_once $base_path . 'PHPMailer.php';
+        require_once $base_path . 'SMTP.php';
+        $phpmailer_found = true;
+        break;
+    }
+}
+
+if (!$phpmailer_found) {
+    // Fallback to basic mail() function if PHPMailer can't be found
+    error_log("PHPMailer not found - falling back to basic mail() function");
+}
 
 // Email Configuration Class - Updated to use your SMTP settings
 class EmailConfig {
@@ -219,13 +243,19 @@ class EmailSender {
         // Add professional signature
         $email_body .= EmailTemplates::getEmailSignature();
         
-        return $this->sendViaPHPMailer($candidate['Email'], $candidate['Name'], $email_subject, $email_body);
+        // Try PHPMailer first if available, fall back to mail() if not
+        global $phpmailer_found;
+        if ($phpmailer_found && EmailConfig::USE_SMTP) {
+            return $this->sendViaPHPMailer($candidate['Email'], $candidate['Name'], $email_subject, $email_body);
+        } else {
+            return $this->sendViaPHPMail($candidate['Email'], $candidate['Name'], $email_subject, $email_body);
+        }
     }
     
     private function sendViaPHPMailer($to_email, $to_name, $subject, $body) {
-        $mail = new PHPMailer(true);
-        
         try {
+            $mail = new PHPMailer(true);
+        
             // Server settings
             $mail->isSMTP();
             $mail->Host = EmailConfig::SMTP_HOST;
@@ -234,23 +264,26 @@ class EmailSender {
             $mail->Password = EmailConfig::SMTP_PASSWORD;
             $mail->SMTPSecure = 'tls';
             $mail->Port = EmailConfig::SMTP_PORT;
-            
+        
             // Recipients
             $mail->setFrom(EmailConfig::FROM_EMAIL, EmailConfig::FROM_NAME);
             $mail->addReplyTo(EmailConfig::FROM_EMAIL, EmailConfig::FROM_NAME);
             $mail->addAddress($to_email, $to_name);
-            
+        
             // Content
             $mail->isHTML(true);
             $mail->Subject = $subject;
             $mail->Body = $body;
             $mail->AltBody = strip_tags($body);
-            
+        
             $mail->send();
+            error_log("Email sent successfully to: $to_email via PHPMailer");
             return true;
-            
+        
         } catch (Exception $e) {
-            throw new Exception("PHPMailer Error: " . $mail->ErrorInfo);
+            error_log("PHPMailer Error: " . $e->getMessage());
+            // Fall back to regular mail function
+            return $this->sendViaPHPMail($to_email, $to_name, $subject, $body);
         }
     }
     
@@ -1564,8 +1597,7 @@ if ($mode === 'kpi') {
                                             <h6>No candidates found</h6>
                                             <p>Try adjusting your search filters or <a href="?mode=<?php echo htmlspecialchars($mode); ?>&isTab=<?php echo htmlspecialchars($isTab); ?>">clear all filters</a> to see more candidates.</p>
                                         </div>
-                                    <?php endif; ?>
-                                <?php else : ?>
+                                    <?php else : ?>
                                     <?php DeniedAccess(); ?>
                                 <?php endif; ?>
                             </div>
