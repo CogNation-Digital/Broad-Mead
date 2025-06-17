@@ -14,15 +14,6 @@ class EmailConfig {
     const USE_SMTP = false; // Set to true to use SMTP, false for PHP mail()
 }
 
-$mail->setFrom('info@nocturnalrecruitment.co.uk', 'Nocturnal Recruitment'); // Updated sender
-$mail->addReplyTo('info@nocturnalrecruitment.co.uk', 'Nocturnal Recruitment'); // Added reply-to
-$mail->addAddress($email, "name");
-
-// Content
-$mail->isHTML(true);
-$mail->Subject = $subject;
-$mail->Body    = $message;
-$mail->AltBody = strip_tags($message);
 
 
 
