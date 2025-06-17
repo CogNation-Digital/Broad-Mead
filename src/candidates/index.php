@@ -1597,9 +1597,10 @@ if ($mode === 'kpi') {
                                             <h6>No candidates found</h6>
                                             <p>Try adjusting your search filters or <a href="?mode=<?php echo htmlspecialchars($mode); ?>&isTab=<?php echo htmlspecialchars($isTab); ?>">clear all filters</a> to see more candidates.</p>
                                         </div>
+                                    <?php endif; ?>
                                     <?php else : ?>
-                                    <?php DeniedAccess(); ?>
-                                <?php endif; ?>
+                                        <?php DeniedAccess(); ?>
+                                    <?php endif; ?>
                             </div>
                             
                             <?php if ($mode === 'mailshot' && $total_results > 0): ?>
