@@ -14,9 +14,6 @@ class EmailConfig {
     const USE_SMTP = false; // Set to true to use SMTP, false for PHP mail()
 }
 
-
-
-
 // Email Templates Class
 class EmailTemplates {
     public static function getTemplate($template_name, $candidate_name = '', $custom_content = '') {
