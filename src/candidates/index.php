@@ -5,14 +5,26 @@ if (!isset($_COOKIE['USERID'])) {
 
 // Email Configuration Class
 class EmailConfig {
-    const SMTP_HOST = 'smtp.gmail.com';
+    const SMTP_HOST = '$host';
     const SMTP_PORT = 587;
-    const SMTP_USERNAME = 'info@nocturnalrecruitment.co.uk';
-    const SMTP_PASSWORD = 'your-app-password'; // Use app password for Gmail
+    const SMTP_USERNAME = '$user';
+    const SMTP_PASSWORD = '$pass'; // Use app password for Gmail
     const FROM_EMAIL = 'info@nocturnalrecruitment.co.uk';
     const FROM_NAME = 'Nocturnal Recruitment';
     const USE_SMTP = false; // Set to true to use SMTP, false for PHP mail()
 }
+
+$mail->setFrom('info@nocturnalrecruitment.co.uk', 'Nocturnal Recruitment'); // Updated sender
+$mail->addReplyTo('info@nocturnalrecruitment.co.uk', 'Nocturnal Recruitment'); // Added reply-to
+$mail->addAddress($email, "name");
+
+// Content
+$mail->isHTML(true);
+$mail->Subject = $subject;
+$mail->Body    = $message;
+$mail->AltBody = strip_tags($message);
+
+
 
 // Email Templates Class
 class EmailTemplates {
@@ -1294,7 +1306,7 @@ if ($mode === 'kpi') {
                                     
                                     // Enhanced filtering - FIXED EMAIL KEYWORDS ISSUE
                                     if (!empty($keyword_filter)) {
-                                        $query .= " AND (Name LIKE :keyword OR Email LIKE :keyword OR JobTitle LIKE :keyword OR CVContent LIKE :keyword)";
+                                        $query .= " AND (Name LIKE :keyword OR Email LIKE :keyword OR JobTitle LIKE :keyword  LIKE :keyword)";
                                         $params[':keyword'] = '%' . $keyword_filter . '%';
                                     }
                                     
@@ -1310,7 +1322,7 @@ if ($mode === 'kpi') {
                                     
                                     // FIXED: Changed EmailContent to Email and Notes
                                     if (!empty($email_keywords)) {
-                                        $query .= " AND (Email LIKE :email_keywords OR Notes LIKE :email_keywords OR CVContent LIKE :email_keywords)";
+                                        $query .= " AND (Email LIKE :email_keywords LIKE :email_keywords LIKE :email_keywords)";
                                         $params[':email_keywords'] = '%' . $email_keywords . '%';
                                     }
                                     
