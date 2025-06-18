@@ -34,7 +34,7 @@ if (!$phpmailer_found) {
 
 // Email Configuration Class
 class EmailConfig {
-    public static $SMTP_HOST = 'smtp.nocturnalrecruitment.co.uk'; // New
+    public static $SMTP_HOST = 'smtp.nocturnalrecruitment.co.uk';
     public static $SMTP_PORT = 587;
     public static $SMTP_SECURE = 'tls';
     public static $SMTP_USERNAME = 'info@nocturnalrecruitment.co.uk';
@@ -76,9 +76,112 @@ class EmailConfig {
     }
 }
 
-// Email Templates Class
+// Enhanced Email Templates Class with Custom Template Support
 class EmailTemplates {
-    public static function getTemplate($template_name, $candidate_name = '', $custom_content = '') {
+    private static $conn;
+    
+    public static function setConnection($database_connection) {
+        self::$conn = $database_connection;
+        self::createCustomTemplatesTable();
+    }
+    
+    private static function createCustomTemplatesTable() {
+        try {
+            $create_table = "CREATE TABLE IF NOT EXISTS custom_email_templates (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                ClientKeyID VARCHAR(50) NOT NULL,
+                template_name VARCHAR(100) NOT NULL,
+                template_subject VARCHAR(255) NOT NULL,
+                template_body TEXT NOT NULL,
+                created_by INT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                is_active TINYINT(1) DEFAULT 1,
+                INDEX idx_client (ClientKeyID),
+                INDEX idx_created_by (created_by),
+                UNIQUE KEY unique_template (ClientKeyID, template_name)
+            )";
+            self::$conn->exec($create_table);
+        } catch (Exception $e) {
+            error_log("Failed to create custom templates table: " . $e->getMessage());
+        }
+    }
+    
+    public static function saveCustomTemplate($ClientKeyID, $template_name, $subject, $body, $created_by) {
+        try {
+            $query = "INSERT INTO custom_email_templates (ClientKeyID, template_name, template_subject, template_body, created_by) 
+                     VALUES (?, ?, ?, ?, ?) 
+                     ON DUPLICATE KEY UPDATE 
+                     template_subject = VALUES(template_subject), 
+                     template_body = VALUES(template_body), 
+                     updated_at = CURRENT_TIMESTAMP";
+            
+            $stmt = self::$conn->prepare($query);
+            $stmt->execute([$ClientKeyID, $template_name, $subject, $body, $created_by]);
+            return true;
+        } catch (Exception $e) {
+            error_log("Failed to save custom template: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    public static function getCustomTemplates($ClientKeyID) {
+        try {
+            $query = "SELECT * FROM custom_email_templates WHERE ClientKeyID = ? AND is_active = 1 ORDER BY template_name";
+            $stmt = self::$conn->prepare($query);
+            $stmt->execute([$ClientKeyID]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("Failed to get custom templates: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    public static function getCustomTemplate($ClientKeyID, $template_name) {
+        try {
+            $query = "SELECT * FROM custom_email_templates WHERE ClientKeyID = ? AND template_name = ? AND is_active = 1";
+            $stmt = self::$conn->prepare($query);
+            $stmt->execute([$ClientKeyID, $template_name]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("Failed to get custom template: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    public static function deleteCustomTemplate($ClientKeyID, $template_name) {
+        try {
+            $query = "UPDATE custom_email_templates SET is_active = 0 WHERE ClientKeyID = ? AND template_name = ?";
+            $stmt = self::$conn->prepare($query);
+            $stmt->execute([$ClientKeyID, $template_name]);
+            return true;
+        } catch (Exception $e) {
+            error_log("Failed to delete custom template: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    public static function getTemplate($template_name, $candidate_name = '', $custom_content = '', $ClientKeyID = null) {
+        // Check if it's a custom template first
+        if ($ClientKeyID && strpos($template_name, 'custom_') === 0) {
+            $custom_template_name = substr($template_name, 7); // Remove 'custom_' prefix
+            $custom_template = self::getCustomTemplate($ClientKeyID, $custom_template_name);
+            
+            if ($custom_template) {
+                $body = $custom_template['template_body'];
+                
+                // Replace placeholders
+                $body = str_replace('[CANDIDATE_NAME]', htmlspecialchars($candidate_name), $body);
+                $body = str_replace('[CUSTOM_CONTENT]', nl2br(htmlspecialchars($custom_content)), $body);
+                
+                return [
+                    'subject' => $custom_template['template_subject'],
+                    'body' => $body
+                ];
+            }
+        }
+        
+        // Default templates
         $templates = [
             'job_alert' => [
                 'subject' => 'New Job Opportunities Available',
@@ -205,15 +308,17 @@ class EmailTemplates {
     }
 }
 
-// Email Sender Class
+// Email Sender Class - Updated to support custom templates
 class EmailSender {
     private $conn;
     private $sent_count = 0;
     private $failed_count = 0;
     private $errors = [];
+    private $ClientKeyID;
     
-    public function __construct($database_connection) {
+    public function __construct($database_connection, $client_key_id = null) {
         $this->conn = $database_connection;
+        $this->ClientKeyID = $client_key_id;
     }
     
     public function sendMailshot($selected_candidates, $subject, $template, $custom_content = '', $sender_id = null) {
@@ -259,7 +364,7 @@ class EmailSender {
     }
     
     private function sendSingleEmail($candidate, $subject, $template_name, $custom_content = '') {
-        $template = EmailTemplates::getTemplate($template_name, $candidate['Name'], $custom_content);
+        $template = EmailTemplates::getTemplate($template_name, $candidate['Name'], $custom_content, $this->ClientKeyID);
         $email_subject = !empty($subject) ? $subject : $template['subject'];
         $email_body = $template['body'] . EmailTemplates::getEmailSignature();
         
@@ -342,6 +447,9 @@ class EmailSender {
     }
 }
 
+// Initialize EmailTemplates with database connection
+EmailTemplates::setConnection($conn);
+
 // Initialize variables
 $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : 'all';
 $mode = isset($_GET['mode']) ? $_GET['mode'] : 'candidates';
@@ -360,7 +468,34 @@ $kpi_metric = isset($_GET['kpi_metric']) ? $_GET['kpi_metric'] : 'overview';
 $kpi_start_date = isset($_GET['kpi_start_date']) ? $_GET['kpi_start_date'] : '';
 $kpi_end_date = isset($_GET['kpi_end_date']) ? $_GET['kpi_end_date'] : '';
 
-// KPI Functions
+// Handle custom template creation
+if (isset($_POST['save_custom_template'])) {
+    $template_name = trim($_POST['custom_template_name']);
+    $template_subject = trim($_POST['custom_template_subject']);
+    $template_body = trim($_POST['custom_template_body']);
+    
+    if (!empty($template_name) && !empty($template_subject) && !empty($template_body)) {
+        if (EmailTemplates::saveCustomTemplate($ClientKeyID, $template_name, $template_subject, $template_body, $USERID)) {
+            $success_message = "Custom email template '$template_name' saved successfully!";
+        } else {
+            $error_message = "Failed to save custom template. Please try again.";
+        }
+    } else {
+        $error_message = "All fields are required for custom template.";
+    }
+}
+
+// Handle custom template deletion
+if (isset($_POST['delete_custom_template'])) {
+    $template_name = $_POST['template_to_delete'];
+    if (EmailTemplates::deleteCustomTemplate($ClientKeyID, $template_name)) {
+        $success_message = "Custom template '$template_name' deleted successfully!";
+    } else {
+        $error_message = "Failed to delete custom template.";
+    }
+}
+
+// KPI Functions (keeping existing functions)
 function getDateRangeForPeriod($period) {
     $today = new DateTime();
     
@@ -538,7 +673,7 @@ if (isset($_POST['Search'])) {
     }
 }
 
-// MAILSHOT HANDLING
+// MAILSHOT HANDLING - Updated to support custom templates
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates'])) {
     error_log("=== MAILSHOT PROCESSING START ===");
     
@@ -560,7 +695,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates']
     
     if (empty($errors)) {
         try {
-            $emailSender = new EmailSender($conn);
+            $emailSender = new EmailSender($conn, $ClientKeyID);
             $result = $emailSender->sendMailshot($selected_candidates, $subject, $template, $custom_content, $USERID);
             
             if ($result['sent'] > 0) {
@@ -610,6 +745,9 @@ $job_titles = $job_titles_stmt->fetchAll(PDO::FETCH_COLUMN);
 $locations_query = "SELECT DISTINCT City FROM _candidates WHERE ClientKeyID = '$ClientKeyID' AND City IS NOT NULL AND City != '' ORDER BY City";
 $locations_stmt = $conn->query($locations_query);
 $locations = $locations_stmt->fetchAll(PDO::FETCH_COLUMN);
+
+// Get custom templates
+$custom_templates = EmailTemplates::getCustomTemplates($ClientKeyID);
 
 // Calculate KPIs if in KPI mode
 $kpi_data = [];
@@ -918,6 +1056,56 @@ if (!isset($ProfilePlaceholder)) {
     color: #495057;
 }
 
+/* Custom Template Styles */
+.custom-template-section {
+    background-color: #f8f9fa;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.template-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 10px;
+    background-color: white;
+}
+
+.template-item {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: between;
+    align-items: center;
+}
+
+.template-item:last-child {
+    border-bottom: none;
+}
+
+.template-name {
+    font-weight: 600;
+    color: #495057;
+}
+
+.template-subject {
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 2px;
+}
+
+.template-actions {
+    margin-left: auto;
+}
+
+.btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
 @media (max-width: 768px) {
     .kpi-cards {
         grid-template-columns: 1fr;
@@ -1201,7 +1389,75 @@ if (!isset($ProfilePlaceholder)) {
                             <li>✅ Email logging and tracking</li>
                             <li>✅ Location-based filtering with distance radius</li>
                             <li>✅ Position and skill-based targeting</li>
+                            <li>✅ Custom email templates - Create your own templates!</li>
                         </ul>
+                    </div>
+
+                    <!-- Custom Email Templates Management -->
+                    <div class="custom-template-section">
+                        <h6 style="margin-bottom: 20px; color: #495057;">
+                            <i class="ti ti-template enhanced-search-icon"></i> Custom Email Templates Management
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Create New Template</h6>
+                                <form method="POST" action="">
+                                    <div class="mb-3">
+                                        <label class="form-label">Template Name *</label>
+                                        <input type="text" name="custom_template_name" class="form-control" required 
+                                               placeholder="e.g., Monthly Newsletter, Job Alert Special">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Default Subject *</label>
+                                        <input type="text" name="custom_template_subject" class="form-control" required 
+                                               placeholder="Default subject line for this template">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Template Body * 
+                                            <small class="text-muted">(Use [CANDIDATE_NAME] and [CUSTOM_CONTENT] as placeholders)</small>
+                                        </label>
+                                        <textarea name="custom_template_body" class="form-control" rows="8" required 
+                                                  placeholder="<html><body><h2>Hello [CANDIDATE_NAME],</h2><p>Your custom message here...</p><div>[CUSTOM_CONTENT]</div><p>Best regards,<br>Your Team</p></body></html>"></textarea>
+                                    </div>
+                                    <button type="submit" name="save_custom_template" class="btn btn-success">
+                                        <i class="ti ti-device-floppy"></i> Save Template
+                                    </button>
+                                </form>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h6>Existing Custom Templates</h6>
+                                <?php if (!empty($custom_templates)): ?>
+                                    <div class="template-list">
+                                        <?php foreach ($custom_templates as $template): ?>
+                                            <div class="template-item">
+                                                <div>
+                                                    <div class="template-name"><?php echo htmlspecialchars($template['template_name']); ?></div>
+                                                    <div class="template-subject"><?php echo htmlspecialchars($template['template_subject']); ?></div>
+                                                </div>
+                                                <div class="template-actions">
+                                                    <button type="button" class="btn btn-sm btn-info" onclick="previewTemplate('<?php echo htmlspecialchars($template['template_name']); ?>')">
+                                                        <i class="ti ti-eye"></i> Preview
+                                                    </button>
+                                                    <form method="POST" style="display: inline;">
+                                                        <input type="hidden" name="template_to_delete" value="<?php echo htmlspecialchars($template['template_name']); ?>">
+                                                        <button type="submit" name="delete_custom_template" class="btn btn-sm btn-danger" 
+                                                                onclick="return confirm('Are you sure you want to delete this template?')">
+                                                            <i class="ti ti-trash"></i> Delete
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="alert alert-info">
+                                        <i class="ti ti-info-circle"></i> No custom templates created yet. Create your first template above!
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
                     </div>
                     <?php endif; ?>
 
@@ -1635,11 +1891,22 @@ if (!isset($ProfilePlaceholder)) {
                                             <label for="mailshot-template" class="form-label">Email Template *</label>
                                             <select name="template" id="mailshot-template" class="form-control" required>
                                                 <option value="">Select a template</option>
-                                                <option value="job_alert">Job Alert</option>
-                                                <option value="newsletter">Newsletter</option>
-                                                <option value="event_invitation">Event Invitation</option>
-                                                <option value="follow_up">Follow Up</option>
-                                                <option value="welcome">Welcome Email</option>
+                                                <optgroup label="Default Templates">
+                                                    <option value="job_alert">Job Alert</option>
+                                                    <option value="newsletter">Newsletter</option>
+                                                    <option value="event_invitation">Event Invitation</option>
+                                                    <option value="follow_up">Follow Up</option>
+                                                    <option value="welcome">Welcome Email</option>
+                                                </optgroup>
+                                                <?php if (!empty($custom_templates)): ?>
+                                                <optgroup label="Custom Templates">
+                                                    <?php foreach ($custom_templates as $template): ?>
+                                                        <option value="custom_<?php echo htmlspecialchars($template['template_name']); ?>">
+                                                            <?php echo htmlspecialchars($template['template_name']); ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                </optgroup>
+                                                <?php endif; ?>
                                             </select>
                                         </div>
                                     </div>
@@ -1700,6 +1967,26 @@ if (!isset($ProfilePlaceholder)) {
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-danger" id="confirmDelete">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template Preview Modal -->
+    <div id="TemplatePreviewModal" class="modal fade" tabindex="-1" aria-labelledby="TemplatePreviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Template Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="template-preview-content">
+                        <!-- Template preview will be loaded here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -1861,6 +2148,40 @@ $(document).ready(function() {
         }
     });
 });
+
+// Template preview function
+function previewTemplate(templateName) {
+    // Get custom template data via AJAX
+    $.ajax({
+        url: window.location.href,
+        type: 'POST',
+        data: {
+            action: 'preview_template',
+            template_name: templateName
+        },
+        success: function(response) {
+            // For now, show a simple preview
+            const previewContent = `
+                <h6>Template: ${templateName}</h6>
+                <div class="alert alert-info">
+                    <strong>Note:</strong> This is a preview of your custom template. 
+                    The actual email will include the company signature and proper formatting.
+                </div>
+                <div style="border: 1px solid #ddd; padding: 15px; background-color: #f9f9f9;">
+                    <p><em>Template preview functionality coming soon...</em></p>
+                    <p>Template Name: <strong>${templateName}</strong></p>
+                </div>
+            `;
+            
+            document.getElementById('template-preview-content').innerHTML = previewContent;
+            const modal = new bootstrap.Modal(document.getElementById('TemplatePreviewModal'));
+            modal.show();
+        },
+        error: function() {
+            alert('Error loading template preview.');
+        }
+    });
+}
 
 // KPI Charts (only load if in KPI mode)
 <?php if ($mode === 'kpi' && !empty($kpi_data) && !isset($kpi_data['error'])): ?>
