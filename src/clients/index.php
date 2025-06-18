@@ -1,31 +1,60 @@
 <?php include "../../includes/config.php";
 if (!isset($_COOKIE['USERID'])) {
-    # code...
     header("location: $LINK/login ");
 }
 
 if (isset($_POST['delete'])) {
-    // Retrieve the 'ID' parameter from the POST request
     $ID = $_POST['ID'];
     $name = $_POST['name'];
     $reason = $_POST['reason'];
 
-    // Prepare the DELETE statement
     $stmt = $conn->prepare("DELETE FROM `_clients` WHERE ClientID = :ID");
-
-    // Bind the 'ID' parameter to the prepared statement
     $stmt->bindParam(':ID', $ID);
 
-    // Execute the statement to delete the record
     if ($stmt->execute()) {
         $NOTIFICATION = "$NAME has successfully deleted the client named '$name'. Reason for deletion: $reason.";
-
         Notify($USERID, $ClientKeyID, $NOTIFICATION);
     } else {
         echo "Error deleting record";
     }
 }
 
+if (isset($_POST['send_mailshot'])) {
+    $selected_clients = $_POST['selected_clients'];
+    $mailshot_subject = $_POST['mailshot_subject'];
+    $mailshot_message = $_POST['mailshot_message'];
+    
+    if (!empty($selected_clients) && !empty($mailshot_subject) && !empty($mailshot_message)) {
+        $success_count = 0;
+        foreach ($selected_clients as $client_id) {
+            // Get client details
+            $client_query = $conn->prepare("SELECT Name, Email FROM `_clients` WHERE ClientID = :client_id");
+            $client_query->bindParam(':client_id', $client_id);
+            $client_query->execute();
+            $client = $client_query->fetchObject();
+            
+            if ($client && !empty($client->Email)) {
+                // Send email (replace with your email sending function)
+                $to = $client->Email;
+                $subject = $mailshot_subject;
+                $message = str_replace('[CLIENT_NAME]', $client->Name, $mailshot_message);
+                
+                // Log mailshot
+                $log_query = $conn->prepare("INSERT INTO `mailshot_log` (ClientID, Subject, Message, SentBy, SentDate) VALUES (:client_id, :subject, :message, :sent_by, NOW())");
+                $log_query->bindParam(':client_id', $client_id);
+                $log_query->bindParam(':subject', $subject);
+                $log_query->bindParam(':message', $message);
+                $log_query->bindParam(':sent_by', $USERID);
+                $log_query->execute();
+                
+                $success_count++;
+            }
+        }
+        
+        $NOTIFICATION = "$NAME has successfully sent mailshot to $success_count clients.";
+        Notify($USERID, $ClientKeyID, $NOTIFICATION);
+    }
+}
 
 if (isset($_POST['Search'])) {
     $Name = $_POST['Name'];
@@ -36,6 +65,7 @@ if (isset($_POST['Search'])) {
     $Address = $_POST['Address'];
     $Postcode = $_POST['Postcode'];
     $City = $_POST['City'];
+    
     if (!empty($SearchID)) {
         $query = $conn->prepare("INSERT INTO `search_queries`(`SearchID`, `column`, `value`) 
                   VALUES (:SearchID, :column, :value)");
@@ -88,8 +118,6 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                                             </span>
                                             Create
                                         </a>
-
-
                                         <a type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target=".bd-example-modal-lg">
                                             <span>
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
@@ -98,19 +126,57 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                                             </span>
                                             Advanced Search
                                         </a>
-
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Quick Filters -->
+                        <div class="card-body" style="padding-bottom: 0;">
+                            <div class="row mb-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">Filter by Name:</label>
+                                    <input type="text" class="form-control" id="nameFilter" placeholder="Enter name..." onkeyup="applyFilters()">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Filter by Email:</label>
+                                    <input type="text" class="form-control" id="emailFilter" placeholder="Enter email..." onkeyup="applyFilters()">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Filter by Location:</label>
+                                    <input type="text" class="form-control" id="locationFilter" placeholder="Enter city/address..." onkeyup="applyFilters()">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Filter by Client Type:</label>
+                                    <select class="form-select" id="clientTypeFilter" onchange="applyFilters()">
+                                        <option value="">All Types</option>
+                                        <?php foreach ($clientype as $type) { ?>
+                                            <option value="<?php echo $type; ?>"><?php echo $type; ?></option>
+                                        <?php } ?>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllFilters()">
+                                        <i class="ti ti-refresh"></i> Clear All Filters
+                                    </button>
+                                    <span id="filterResults" class="ms-3 text-muted"></span>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <button type="button" class="btn btn-primary btn-sm" id="mailshotBtn" onclick="openMailshotModal()" style="display: none;">
+                                        <i class="ti ti-mail"></i> Send Mailshot (<span id="selectedCount">0</span>)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                         <ul class="nav nav-tabs analytics-tab" id="myTab" role="tablist" style="margin-left:30px;">
                             <li class="nav-item" role="presentation">
                                 <a href="<?php echo $LINK; ?>/clients<?php echo !empty($SearchID) ? "/?q=$SearchID" : "" ?>">
                                     <button class="nav-link <?php echo ($isTab == "all") ? 'active' : ''; ?>">All Clients</button>
                                 </a>
                             </li>
-
-
                             <ul class="nav">
                                 <?php foreach ($clients_status as $tab) : ?>
                                     <li class="nav-item" role="presentation">
@@ -122,28 +188,26 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                                     </li>
                                 <?php endforeach; ?>
                             </ul>
-
-
                         </ul>
+
                         <div class="card-body">
                             <div class="table-responsive dt-responsive">
                                 <?php if (IsCheckPermission($USERID, "VIEW_CLIENTS")) : ?>
-                                    <table class="table table-bordered">
+                                    <table class="table table-bordered" id="clientsTable">
                                         <thead>
                                             <tr>
                                                 <th>#</th>
-                                                <th style="display: none;">
-                                                    <span id="selectAll" style="cursor: pointer;">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-                                                            <path fill="currentColor" d="m9.55 17.308l-4.97-4.97l.714-.713l4.256 4.256l9.156-9.156l.713.714z" />
-                                                        </svg>
-                                                    </span>
+                                                <th>
+                                                    <input type="checkbox" id="selectAll" class="form-check-input">
+                                                    <label for="selectAll" class="form-check-label ms-1">Select All</label>
                                                 </th>
-                                                <th>Client Name </th>
+                                                <th>Client Name</th>
                                                 <th>Client ID</th>
+                                                <th>Client Type</th>
                                                 <th>Status</th>
-                                                <th>Email Address </th>
-                                                <th>Phone Number </th>
+                                                <th>Email Address</th>
+                                                <th>Phone Number</th>
+                                                <th>Location</th>
                                                 <th>Created By</th>
                                                 <th>Date</th>
                                                 <th>Actions</th>
@@ -162,10 +226,11 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                                                     $query .= " AND " . $column . " LIKE '%$value%'";
                                                 }
                                             }
+                                            
                                             if($isTab !== "all"){
                                                  $query .= " AND Status = '$isTab'";
- 
                                             }
+                                            
                                             $query .= " ORDER BY Name ASC";
                                             $stmt = $conn->prepare($query);
                                             $stmt->execute();
@@ -174,46 +239,47 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                                                 <?php
                                                 $CreatedBy = $conn->query("SELECT Name FROM `users` WHERE UserID = '{$row->CreatedBy}' ")->fetchColumn();
                                                 ?>
-                                                <tr>
+                                                <tr class="client-row" 
+                                                    data-name="<?php echo strtolower($row->Name); ?>"
+                                                    data-email="<?php echo strtolower($row->Email); ?>"
+                                                    data-location="<?php echo strtolower($row->City . ' ' . $row->Address); ?>"
+                                                    data-clienttype="<?php echo strtolower($row->ClientType); ?>">
                                                     <td><?php echo $n++; ?></td>
-                                                    <td style="display: none;"> <input class="form-check-input checkbox-item" type="checkbox" value="<?php echo $row->ClientID; ?>" data-name="<?php echo $row->Name; ?>" id="flexCheckDefault<?php echo $row->id ?>"> </td>
-
+                                                    <td>
+                                                        <input class="form-check-input checkbox-item" 
+                                                               type="checkbox" 
+                                                               value="<?php echo $row->ClientID; ?>" 
+                                                               data-name="<?php echo $row->Name; ?>"
+                                                               data-email="<?php echo $row->Email; ?>"
+                                                               onchange="updateSelectedCount()">
+                                                    </td>
                                                     <td><?php echo $row->Name; ?></td>
                                                     <td><?php echo $row->_client_id; ?></td>
+                                                    <td><?php echo $row->ClientType; ?></td>
                                                     <td>
                                                         <?php if ($row->Status == "Active") : ?>
                                                             <span class="badge bg-success">Active</span>
+                                                        <?php elseif ($row->Status == "Archived") : ?>
+                                                            <span class="badge bg-warning">Archived</span>
+                                                        <?php elseif ($row->Status == "Inactive") : ?>
+                                                            <span class="badge bg-danger">Inactive</span>
+                                                        <?php elseif ($row->Status == "Targeted") : ?>
+                                                            <span class="badge bg-info">Targeted</span>
                                                         <?php else : ?>
-                                                            <?php if ($row->Status == "Archived") : ?>
-                                                                <span class="badge bg-warning">Archived</span>
-
-                                                            <?php else : ?>
-                                                                <?php if ($row->Status == "Inactive") : ?>
-                                                                    <span class="badge bg-danger"><?php echo $row->Status; ?></span>
-                                                                <?php endif; ?>
-                                                                <?php if ($row->Status == "Targeted") : ?>
-                                                                    <span class="badge bg-info"><?php echo $row->Status; ?></span>
-                                                                <?php endif; ?>
-
-                                                            <?php endif; ?>
+                                                            <span class="badge bg-danger">Not Updated</span>
                                                         <?php endif; ?>
-                                                    <?php if (empty($row->Status)): ?>
-                                                        <span class="badge bg-danger">Not Updated</span>
-                                                        
-                                                    <?php endif; ?>
                                                     </td>
                                                     <td><?php echo $row->Email; ?></td>
                                                     <td><?php echo $row->Number; ?></td>
+                                                    <td><?php echo $row->City . ', ' . $row->Address; ?></td>
                                                     <td><?php echo $CreatedBy; ?></td>
                                                     <td><?php echo FormatDate($row->Date); ?></td>
                                                     <td>
                                                         <div class="dropdown">
                                                             <a class="avtar avtar-s btn-link-secondary dropdown-toggle arrow-none" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="ti ti-dots-vertical f-18"></i></a>
                                                             <div class="dropdown-menu dropdown-menu-end">
-
                                                                 <a class="dropdown-item" href="<?php echo $LINK; ?>/edit_client/?ID=<?php echo $row->ClientID; ?>">
                                                                     <span class="text-info">
-
                                                                         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
                                                                             <path fill="currentColor" d="M4 20v-2.52L17.18 4.288q.155-.137.34-.212T17.907 4t.39.064q.19.063.35.228l1.067 1.074q.165.159.226.35q.06.19.06.38q0 .204-.068.39q-.069.185-.218.339L6.519 20zM17.504 7.589L19 6.111L17.889 5l-1.477 1.496z" />
                                                                         </svg>
@@ -228,7 +294,6 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                                                                         </span>
                                                                         Delete</a>
                                                                 <?php endif; ?>
-
                                                                 <a class="dropdown-item" href="<?php echo $LINK; ?>/view_client/?ID=<?php echo $row->ClientID; ?>">
                                                                     <span class="text-warning">
                                                                         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 20 20">
@@ -245,8 +310,6 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                                                     </td>
                                                 </tr>
                                             <?php } ?>
-
-
                                         </tbody>
                                     </table>
                                     <?php if ($stmt->rowCount() == 0) : ?>
@@ -255,20 +318,14 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                                         </div>
                                     <?php endif; ?>
                                 <?php else : ?>
-                                    <?php
-                                    DeniedAccess();
-                                    ?>
+                                    <?php DeniedAccess(); ?>
                                 <?php endif; ?>
 
                                 <?php if (isset($_GET['q'])) : ?>
                                     <a href="<?php echo $LINK; ?>/clients">
-                                        <button class="btn btn-primary">
-                                            Reset Search
-                                        </button>
+                                        <button class="btn btn-primary">Reset Search</button>
                                     </a>
                                     <span style="margin-left: 20px;"><?php echo $stmt->rowCount() . ' ' . ($stmt->rowCount() == 1 ? 'client' : 'clients'); ?> found</span>
-
-
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -277,11 +334,13 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
             </div>
         </div>
     </div>
-    <div id="DeleteModal" class="modal fade" tabindex="-1" aria-labelledby="DeleteModalLabel" aria-hidden="true" style="display: none;">
+
+    <!-- Delete Modal -->
+    <div id="DeleteModal" class="modal fade" tabindex="-1" aria-labelledby="DeleteModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLiveLabel">Confirm Delete</h5>
+                    <h5 class="modal-title">Confirm Delete</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -298,28 +357,68 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
         </div>
     </div>
 
+    <!-- Mailshot Modal -->
+    <div id="MailshotModal" class="modal fade" tabindex="-1" aria-labelledby="MailshotModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Send Mailshot</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" id="mailshotForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Selected Clients (<span id="modalSelectedCount">0</span>):</label>
+                            <div id="selectedClientsList" class="border rounded p-2 bg-light" style="max-height: 150px; overflow-y: auto;">
+                                <!-- Selected clients will be listed here -->
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Subject:</label>
+                            <input type="text" class="form-control" name="mailshot_subject" required placeholder="Enter email subject">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Message:</label>
+                            <textarea class="form-control" name="mailshot_message" rows="8" required placeholder="Enter your message here. Use [CLIENT_NAME] to personalize the message."></textarea>
+                            <small class="text-muted">Tip: Use [CLIENT_NAME] in your message to automatically insert the client's name.</small>
+                        </div>
+                        <input type="hidden" name="selected_clients" id="selectedClientsInput">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" name="send_mailshot" class="btn btn-primary">
+                            <i class="ti ti-send"></i> Send Mailshot
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Search Modal -->
     <div class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title h4" id="myLargeModalLabel">Advance Search</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title h4">Advanced Search</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form method="POST">
                         <div class="row">
                             <div class="col-lg-6">
-                                <div class="mb-3"><label class="form-label">Name</label>
+                                <div class="mb-3">
+                                    <label class="form-label">Name</label>
                                     <input type="text" name="Name" class="form-control">
                                 </div>
                             </div>
                             <div class="col-lg-6">
-                                <div class="mb-3"><label class="form-label">Client Type</label>
+                                <div class="mb-3">
+                                    <label class="form-label">Client Type</label>
                                     <select name="ClientType" class="select-input">
                                         <option value=""></option>
-                                        <?php
-                                        foreach ($clientype as $type) { ?>
+                                        <?php foreach ($clientype as $type) { ?>
                                             <option><?php echo $type; ?></option>
-
                                         <?php } ?>
                                     </select>
                                 </div>
@@ -327,83 +426,182 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                         </div>
                         <div class="row">
                             <div class="col-lg-6">
-                                <div class="mb-3"><label class="form-label">Client ID</label>
-                                    <div class="input-group search-form">
-                                        <input type="text" class="form-control" name="_client_id">
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Client ID</label>
+                                    <input type="text" class="form-control" name="_client_id">
                                 </div>
                             </div>
                             <div class="col-lg-6">
-                                <div class="mb-3"><label class="form-label">Email address</label>
-                                    <div class="input-group search-form">
-                                        <input type="text" class="form-control" name="Email">
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Email address</label>
+                                    <input type="text" class="form-control" name="Email">
                                 </div>
                             </div>
                             <div class="col-lg-6">
-                                <div class="mb-3"><label class="form-label">Phone Number</label>
-                                    <div class="input-group search-form">
-                                        <input type="text" class="form-control" name="Email">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-lg-6">
-                                <div class="mb-3"><label class="form-label">Address</label>
-                                    <div class="input-group search-form">
-                                        <input type="text" class="form-control" name="Address">
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="text" class="form-control" name="Number">
                                 </div>
                             </div>
                             <div class="col-lg-6">
-                                <div class="mb-3"><label class="form-label">Postcode</label>
-                                    <div class="input-group search-form">
-                                        <input type="text" class="form-control" name="PostCode">
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Address</label>
+                                    <input type="text" class="form-control" name="Address">
                                 </div>
                             </div>
                             <div class="col-lg-6">
-                                <div class="mb-3"><label class="form-label">City</label>
-                                    <div class="input-group search-form">
-                                        <input type="text" class="form-control" name="City">
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Postcode</label>
+                                    <input type="text" class="form-control" name="PostCode">
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="mb-3">
+                                    <label class="form-label">City</label>
+                                    <input type="text" class="form-control" name="City">
                                 </div>
                             </div>
                         </div>
-                        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="submit" name="Search" class="btn btn-primary me-0">Search</button>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" name="Search" class="btn btn-primary">Search</button>
                         </div>
-
                     </form>
                 </div>
             </div>
         </div>
+    </div>
 </body>
+
 <?php include "../../includes/js.php"; ?>
 <script>
-    document.getElementById('selectAll').addEventListener('click', function() {
-        let checkboxes = document.querySelectorAll('.checkbox-item');
-        let allChecked = this.classList.toggle('checked');
+    let visibleRows = 0;
 
-        checkboxes.forEach(function(checkbox) {
-            checkbox.checked = allChecked;
+    // Apply filters function
+    function applyFilters() {
+        const nameFilter = document.getElementById('nameFilter').value.toLowerCase();
+        const emailFilter = document.getElementById('emailFilter').value.toLowerCase();
+        const locationFilter = document.getElementById('locationFilter').value.toLowerCase();
+        const clientTypeFilter = document.getElementById('clientTypeFilter').value.toLowerCase();
+        
+        const rows = document.querySelectorAll('.client-row');
+        visibleRows = 0;
+        
+        rows.forEach(row => {
+            const name = row.getAttribute('data-name');
+            const email = row.getAttribute('data-email');
+            const location = row.getAttribute('data-location');
+            const clientType = row.getAttribute('data-clienttype');
+            
+            const nameMatch = !nameFilter || name.includes(nameFilter);
+            const emailMatch = !emailFilter || email.includes(emailFilter);
+            const locationMatch = !locationFilter || location.includes(locationFilter);
+            const clientTypeMatch = !clientTypeFilter || clientType.includes(clientTypeFilter);
+            
+            if (nameMatch && emailMatch && locationMatch && clientTypeMatch) {
+                row.style.display = '';
+                visibleRows++;
+            } else {
+                row.style.display = 'none';
+                // Uncheck hidden rows
+                const checkbox = row.querySelector('.checkbox-item');
+                if (checkbox.checked) {
+                    checkbox.checked = false;
+                }
+            }
         });
+        
+        updateFilterResults();
+        updateSelectedCount();
+    }
+
+    // Clear all filters
+    function clearAllFilters() {
+        document.getElementById('nameFilter').value = '';
+        document.getElementById('emailFilter').value = '';
+        document.getElementById('locationFilter').value = '';
+        document.getElementById('clientTypeFilter').value = '';
+        applyFilters();
+    }
+
+    // Update filter results display
+    function updateFilterResults() {
+        const totalRows = document.querySelectorAll('.client-row').length;
+        document.getElementById('filterResults').textContent = 
+            `Showing ${visibleRows} of ${totalRows} clients`;
+    }
+
+    // Update selected count
+    function updateSelectedCount() {
+        const visibleCheckboxes = document.querySelectorAll('.client-row:not([style*="display: none"]) .checkbox-item');
+        const selectedCheckboxes = document.querySelectorAll('.client-row:not([style*="display: none"]) .checkbox-item:checked');
+        
+        const count = selectedCheckboxes.length;
+        document.getElementById('selectedCount').textContent = count;
+        document.getElementById('modalSelectedCount').textContent = count;
+        
+        // Show/hide mailshot button
+        const mailshotBtn = document.getElementById('mailshotBtn');
+        if (count > 0) {
+            mailshotBtn.style.display = 'inline-block';
+        } else {
+            mailshotBtn.style.display = 'none';
+        }
+        
+        // Update select all checkbox
+        const selectAllCheckbox = document.getElementById('selectAll');
+        if (visibleCheckboxes.length > 0) {
+            selectAllCheckbox.indeterminate = count > 0 && count < visibleCheckboxes.length;
+            selectAllCheckbox.checked = count === visibleCheckboxes.length;
+        }
+    }
+
+    // Select all functionality
+    document.getElementById('selectAll').addEventListener('change', function() {
+        const visibleCheckboxes = document.querySelectorAll('.client-row:not([style*="display: none"]) .checkbox-item');
+        visibleCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateSelectedCount();
     });
 
+    // Open mailshot modal
+    function openMailshotModal() {
+        const selectedCheckboxes = document.querySelectorAll('.client-row:not([style*="display: none"]) .checkbox-item:checked');
+        const selectedClientsList = document.getElementById('selectedClientsList');
+        const selectedClientsInput = document.getElementById('selectedClientsInput');
+        
+        let clientsHtml = '';
+        let clientIds = [];
+        
+        selectedCheckboxes.forEach(checkbox => {
+            const name = checkbox.getAttribute('data-name');
+            const email = checkbox.getAttribute('data-email');
+            clientIds.push(checkbox.value);
+            clientsHtml += `<div class="mb-1"><strong>${name}</strong> - ${email}</div>`;
+        });
+        
+        selectedClientsList.innerHTML = clientsHtml;
+        selectedClientsInput.value = JSON.stringify(clientIds);
+        
+        const modal = new bootstrap.Modal(document.getElementById('MailshotModal'));
+        modal.show();
+    }
 
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        updateFilterResults();
+        updateSelectedCount();
+    });
 
-    // Confirm Delete
+    // Delete functionality
     document.getElementById('confirmDelete').addEventListener('click', function() {
         let checkboxes = document.querySelectorAll('.checkbox-item:checked');
         let ids = [];
         let successCount = 0;
-
         var reason = $("#reason").val();
 
         if (reason.length > 0) {
-
-
-
             checkboxes.forEach(function(checkbox) {
                 ids.push({
                     id: checkbox.value,
@@ -413,9 +611,6 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
 
             if (ids.length > 0) {
                 $("#confirmDelete").text("Deleting...");
-
-
-
                 ids.forEach(function(item) {
                     $.ajax({
                         url: window.location.href,
@@ -436,11 +631,9 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                         },
                         error: function(xhr, status, error) {
                             console.log("Error: " + error);
-                            // Optionally, handle the error case if needed
                         }
                     });
                 });
-
             } else {
                 ShowToast('Error 102: Something went wrong.');
             }
