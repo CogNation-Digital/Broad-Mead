@@ -40,7 +40,7 @@ try {
     // Recipients
     $mail->setFrom('info@nocturnalrecruitment.co.uk', 'Nocturnal Recruitment'); // Updated sender
     $mail->addReplyTo('info@nocturnalrecruitment.co.uk', 'Nocturnal Recruitment'); // Added reply-to
-    $mail->addAddress($email, "name");
+    // $mail->addAddress($email, "name");
 
     // Content
     $mail->isHTML(true);
@@ -56,6 +56,9 @@ try {
     echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
     error_log("PHPMailer Error: " . $e->getMessage());
 }
+
+
+
 
 $phpmailer_found = false;
 foreach ($phpmailer_paths as $base_path) {
