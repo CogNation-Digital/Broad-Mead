@@ -9,56 +9,13 @@ use PHPMailer\PHPMailer\Exception;
 
 // Try different possible paths to find PHPMailer
 $phpmailer_paths = [
-    // Path from your send_email.php
     'PHPMailer/src/',
-    // Common alternative paths
     '../PHPMailer/src/',
     '../../PHPMailer/src/',
     $_SERVER['DOCUMENT_ROOT'] . '/PHPMailer/src/',
     $_SERVER['DOCUMENT_ROOT'] . '/broadmead/PHPMailer/src/',
     'C:/xampppppp/htdocs/broadmead/PHPMailer/src/'
 ];
-
-
-
-$mail = new PHPMailer(true);
-
-try {
-    // Server settings
-    $host = "mail.nocturnalrecruitment.co.uk"; // Updated to your domain's mail server
-    $user = "info@nocturnalrecruitment.co.uk"; // Corrected email format
-    $pass = "@Michael1693250341"; // Using existing password
-
-    $mail->isSMTP();
-    $mail->Host = $host;
-    $mail->SMTPAuth = true;
-    $mail->Username = $user;
-    $mail->Password = $pass;
-    $mail->SMTPSecure = 'tls';
-    $mail->Port = 587;
-
-    // Recipients
-    $mail->setFrom('info@nocturnalrecruitment.co.uk', 'Nocturnal Recruitment'); // Updated sender
-    // $mail->addReplyTo('euphemiachikungulu347@gmail.com', 'Nocturnal Recruitment'); // Added reply-to
-    $mail->addAddress($email, "name");
-
-    // Content
-    // $mail->isHTML(true);
-    // $mail->Subject = $subject;
-    // $mail->Body    = $message;
-    // $mail->AltBody = strip_tags($message);
-
-    // Send the email
-    $mail->send();
-    echo 'Message has been sent';
-    
-} catch (Exception $e) {
-    echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
-    error_log("PHPMailer Error: " . $e->getMessage());
-}
-
-
-
 
 $phpmailer_found = false;
 foreach ($phpmailer_paths as $base_path) {
@@ -72,11 +29,10 @@ foreach ($phpmailer_paths as $base_path) {
 }
 
 if (!$phpmailer_found) {
-    // Fallback to basic mail() function if PHPMailer can't be found
     error_log("PHPMailer not found - falling back to basic mail() function");
 }
 
-// Email Configuration Class - Compatible with older PHP versions
+// Email Configuration Class
 class EmailConfig {
     public static $SMTP_HOST = 'mail.nocturnalrecruitment.co.uk';
     public static $SMTP_PORT = 587;
@@ -87,7 +43,6 @@ class EmailConfig {
     public static $FROM_NAME = 'Nocturnal Recruitment';
     public static $USE_SMTP = true;
     
-
     public static function getHost() {
         return self::$SMTP_HOST;
     }
@@ -131,10 +86,10 @@ class EmailTemplates {
                     <html>
                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
                         <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-                            <h2 style='color: #2c3e50;'>Hello {$candidate_name},</h2>
+                            <h2 style='color: #2c3e50;'>Hello " . htmlspecialchars($candidate_name) . ",</h2>
                             <p>We have exciting new job opportunities that match your profile!</p>
                             <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-                                <p>{$custom_content}</p>
+                                <p>" . nl2br(htmlspecialchars($custom_content)) . "</p>
                             </div>
                             <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
                         </div>
@@ -148,10 +103,10 @@ class EmailTemplates {
                     <html>
                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
                         <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-                            <h2 style='color: #2c3e50;'>Hello {$candidate_name},</h2>
+                            <h2 style='color: #2c3e50;'>Hello " . htmlspecialchars($candidate_name) . ",</h2>
                             <p>Here's our latest newsletter with industry updates and opportunities.</p>
                             <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-                                <p>{$custom_content}</p>
+                                <p>" . nl2br(htmlspecialchars($custom_content)) . "</p>
                             </div>
                             <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
                         </div>
@@ -165,10 +120,10 @@ class EmailTemplates {
                     <html>
                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
                         <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-                            <h2 style='color: #2c3e50;'>Hello {$candidate_name},</h2>
+                            <h2 style='color: #2c3e50;'>Hello " . htmlspecialchars($candidate_name) . ",</h2>
                             <p>We'd like to invite you to our upcoming event!</p>
                             <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-                                <p>{$custom_content}</p>
+                                <p>" . nl2br(htmlspecialchars($custom_content)) . "</p>
                             </div>
                             <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
                         </div>
@@ -182,10 +137,10 @@ class EmailTemplates {
                     <html>
                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
                         <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-                            <h2 style='color: #2c3e50;'>Hello {$candidate_name},</h2>
+                            <h2 style='color: #2c3e50;'>Hello " . htmlspecialchars($candidate_name) . ",</h2>
                             <p>We wanted to follow up regarding your recent application.</p>
                             <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-                                <p>{$custom_content}</p>
+                                <p>" . nl2br(htmlspecialchars($custom_content)) . "</p>
                             </div>
                             <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
                         </div>
@@ -199,10 +154,10 @@ class EmailTemplates {
                     <html>
                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
                         <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-                            <h2 style='color: #2c3e50;'>Hello {$candidate_name}!</h2>
+                            <h2 style='color: #2c3e50;'>Hello " . htmlspecialchars($candidate_name) . "!</h2>
                             <p>Thank you for joining Nocturnal Recruitment. We're excited to help you find your next opportunity.</p>
                             <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-                                <p>{$custom_content}</p>
+                                <p>" . nl2br(htmlspecialchars($custom_content)) . "</p>
                             </div>
                             <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
                         </div>
@@ -212,15 +167,13 @@ class EmailTemplates {
             ]
         ];
         
-        return $templates[$template_name] ?? $templates['job_alert'];
+        return isset($templates[$template_name]) ? $templates[$template_name] : $templates['job_alert'];
     }
     
     public static function getEmailSignature() {
         return '
 <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #f0f0f0; font-family: Arial, sans-serif;">
-    <table style="wi
-    
-    dth: 100%; max-width: 600px;">
+    <table style="width: 100%; max-width: 600px;">
         <tr>
             <td style="text-align: center; padding-bottom: 20px;">
                 <img src="https://nocturnalrecruitment.co.uk/logo.png" alt="Nocturnal Recruitment" style="max-width: 200px; height: auto;">
@@ -252,7 +205,7 @@ class EmailTemplates {
     }
 }
 
-// UPDATED Email Sender Class - Now using PHPMailer
+// Email Sender Class
 class EmailSender {
     private $conn;
     private $sent_count = 0;
@@ -268,23 +221,18 @@ class EmailSender {
         $this->failed_count = 0;
         $this->errors = [];
         
-        // Get candidate details
         $candidate_emails = $this->getCandidateEmails($selected_candidates);
         
         if (empty($candidate_emails)) {
             throw new Exception("No valid candidate emails found.");
         }
         
-        // Send emails
         foreach ($candidate_emails as $candidate) {
             try {
                 $this->sendSingleEmail($candidate, $subject, $template, $custom_content);
                 $this->logEmailSent($candidate['CandidateID'], $subject, $template, $sender_id);
                 $this->sent_count++;
-                
-                // Add small delay to prevent overwhelming the email server
-                usleep(500000); // 0.5 second delay for SMTP
-                
+                usleep(500000);
             } catch (Exception $e) {
                 $this->failed_count++;
                 $this->errors[] = "Failed to send to {$candidate['Email']}: " . $e->getMessage();
@@ -312,15 +260,9 @@ class EmailSender {
     
     private function sendSingleEmail($candidate, $subject, $template_name, $custom_content = '') {
         $template = EmailTemplates::getTemplate($template_name, $candidate['Name'], $custom_content);
-        
-        // Use custom subject if provided, otherwise use template subject
         $email_subject = !empty($subject) ? $subject : $template['subject'];
-        $email_body = $template['body'];
+        $email_body = $template['body'] . EmailTemplates::getEmailSignature();
         
-        // Add professional signature
-        $email_body .= EmailTemplates::getEmailSignature();
-        
-        // Try PHPMailer first if available, fall back to mail() if not
         global $phpmailer_found;
         if ($phpmailer_found && EmailConfig::useSmtp()) {
             return $this->sendViaPHPMailer($candidate['Email'], $candidate['Name'], $email_subject, $email_body);
@@ -332,8 +274,6 @@ class EmailSender {
     private function sendViaPHPMailer($to_email, $to_name, $subject, $body) {
         try {
             $mail = new PHPMailer(true);
-        
-            // Server settings
             $mail->isSMTP();
             $mail->Host = EmailConfig::getHost();
             $mail->SMTPAuth = true;
@@ -341,25 +281,18 @@ class EmailSender {
             $mail->Password = EmailConfig::getPassword();
             $mail->SMTPSecure = EmailConfig::getSecure();
             $mail->Port = EmailConfig::getPort();
-        
-            // Recipients
             $mail->setFrom(EmailConfig::getFromEmail(), EmailConfig::getFromName());
             $mail->addReplyTo(EmailConfig::getFromEmail(), EmailConfig::getFromName());
             $mail->addAddress($to_email, $to_name);
-        
-            // Content
             $mail->isHTML(true);
             $mail->Subject = $subject;
             $mail->Body = $body;
             $mail->AltBody = strip_tags($body);
-        
             $mail->send();
             error_log("Email sent successfully to: $to_email via PHPMailer");
             return true;
-        
         } catch (Exception $e) {
             error_log("PHPMailer Error: " . $e->getMessage());
-            // Fall back to regular mail function
             return $this->sendViaPHPMail($to_email, $to_name, $subject, $body);
         }
     }
@@ -385,7 +318,6 @@ class EmailSender {
     
     private function logEmailSent($candidate_id, $subject, $template, $sender_id) {
         try {
-            // Create email_log table if it doesn't exist
             $create_table = "CREATE TABLE IF NOT EXISTS email_log (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 CandidateID VARCHAR(50) NOT NULL,
@@ -402,17 +334,17 @@ class EmailSender {
             $this->conn->exec($create_table);
             
             $query = "INSERT INTO email_log (CandidateID, Subject, Template, SentBy, SentAt, Status) VALUES (?, ?, ?, ?, NOW(), 'sent')";
-            $stmt = $conn->prepare($query);
+            $stmt = $this->conn->prepare($query);
             $stmt->execute([$candidate_id, $subject, $template, $sender_id]);
         } catch (Exception $e) {
-            // Log error but don't fail the email sending
             error_log("Failed to log email: " . $e->getMessage());
         }
     }
 }
 
+// Initialize variables
 $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : 'all';
-$mode = isset($_GET['mode']) ? $_GET['mode'] : 'candidates'; // candidates, mailshot, or kpi
+$mode = isset($_GET['mode']) ? $_GET['mode'] : 'candidates';
 
 // Enhanced search parameters
 $keyword_filter = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
@@ -572,29 +504,28 @@ function getPreviousPeriodRange($period, $currentRange) {
     ];
 }
 
-// Utility function for distance calculation (simplified)
 function calculateDistance($postcode1, $postcode2) {
-    // This is a simplified version - in production, use a proper postcode API
-    // For now, return a random distance for demonstration
     return rand(1, 50);
 }
 
+// Handle legacy search
 if (isset($_POST['Search'])) {
-    $Name = $_POST['Name'];
-    $JobTitle = $_POST['JobTitle'];
-    $IDNumber = $_POST['IDNumber'];
-    $EmailAddress = $_POST['Email'];
-    $PhoneNumber = $_POST['Number'];
-    $Address = $_POST['Address'];
-    $Postcode = $_POST['Postcode'];
-    $City = $_POST['City'];
+    $Name = isset($_POST['Name']) ? $_POST['Name'] : '';
+    $JobTitle = isset($_POST['JobTitle']) ? $_POST['JobTitle'] : '';
+    $IDNumber = isset($_POST['IDNumber']) ? $_POST['IDNumber'] : '';
+    $EmailAddress = isset($_POST['Email']) ? $_POST['Email'] : '';
+    $PhoneNumber = isset($_POST['Number']) ? $_POST['Number'] : '';
+    $Address = isset($_POST['Address']) ? $_POST['Address'] : '';
+    $Postcode = isset($_POST['Postcode']) ? $_POST['Postcode'] : '';
+    $City = isset($_POST['City']) ? $_POST['City'] : '';
+    
+    $SearchID = uniqid();
     
     if (!empty($SearchID)) {
-        $query = $conn->prepare("INSERT INTO `search_queries`(`SearchID`, `column`, `value`) 
-                  VALUES (:SearchID, :column, :value)");
+        $query = $conn->prepare("INSERT INTO `search_queries`(`SearchID`, `column`, `value`) VALUES (:SearchID, :column, :value)");
 
         foreach ($_POST as $key => $value) {
-            if (!empty($value)) {
+            if (!empty($value) && $key !== 'Search') {
                 $query->bindParam(':SearchID', $SearchID);
                 $query->bindParam(':column', $key);
                 $query->bindParam(':value', $value);
@@ -607,7 +538,7 @@ if (isset($_POST['Search'])) {
     }
 }
 
-// UPDATED MAILSHOT HANDLING - Now using PHPMailer
+// MAILSHOT HANDLING
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates'])) {
     error_log("=== MAILSHOT PROCESSING START ===");
     
@@ -616,11 +547,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates']
     $template = $_POST['template'];
     $custom_content = isset($_POST['custom_content']) ? trim($_POST['custom_content']) : '';
     
-    error_log("Subject: " . $subject);
-    error_log("Template: " . $template);
-    error_log("Selected candidates count: " . count($selected_candidates));
-    
-    // Validation
     $errors = [];
     if (empty($selected_candidates)) {
         $errors[] = "No candidates selected.";
@@ -634,8 +560,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates']
     
     if (empty($errors)) {
         try {
-            error_log("Starting PHPMailer email sending process...");
-            
             $emailSender = new EmailSender($conn);
             $result = $emailSender->sendMailshot($selected_candidates, $subject, $template, $custom_content, $USERID);
             
@@ -645,31 +569,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates']
                     $success_message .= ", " . $result['failed'] . " failed.";
                 }
                 
-                // Log the successful mailshot
                 $NOTIFICATION = "$NAME sent a mailshot with subject '$subject' to " . $result['sent'] . " candidates.";
                 Notify($USERID, $ClientKeyID, $NOTIFICATION);
-                
-                error_log("Mailshot completed: " . $result['sent'] . " sent, " . $result['failed'] . " failed");
-                
             } else {
                 $error_message = "Failed to send mailshot. " . implode('; ', $result['errors']);
-                error_log("Mailshot failed: " . $error_message);
             }
             
         } catch (Exception $e) {
             $error_message = "Error sending mailshot: " . $e->getMessage();
-            error_log("Mailshot error: " . $e->getMessage());
         }
     } else {
         $error_message = implode('<br>', $errors);
-        error_log("Mailshot validation errors: " . implode(', ', $errors));
     }
-    
-    error_log("=== MAILSHOT PROCESSING END ===");
 }
 
 $SearchID = isset($_GET['q']) ? $_GET['q'] : '';
 
+// Handle candidate deletion
 if (isset($_POST['DeletCandidate'])) {
     $ID = $_POST['ID'];
     $name = $_POST['name'];
@@ -700,13 +616,17 @@ $kpi_data = [];
 if ($mode === 'kpi') {
     $kpi_data = calculateKPIs($conn, $ClientKeyID, $kpi_period, $kpi_start_date, $kpi_end_date);
 }
+
+// Set default profile placeholder if not defined
+if (!isset($ProfilePlaceholder)) {
+    $ProfilePlaceholder = '/assets/images/user/avatar-1.jpg';
+}
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <?php include "../../includes/head.php"; ?>
 <style>
-/* Enhanced filtering styles */
 .filter-section {
     background-color: #f8f9fa;
     padding: 20px;
@@ -871,7 +791,6 @@ if ($mode === 'kpi') {
     border-color: #ffeaa7;
 }
 
-/* KPI SPECIFIC STYLES */
 .kpi-info {
     background-color: #fff3cd;
     color: #856404;
@@ -999,7 +918,6 @@ if ($mode === 'kpi') {
     color: #495057;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
     .kpi-cards {
         grid-template-columns: 1fr;
@@ -1035,7 +953,7 @@ if ($mode === 'kpi') {
                         <a href="?mode=mailshot" class="mode-button <?php echo $mode === 'mailshot' ? 'active' : ''; ?>">
                             <i class="ti ti-mail"></i> Create Mailshot
                         </a>
-                        <?php if (IsCheckPermission($USERID, "VIEW_KPIs") || IsCheckPermission($USERID, "VIEW_CANDIDATES")) : ?>
+                        <?php if (IsCheckPermission($USERID, "VIEW_KPIs") || IsCheckPermission($USERID, "VIEW_CANDIDATES")): ?>
                         <a href="?mode=kpi" class="mode-button <?php echo $mode === 'kpi' ? 'active' : ''; ?>">
                             <i class="ti ti-chart-bar"></i> Weekly KPI Search
                         </a>
@@ -1402,7 +1320,7 @@ if ($mode === 'kpi') {
                                 <div class="dropdown">
                                     <a class="avtar avtar-s btn-link-secondary dropdown-toggle arrow-none" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="ti ti-dots-vertical f-18"></i></a>
                                     <div class="dropdown-menu dropdown-menu-end">
-                                        <a class="dropdown-item" href="<?php echo $LINK; ?>/create_candidate?CandidateID=<?php echo $KeyID; ?>">
+                                        <a class="dropdown-item" href="<?php echo $LINK; ?>/create_candidate?CandidateID=<?php echo isset($KeyID) ? $KeyID : ''; ?>">
                                             <span class="text-success">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
                                                     <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4" color="currentColor" />
@@ -1439,7 +1357,7 @@ if ($mode === 'kpi') {
                             ?>
 
                             <ul class="nav">
-                                <?php foreach ($tabs as $tab) : ?>
+                                <?php foreach ($tabs as $tab): ?>
                                     <li class="nav-item" role="presentation">
                                         <a href="<?php echo $LINK; ?>/candidates?mode=<?php echo $mode; ?><?php echo !empty($SearchID) ? "&q=$SearchID" : "&i=" . $tab['index']; ?>&isTab=<?php echo $tab['name']; ?>">
                                             <button class="nav-link <?php echo ($isTab == $tab['name']) ? 'active' : ''; ?>">
@@ -1464,7 +1382,7 @@ if ($mode === 'kpi') {
                             <?php endif; ?>
 
                             <div class="table-responsive dt-responsive">
-                                <?php if (IsCheckPermission($USERID, "VIEW_CANDIDATES")) : ?>
+                                <?php if (IsCheckPermission($USERID, "VIEW_CANDIDATES")): ?>
                                     <?php
                                     // Build enhanced query with filters
                                     $query = "SELECT * FROM `_candidates` WHERE ClientKeyID = '$ClientKeyID'";
@@ -1475,9 +1393,9 @@ if ($mode === 'kpi') {
                                         $params[':status'] = $isTab;
                                     }
                                     
-                                    // Enhanced filtering - FIXED EMAIL KEYWORDS ISSUE
+                                    // Enhanced filtering
                                     if (!empty($keyword_filter)) {
-                                        $query .= " AND (Name LIKE :keyword OR Email LIKE :keyword OR JobTitle LIKE :keyword  LIKE :keyword)";
+                                        $query .= " AND (Name LIKE :keyword OR Email LIKE :keyword OR JobTitle LIKE :keyword)";
                                         $params[':keyword'] = '%' . $keyword_filter . '%';
                                     }
                                     
@@ -1491,9 +1409,8 @@ if ($mode === 'kpi') {
                                         $params[':position'] = '%' . $position_filter . '%';
                                     }
                                     
-                                    // FIXED: Changed EmailContent to Email and Notes
                                     if (!empty($email_keywords)) {
-                                        $query .= " AND (Email LIKE :email_keywords  LIKE :email_keywords LIKE :email_keywords)";
+                                        $query .= " AND (Email LIKE :email_keywords OR Notes LIKE :email_keywords)";
                                         $params[':email_keywords'] = '%' . $email_keywords . '%';
                                     }
                                     
@@ -1601,38 +1518,40 @@ if ($mode === 'kpi') {
                                                     <?php endif; ?>
                                                     <td><?php echo $n++; ?></td>
                                                     <td style="<?php echo $mode === 'mailshot' ? 'display: none;' : ''; ?>">
-                                                        <input class="form-check-input checkbox-item" type="checkbox" value="<?php echo $row->CandidateID; ?>" data-name="<?php echo $row->Name; ?>" id="flexCheckDefault<?php echo $row->id ?>">
+                                                        <input class="form-check-input checkbox-item" type="checkbox" value="<?php echo $row->CandidateID; ?>" data-name="<?php echo $row->Name; ?>" id="flexCheckDefault<?php echo isset($row->id) ? $row->id : $row->CandidateID; ?>">
                                                     </td>
-                                                    <td><?php echo empty($row->IDNumber) ? str_pad($row->id, 5, '0', STR_PAD_LEFT) : $row->IDNumber; ?></td>
+                                                    <td><?php echo empty($row->IDNumber) ? str_pad(isset($row->id) ? $row->id : 1, 5, '0', STR_PAD_LEFT) : $row->IDNumber; ?></td>
                                                     <td>
-                                                        <?php if ($row->Status == "Active") : ?>
+                                                        <?php if ($row->Status == "Active"): ?>
                                                             <span class="badge bg-success">Active</span>
-                                                        <?php elseif ($row->Status == "Archived") : ?>
+                                                        <?php elseif ($row->Status == "Archived"): ?>
                                                             <span class="badge bg-warning">Archived</span>
-                                                        <?php elseif ($row->Status == "Inactive") : ?>
+                                                        <?php elseif ($row->Status == "Inactive"): ?>
                                                             <span class="badge bg-danger"><?php echo $row->Status; ?></span>
-                                                        <?php elseif ($row->Status == "Pending Compliance") : ?>
+                                                        <?php elseif ($row->Status == "Pending Compliance"): ?>
                                                             <span class="badge bg-info"><?php echo $row->Status; ?></span>
+                                                        <?php else: ?>
+                                                            <span class="badge bg-secondary">Unknown</span>
                                                         <?php endif; ?>
                                                     </td>
                                                     <td>
-                                                        <a href="/view_candidate/?ID=<?php echo $row->CandidateID; ?>">
+                                                        <a href="<?php echo $LINK; ?>/view_candidate/?ID=<?php echo $row->CandidateID; ?>">
                                                             <div class="d-flex align-items-center">
                                                                 <div class="flex-shrink-0">
                                                                     <img width="40" height="40" style="object-fit: cover;" src="<?php echo !empty($row->ProfileImage) ? $row->ProfileImage : $ProfilePlaceholder; ?>" onerror="this.onerror=null;this.src='<?php echo $ProfilePlaceholder; ?>'" alt="user image" class="img-radius wid-40">
                                                                 </div>
                                                                 <div class="flex-grow-1 ms-3">
-                                                                    <h6 class="mb-0"><?php echo $row->Name; ?></h6>
+                                                                    <h6 class="mb-0"><?php echo htmlspecialchars($row->Name); ?></h6>
                                                                 </div>
                                                             </div>
                                                         </a>
                                                     </td>
-                                                    <td><?php echo $row->Email; ?></td>
+                                                    <td><?php echo htmlspecialchars($row->Email); ?></td>
                                                     <?php if ($mode !== 'mailshot'): ?>
-                                                    <td><?php echo $row->Number; ?></td>
+                                                    <td><?php echo htmlspecialchars($row->Number); ?></td>
                                                     <?php endif; ?>
-                                                    <td><?php echo $row->JobTitle; ?></td>
-                                                    <td><?php echo $row->City; ?></td>
+                                                    <td><?php echo htmlspecialchars($row->JobTitle); ?></td>
+                                                    <td><?php echo htmlspecialchars($row->City); ?></td>
                                                     <?php if (!empty($center_postcode) && $distance_miles > 0): ?>
                                                     <td>
                                                         <?php if (isset($row->distance)): ?>
@@ -1645,7 +1564,7 @@ if ($mode === 'kpi') {
                                                     </td>
                                                     <?php endif; ?>
                                                     <?php if ($mode !== 'mailshot'): ?>
-                                                    <td><?php echo $CreatedBy; ?></td>
+                                                    <td><?php echo htmlspecialchars($CreatedBy); ?></td>
                                                     <td><?php echo FormatDate($row->Date); ?></td>
                                                     <td>
                                                         <div class="dropdown">
@@ -1658,7 +1577,7 @@ if ($mode === 'kpi') {
                                                                         </svg>
                                                                     </span>
                                                                     Edit</a>
-                                                                <?php if (IsCheckPermission($USERID, "DELETE_CANDIDATE")) : ?>
+                                                                <?php if (IsCheckPermission($USERID, "DELETE_CANDIDATE")): ?>
                                                                     <a class="dropdown-item delete" href="#" data-bs-toggle="modal" data-bs-target="#DeleteModal">
                                                                         <span class="text-danger">
                                                                             <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 20 20">
@@ -1688,19 +1607,19 @@ if ($mode === 'kpi') {
                                         </tbody>
                                     </table>
                                     
-                                    <?php if ($total_results == 0) : ?>
+                                    <?php if ($total_results == 0): ?>
                                         <div class="alert alert-info text-center">
                                             <h6>No candidates found</h6>
                                             <p>Try adjusting your search filters or <a href="?mode=<?php echo htmlspecialchars($mode); ?>&isTab=<?php echo htmlspecialchars($isTab); ?>">clear all filters</a> to see more candidates.</p>
                                         </div>
                                     <?php endif; ?>
-                                    <?php else : ?>
+                                    <?php else: ?>
                                         <?php DeniedAccess(); ?>
                                     <?php endif; ?>
                             </div>
                             
                             <?php if ($mode === 'mailshot' && $total_results > 0): ?>
-                            <!-- UPDATED Mailshot Actions -->
+                            <!-- Mailshot Actions -->
                             <div class="mailshot-actions">
                                 <h6>Mailshot Configuration</h6>
                                 <div class="row">
@@ -1743,7 +1662,7 @@ if ($mode === 'kpi') {
                             </form>
                             <?php endif; ?>
 
-                            <?php if (isset($_GET['q']) || !empty($keyword_filter) || !empty($location_filter) || !empty($position_filter) || !empty($email_keywords)) : ?>
+                            <?php if (isset($_GET['q']) || !empty($keyword_filter) || !empty($location_filter) || !empty($position_filter) || !empty($email_keywords)): ?>
                                 <div style="margin-top: 10px;">
                                     <a href="<?php echo $LINK; ?>/candidates?mode=<?php echo $mode; ?>&isTab=<?php echo $isTab; ?>">
                                         <button class="btn btn-primary">
@@ -1765,11 +1684,11 @@ if ($mode === 'kpi') {
     </div>
 
     <!-- Delete Modal -->
-    <div id="DeleteModal" class="modal fade" tabindex="-1" aria-labelledby="DeleteModalLabel" aria-hidden="true" style="display: none;">
+    <div id="DeleteModal" class="modal fade" tabindex="-1" aria-labelledby="DeleteModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLiveLabel">Confirm Delete</h5>
+                    <h5 class="modal-title">Confirm Delete</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -1791,7 +1710,7 @@ if ($mode === 'kpi') {
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title h4" id="myLargeModalLabel">Legacy Advanced Search</h5>
+                    <h5 class="modal-title h4">Legacy Advanced Search</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -1802,77 +1721,72 @@ if ($mode === 'kpi') {
                     <form method="POST">
                         <div class="row">
                             <div class="col-lg-12">
-                                <div class="mb-3"><label class="form-label">Name</label>
+                                <div class="mb-3">
+                                    <label class="form-label">Name</label>
                                     <input type="text" name="Name" class="form-control">
                                 </div>
                             </div>
                             <div class="col-lg-6">
-                                <div class="mb-3"><label class="form-label">Candidate ID</label>
-                                    <div class="input-group search-form">
-                                        <input type="text" class="form-control" name="IDNumber">
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Candidate ID</label>
+                                    <input type="text" class="form-control" name="IDNumber">
                                 </div>
                             </div>
                             <div class="col-lg-6">
-                                <div class="mb-3"><label class="form-label">Job Title</label>
+                                <div class="mb-3">
+                                    <label class="form-label">Job Title</label>
                                     <input type="text" name="JobTitle" class="form-control">
                                 </div>
                             </div>
                             <div class="col-lg-6">
-                                <div class="mb-3"><label class="form-label">Email address</label>
-                                    <div class="input-group search-form">
-                                        <input type="text" class="form-control" name="Email">
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Email address</label>
+                                    <input type="text" class="form-control" name="Email">
                                 </div>
                             </div>
                             <div class="col-lg-6">
-                                <div class="mb-3"><label class="form-label">Phone Number</label>
-                                    <div class="input-group search-form">
-                                        <input type="text" class="form-control" name="Number">
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="text" class="form-control" name="Number">
                                 </div>
                             </div>
                             <div class="col-lg-6">
-                                <div class="mb-3"><label class="form-label">Address</label>
-                                    <div class="input-group search-form">
-                                        <input type="text" class="form-control" name="Address">
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Address</label>
+                                    <input type="text" class="form-control" name="Address">
                                 </div>
                             </div>
                             <div class="col-lg-6">
-                                <div class="mb-3"><label class="form-label">Postcode</label>
-                                    <div class="input-group search-form">
-                                        <input type="text" class="form-control" name="Postcode">
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Postcode</label>
+                                    <input type="text" class="form-control" name="Postcode">
                                 </div>
                             </div>
                             <div class="col-lg-6">
-                                <div class="mb-3"><label class="form-label">City</label>
-                                    <div class="input-group search-form">
-                                        <input type="text" class="form-control" name="City">
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label">City</label>
+                                    <input type="text" class="form-control" name="City">
                                 </div>
                             </div>
                             <div class="col-lg-6">
-                                <div class="mb-3"><label class="form-label">Created By</label>
-                                    <div class="input-group search-form">
-                                        <select name="CreatedBy" id="" class="form-control">
-                                            <option value=""></option>
-                                            <?php
-                                            $q = "SELECT * FROM `users` WHERE ClientKeyID = '$ClientKeyID'";
-                                            $stmt = $conn->prepare($q);
-                                            $stmt->execute();
-                                            while ($row = $stmt->fetch(PDO::FETCH_OBJ)) { ?>
-                                                <option value="<?php echo $row->UserID; ?>"><?php echo $row->Name ?></option>
-                                            <?php } ?>
-                                        </select>
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Created By</label>
+                                    <select name="CreatedBy" class="form-control">
+                                        <option value=""></option>
+                                        <?php
+                                        $q = "SELECT * FROM `users` WHERE ClientKeyID = '$ClientKeyID'";
+                                        $stmt = $conn->prepare($q);
+                                        $stmt->execute();
+                                        while ($row = $stmt->fetch(PDO::FETCH_OBJ)) { ?>
+                                            <option value="<?php echo $row->UserID; ?>"><?php echo htmlspecialchars($row->Name); ?></option>
+                                        <?php } ?>
+                                    </select>
                                 </div>
                             </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="submit" name="Search" class="btn btn-primary me-0">Search</button>
+                            <button type="submit" name="Search" class="btn btn-primary">Search</button>
                         </div>
                     </form>
                 </div>
@@ -1911,7 +1825,7 @@ $(document).ready(function() {
         checkbox.prop('checked', true);
     });
 
-    // UPDATED: Mailshot form validation and loading state
+    // Mailshot form validation and loading state
     $('#send-mailshot-btn').on('click', function(e) {
         const selectedCandidates = document.querySelectorAll('input[name="selected_candidates[]"]:checked');
         const subject = document.getElementById('mailshot-subject').value.trim();
