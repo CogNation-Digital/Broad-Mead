@@ -19,6 +19,36 @@ $phpmailer_paths = [
     'C:/xampppppp/htdocs/broadmead/PHPMailer/src/'
 ];
 
+
+
+$mail = new PHPMailer(true);
+
+try {
+    // Server settings
+    $host = "mail.nocturnalrecruitment.co.uk"; // Updated to your domain's mail server
+    $user = "info@nocturnalrecruitment.co.uk"; // Corrected email format
+    $pass = "@Michael1693250341"; // Using existing password
+
+    $mail->isSMTP();
+    $mail->Host = $host;
+    $mail->SMTPAuth = true;
+    $mail->Username = $user;
+    $mail->Password = $pass;
+    $mail->SMTPSecure = 'tls';
+    $mail->Port = 587;
+
+    // Recipients
+    $mail->setFrom('info@nocturnalrecruitment.co.uk', 'Nocturnal Recruitment'); // Updated sender
+    $mail->addReplyTo('info@nocturnalrecruitment.co.uk', 'Nocturnal Recruitment'); // Added reply-to
+    $mail->addAddress($email, "name");
+
+    // Content
+    $mail->isHTML(true);
+    $mail->Subject = $subject;
+    $mail->Body    = $message;
+    $mail->AltBody = strip_tags($message);
+}
+
 $phpmailer_found = false;
 foreach ($phpmailer_paths as $base_path) {
     if (file_exists($base_path . 'Exception.php')) {
@@ -122,13 +152,6 @@ class EmailTemplates {
                 'subject' => 'You\'re Invited to Our Event',
                 'body' => "
                     <html>
-
-
-
-
-
-
-
                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
                         <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
                             <h2 style='color: #2c3e50;'>Hello {$candidate_name},</h2>
