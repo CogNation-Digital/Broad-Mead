@@ -47,6 +47,14 @@ try {
     $mail->Subject = $subject;
     $mail->Body    = $message;
     $mail->AltBody = strip_tags($message);
+
+    // Send the email
+    $mail->send();
+    echo 'Message has been sent';
+    
+} catch (Exception $e) {
+    echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
+    error_log("PHPMailer Error: " . $e->getMessage());
 }
 
 $phpmailer_found = false;
