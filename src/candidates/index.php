@@ -34,7 +34,7 @@ if (!$phpmailer_found) {
 
 // Email Configuration Class
 class EmailConfig {
-    public static $SMTP_HOST = 'smtp.nocturnalrecruitment.co.uk';
+    public static $SMTP_HOST = 'mail.nocturnalrecruitment.co.uk';
     public static $SMTP_PORT = 587;
     public static $SMTP_SECURE = 'tls';
     public static $SMTP_USERNAME = 'info@nocturnalrecruitment.co.uk';
@@ -1393,72 +1393,6 @@ if (!isset($ProfilePlaceholder)) {
                         </ul>
                     </div>
 
-                    <!-- Custom Email Templates Management -->
-                    <div class="custom-template-section">
-                        <h6 style="margin-bottom: 20px; color: #495057;">
-                            <i class="ti ti-template enhanced-search-icon"></i> Custom Email Templates Management
-                        </h6>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6>Create New Template</h6>
-                                <form method="POST" action="">
-                                    <div class="mb-3">
-                                        <label class="form-label">Template Name *</label>
-                                        <input type="text" name="custom_template_name" class="form-control" required 
-                                               placeholder="e.g., Monthly Newsletter, Job Alert Special">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Default Subject *</label>
-                                        <input type="text" name="custom_template_subject" class="form-control" required 
-                                               placeholder="Default subject line for this template">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Template Body * 
-                                            <small class="text-muted">(Use [CANDIDATE_NAME] and [CUSTOM_CONTENT] as placeholders)</small>
-                                        </label>
-                                        <textarea name="custom_template_body" class="form-control" rows="8" required 
-                                                  placeholder="<html><body><h2>Hello [CANDIDATE_NAME],</h2><p>Your custom message here...</p><div>[CUSTOM_CONTENT]</div><p>Best regards,<br>Your Team</p></body></html>"></textarea>
-                                    </div>
-                                    <button type="submit" name="save_custom_template" class="btn btn-success">
-                                        <i class="ti ti-device-floppy"></i> Save Template
-                                    </button>
-                                </form>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <h6>Existing Custom Templates</h6>
-                                <?php if (!empty($custom_templates)): ?>
-                                    <div class="template-list">
-                                        <?php foreach ($custom_templates as $template): ?>
-                                            <div class="template-item">
-                                                <div>
-                                                    <div class="template-name"><?php echo htmlspecialchars($template['template_name']); ?></div>
-                                                    <div class="template-subject"><?php echo htmlspecialchars($template['template_subject']); ?></div>
-                                                </div>
-                                                <div class="template-actions">
-                                                    <button type="button" class="btn btn-sm btn-info" onclick="previewTemplate('<?php echo htmlspecialchars($template['template_name']); ?>')">
-                                                        <i class="ti ti-eye"></i> Preview
-                                                    </button>
-                                                    <form method="POST" style="display: inline;">
-                                                        <input type="hidden" name="template_to_delete" value="<?php echo htmlspecialchars($template['template_name']); ?>">
-                                                        <button type="submit" name="delete_custom_template" class="btn btn-sm btn-danger" 
-                                                                onclick="return confirm('Are you sure you want to delete this template?')">
-                                                            <i class="ti ti-trash"></i> Delete
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                <?php else: ?>
-                                    <div class="alert alert-info">
-                                        <i class="ti ti-info-circle"></i> No custom templates created yet. Create your first template above!
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
                     <?php endif; ?>
 
                     <?php if ($mode !== 'kpi'): ?>
@@ -1874,60 +1808,102 @@ if (!isset($ProfilePlaceholder)) {
                                     <?php endif; ?>
                             </div>
                             
-                            <?php if ($mode === 'mailshot' && $total_results > 0): ?>
-                            <!-- Mailshot Actions -->
-                            <div class="mailshot-actions">
-                                <h6>Mailshot Configuration</h6>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="mailshot-subject" class="form-label">Email Subject *</label>
-                                            <input type="text" name="subject" id="mailshot-subject" class="form-control" required 
-                                                   placeholder="Enter email subject">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="mailshot-template" class="form-label">Email Template *</label>
-                                            <select name="template" id="mailshot-template" class="form-control" required>
-                                                <option value="">Select a template</option>
-                                                <optgroup label="Default Templates">
-                                                    <option value="job_alert">Job Alert</option>
-                                                    <option value="newsletter">Newsletter</option>
-                                                    <option value="event_invitation">Event Invitation</option>
-                                                    <option value="follow_up">Follow Up</option>
-                                                    <option value="welcome">Welcome Email</option>
-                                                </optgroup>
-                                                <?php if (!empty($custom_templates)): ?>
-                                                <optgroup label="Custom Templates">
-                                                    <?php foreach ($custom_templates as $template): ?>
-                                                        <option value="custom_<?php echo htmlspecialchars($template['template_name']); ?>">
-                                                            <?php echo htmlspecialchars($template['template_name']); ?>
-                                                        </option>
-                                                    <?php endforeach; ?>
-                                                </optgroup>
-                                                <?php endif; ?>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="custom-content" class="form-label">Custom Content (Optional)</label>
-                                    <textarea name="custom_content" id="custom-content" class="form-control" rows="4" 
-                                              placeholder="Add any custom content to include in the email..."></textarea>
-                                </div>
-                                <div class="mb-3">
-                                    <button type="submit" class="btn btn-primary" id="send-mailshot-btn">
-                                        <i class="ti ti-mail"></i> Send Mailshot
-                                    </button>
-                                    <span class="text-muted ms-3">
-                                        <i class="ti ti-info-circle"></i> 
-                                        This will send emails to all selected candidates
-                                    </span>
-                                </div>
+                            
+<?php if ($mode === 'mailshot' && $total_results > 0): ?>
+<!-- Mailshot Actions -->
+<div class="mailshot-actions">
+    <div class="row">
+        <div class="col-md-8">
+            <h6>Mailshot Configuration</h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="mailshot-subject" class="form-label">Email Subject *</label>
+                        <input type="text" name="subject" id="mailshot-subject" class="form-control" required 
+                               placeholder="Enter email subject">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="mailshot-template" class="form-label">Email Template *</label>
+                        <div class="d-flex">
+                            <select name="template" id="mailshot-template" class="form-control" required style="margin-right: 10px;">
+                                <option value="">Select a template</option>
+                                <optgroup label="Default Templates">
+                                    <option value="job_alert">Job Alert</option>
+                                    <option value="newsletter">Newsletter</option>
+                                    <option value="event_invitation">Event Invitation</option>
+                                    <option value="follow_up">Follow Up</option>
+                                    <option value="welcome">Welcome Email</option>
+                                </optgroup>
+                                <?php if (!empty($custom_templates)): ?>
+                                <optgroup label="Custom Templates">
+                                    <?php foreach ($custom_templates as $template): ?>
+                                        <option value="custom_<?php echo htmlspecialchars($template['template_name']); ?>">
+                                            <?php echo htmlspecialchars($template['template_name']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </optgroup>
+                                <?php endif; ?>
+                            </select>
+                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#CustomTemplateModal">
+                                <i class="ti ti-plus"></i> New
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="custom-content" class="form-label">Custom Content (Optional)</label>
+                <textarea name="custom_content" id="custom-content" class="form-control" rows="4" 
+                          placeholder="Add any custom content to include in the email..."></textarea>
+            </div>
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary" id="send-mailshot-btn">
+                    <i class="ti ti-mail"></i> Send Mailshot
+                </button>
+                <span class="text-muted ms-3">
+                    <i class="ti ti-info-circle"></i> 
+                    This will send emails to all selected candidates
+                </span>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <h6>Quick Template Management</h6>
+            <?php if (!empty($custom_templates)): ?>
+                <div class="template-list" style="max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px; padding: 10px; background-color: white;">
+                    <?php foreach ($custom_templates as $template): ?>
+                        <div class="template-item" style="padding: 8px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div class="template-name" style="font-weight: 600; color: #495057; font-size: 13px;"><?php echo htmlspecialchars($template['template_name']); ?></div>
+                                <div class="template-subject" style="font-size: 11px; color: #6c757d; margin-top: 2px;"><?php echo htmlspecialchars(substr($template['template_subject'], 0, 30)) . (strlen($template['template_subject']) > 30 ? '...' : ''); ?></div>
                             </div>
-                            </form>
-                            <?php endif; ?>
+                            <div class="template-actions">
+                                <button type="button" class="btn btn-sm btn-outline-info" onclick="useTemplate('custom_<?php echo htmlspecialchars($template['template_name']); ?>', '<?php echo htmlspecialchars($template['template_subject']); ?>')" title="Use Template">
+                                    <i class="ti ti-check"></i>
+                                </button>
+                                <form method="POST" style="display: inline;">
+                                    <input type="hidden" name="template_to_delete" value="<?php echo htmlspecialchars($template['template_name']); ?>">
+                                    <button type="submit" name="delete_custom_template" class="btn btn-sm btn-outline-danger" 
+                                            onclick="return confirm('Are you sure you want to delete this template?')" title="Delete Template">
+                                        <i class="ti ti-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <div class="alert alert-info" style="font-size: 12px; padding: 10px;">
+                    <i class="ti ti-info-circle"></i> No custom templates yet. Click "New" to create one!
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+</form>
+<?php endif; ?>
 
                             <?php if (isset($_GET['q']) || !empty($keyword_filter) || !empty($location_filter) || !empty($position_filter) || !empty($email_keywords)): ?>
                                 <div style="margin-top: 10px;">
@@ -2080,6 +2056,66 @@ if (!isset($ProfilePlaceholder)) {
             </div>
         </div>
     </div>
+
+<!-- Custom Template Modal -->
+<div id="CustomTemplateModal" class="modal fade" tabindex="-1" aria-labelledby="CustomTemplateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Custom Email Template</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="ti ti-info-circle"></i>
+                        <strong>Template Placeholders:</strong> Use <code>[CANDIDATE_NAME]</code> for the candidate's name and <code>[CUSTOM_CONTENT]</code> for the custom content field.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Template Name *</label>
+                        <input type="text" name="custom_template_name" class="form-control" required 
+                               placeholder="e.g., Monthly Newsletter, Job Alert Special">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Default Subject *</label>
+                        <input type="text" name="custom_template_subject" class="form-control" required 
+                               placeholder="Default subject line for this template">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Template Body (HTML) *</label>
+                        <textarea name="custom_template_body" class="form-control" rows="12" required 
+                                  placeholder="<html><body><h2>Hello [CANDIDATE_NAME],</h2><p>Your custom message here...</p><div>[CUSTOM_CONTENT]</div><p>Best regards,<br>Your Team</p></body></html>"></textarea>
+                        <small class="form-text text-muted">You can use HTML formatting. The company signature will be automatically added.</small>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Quick Templates:</h6>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="loadQuickTemplate('basic')">Basic Template</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="loadQuickTemplate('newsletter')">Newsletter Style</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="loadQuickTemplate('job_alert')">Job Alert Style</button>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Preview:</h6>
+                            <div id="template-preview" style="border: 1px solid #ddd; padding: 10px; background-color: #f9f9f9; min-height: 100px; font-size: 12px;">
+                                <em>Template preview will appear here...</em>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" name="save_custom_template" class="btn btn-success">
+                        <i class="ti ti-device-floppy"></i> Save Template
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 </body>
 
 <?php include "../../includes/js.php"; ?>
@@ -2310,6 +2346,123 @@ document.getElementById('confirmDelete').addEventListener('click', function() {
         ShowToast('Error 101: Reason field is required.');
         return;
     }
+});
+
+// Template management functions
+function useTemplate(templateValue, templateSubject) {
+    document.getElementById('mailshot-template').value = templateValue;
+    document.getElementById('mailshot-subject').value = templateSubject;
+    
+    // Visual feedback
+    const templateSelect = document.getElementById('mailshot-template');
+    templateSelect.style.borderColor = '#28a745';
+    setTimeout(() => {
+        templateSelect.style.borderColor = '';
+    }, 2000);
+}
+
+function loadQuickTemplate(type) {
+    const templateBody = document.querySelector('textarea[name="custom_template_body"]');
+    const templateSubject = document.querySelector('input[name="custom_template_subject"]');
+    
+    const templates = {
+        basic: {
+            subject: 'Important Update from Nocturnal Recruitment',
+            body: `<html>
+<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;'>
+    <h2 style='color: #2c3e50;'>Hello [CANDIDATE_NAME],</h2>
+    
+    <p>We hope this email finds you well.</p>
+    
+    <div style='background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;'>
+        [CUSTOM_CONTENT]
+    </div>
+    
+    <p>If you have any questions, please don't hesitate to contact us.</p>
+    
+    <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
+</body>
+</html>`
+        },
+        newsletter: {
+            subject: 'Nocturnal Recruitment Newsletter - [MONTH] Edition',
+            body: `<html>
+<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;'>
+    <div style='background-color: #007bff; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0;'>
+        <h1 style='margin: 0;'>Newsletter</h1>
+        <p style='margin: 5px 0 0 0;'>Latest Updates & Opportunities</p>
+    </div>
+    
+    <div style='background-color: #f8f9fa; padding: 20px; border-radius: 0 0 5px 5px;'>
+        <h2 style='color: #2c3e50;'>Hello [CANDIDATE_NAME],</h2>
+        
+        <p>Welcome to our latest newsletter with exciting updates and opportunities!</p>
+        
+        <div style='background-color: white; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #007bff;'>
+            [CUSTOM_CONTENT]
+        </div>
+        
+        <p>Stay connected with us for more opportunities!</p>
+        
+        <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
+    </div>
+</body>
+</html>`
+        },
+        job_alert: {
+            subject: 'New Job Opportunities - Perfect Match for You!',
+            body: `<html>
+<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;'>
+    <div style='background-color: #28a745; color: white; padding: 15px; text-align: center; border-radius: 5px;'>
+        <h1 style='margin: 0;'>🎯 New Job Alert!</h1>
+    </div>
+    
+    <h2 style='color: #2c3e50; margin-top: 20px;'>Hello [CANDIDATE_NAME],</h2>
+    
+    <p>We've found some exciting new opportunities that match your profile!</p>
+    
+    <div style='background-color: #d4edda; padding: 20px; border-radius: 5px; margin: 20px 0; border: 1px solid #c3e6cb;'>
+        <h3 style='color: #155724; margin-top: 0;'>Featured Opportunities:</h3>
+        [CUSTOM_CONTENT]
+    </div>
+    
+    <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; text-align: center;'>
+        <p style='margin: 0;'><strong>Ready to take the next step?</strong></p>
+        <p style='margin: 5px 0 0 0;'>Contact us today to discuss these opportunities!</p>
+    </div>
+    
+    <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
+</body>
+</html>`
+        }
+    };
+    
+    if (templates[type]) {
+        templateSubject.value = templates[type].subject;
+        templateBody.value = templates[type].body;
+        updatePreview();
+    }
+}
+
+function updatePreview() {
+    const templateBody = document.querySelector('textarea[name="custom_template_body"]').value;
+    const preview = document.getElementById('template-preview');
+    
+    if (templateBody.trim()) {
+        // Simple preview - replace placeholders with sample data
+        let previewContent = templateBody
+            .replace(/\[CANDIDATE_NAME\]/g, 'John Doe')
+            .replace(/\[CUSTOM_CONTENT\]/g, 'This is where your custom content will appear...');
+        
+        preview.innerHTML = previewContent;
+    } else {
+        preview.innerHTML = '<em>Template preview will appear here...</em>';
+    }
+}
+
+// Add event listener for template body changes
+$(document).ready(function() {
+    $('textarea[name="custom_template_body"]').on('input', updatePreview);
 });
 </script>
 
