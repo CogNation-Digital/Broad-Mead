@@ -15,12 +15,12 @@ try {
     $pass = "@Michael1693250341"; // Using existing password
 
     $mail->isSMTP();
-    $mail->Host = $host;
-    $mail->SMTPAuth = true;
-    $mail->Username = $user;
-    $mail->Password = $pass;
-    $mail->SMTPSecure = 'tls';
-    $mail->Port = 587;
+$mail->Host = 'smtp.nocturnalrecruitment.co.uk'; // Your SMTP server
+$mail->SMTPAuth = true;
+$mail->Username = 'info@nocturnalrecruitment.co.uk'; // Your email
+$mail->Password = '@Michael1693250341'; // Your password
+$mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // TLS encryption
+$mail->Port = 587; // Standard port for TLS
 
     // Recipients
     $mail->setFrom('info@nocturnalrecruitment.co.uk', 'Nocturnal Recruitment'); // Updated sender
