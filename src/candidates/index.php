@@ -34,7 +34,7 @@ if (!$phpmailer_found) {
 
 // Email Configuration Class
 class EmailConfig {
-    public static $SMTP_HOST = 'mail.nocturnalrecruitment.co.uk';
+    public static $SMTP_HOST = 'smtp.nocturnalrecruitment.co.uk'; // New
     public static $SMTP_PORT = 587;
     public static $SMTP_SECURE = 'tls';
     public static $SMTP_USERNAME = 'info@nocturnalrecruitment.co.uk';
