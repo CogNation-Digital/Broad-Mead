@@ -143,15 +143,22 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                                     <input type="text" class="form-control" id="emailFilter" placeholder="Enter email..." onkeyup="applyFilters()">
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label">Filter by Location:</label>
-                                    <input type="text" class="form-control" id="locationFilter" placeholder="Enter city/address..." onkeyup="applyFilters()">
+                                    <label class="form-label">Filter by Status:</label>
+                                    <select class="form-select" id="statusFilter" onchange="applyFilters()">
+                                        <option value="">All Statuses</option>
+                                        <option value="targeted">Targeted</option>
+                                        <option value="not updated">Not Updated</option>
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                        <option value="archived">Archived</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label">Filter by Client Type:</label>
                                     <select class="form-select" id="clientTypeFilter" onchange="applyFilters()">
                                         <option value="">All Types</option>
                                         <?php foreach ($clientype as $type) { ?>
-                                            <option value="<?php echo $type; ?>"><?php echo $type; ?></option>
+                                            <option value="<?php echo strtolower($type); ?>"><?php echo $type; ?></option>
                                         <?php } ?>
                                     </select>
                                 </div>
@@ -238,11 +245,12 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                                             while ($row = $stmt->fetchObject()) { ?>
                                                 <?php
                                                 $CreatedBy = $conn->query("SELECT Name FROM `users` WHERE UserID = '{$row->CreatedBy}' ")->fetchColumn();
+                                                $status = !empty($row->Status) ? strtolower($row->Status) : "not updated";
                                                 ?>
                                                 <tr class="client-row" 
                                                     data-name="<?php echo strtolower($row->Name); ?>"
                                                     data-email="<?php echo strtolower($row->Email); ?>"
-                                                    data-location="<?php echo strtolower($row->City . ' ' . $row->Address); ?>"
+                                                    data-status="<?php echo $status; ?>"
                                                     data-clienttype="<?php echo strtolower($row->ClientType); ?>">
                                                     <td><?php echo $n++; ?></td>
                                                     <td>
@@ -481,7 +489,7 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
     function applyFilters() {
         const nameFilter = document.getElementById('nameFilter').value.toLowerCase();
         const emailFilter = document.getElementById('emailFilter').value.toLowerCase();
-        const locationFilter = document.getElementById('locationFilter').value.toLowerCase();
+        const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
         const clientTypeFilter = document.getElementById('clientTypeFilter').value.toLowerCase();
         
         const rows = document.querySelectorAll('.client-row');
@@ -490,15 +498,15 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
         rows.forEach(row => {
             const name = row.getAttribute('data-name');
             const email = row.getAttribute('data-email');
-            const location = row.getAttribute('data-location');
+            const status = row.getAttribute('data-status');
             const clientType = row.getAttribute('data-clienttype');
             
             const nameMatch = !nameFilter || name.includes(nameFilter);
             const emailMatch = !emailFilter || email.includes(emailFilter);
-            const locationMatch = !locationFilter || location.includes(locationFilter);
+            const statusMatch = !statusFilter || status.includes(statusFilter);
             const clientTypeMatch = !clientTypeFilter || clientType.includes(clientTypeFilter);
             
-            if (nameMatch && emailMatch && locationMatch && clientTypeMatch) {
+            if (nameMatch && emailMatch && statusMatch && clientTypeMatch) {
                 row.style.display = '';
                 visibleRows++;
             } else {
@@ -519,7 +527,7 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
     function clearAllFilters() {
         document.getElementById('nameFilter').value = '';
         document.getElementById('emailFilter').value = '';
-        document.getElementById('locationFilter').value = '';
+        document.getElementById('statusFilter').value = '';
         document.getElementById('clientTypeFilter').value = '';
         applyFilters();
     }
