@@ -39,14 +39,14 @@ try {
 
     // Recipients
     $mail->setFrom('info@nocturnalrecruitment.co.uk', 'Nocturnal Recruitment'); // Updated sender
-    $mail->addReplyTo('info@nocturnalrecruitment.co.uk', 'Nocturnal Recruitment'); // Added reply-to
-    // $mail->addAddress($email, "name");
+    // $mail->addReplyTo('euphemiachikungulu347@gmail.com', 'Nocturnal Recruitment'); // Added reply-to
+    $mail->addAddress($email, "name");
 
     // Content
-    $mail->isHTML(true);
-    $mail->Subject = $subject;
-    $mail->Body    = $message;
-    $mail->AltBody = strip_tags($message);
+    // $mail->isHTML(true);
+    // $mail->Subject = $subject;
+    // $mail->Body    = $message;
+    // $mail->AltBody = strip_tags($message);
 
     // Send the email
     $mail->send();
