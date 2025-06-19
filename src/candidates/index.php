@@ -14,7 +14,7 @@ $phpmailer_paths = [
     '../../PHPMailer/src/',
     $_SERVER['DOCUMENT_ROOT'] . '/PHPMailer/src/',
     $_SERVER['DOCUMENT_ROOT'] . '/broadmead/PHPMailer/src/',
-    'C:/xampppppp/htdocs/broadmead/PHPMailer/src/'
+    // 'C:/xampppppp/htdocs/broadmead/PHPMailer/src/'
 ];
 
 $phpmailer_found = false;
