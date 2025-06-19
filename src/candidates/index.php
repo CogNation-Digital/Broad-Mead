@@ -17,6 +17,7 @@ $phpmailer_paths = [
     // 'C:/xampppppp/htdocs/broadmead/PHPMailer/src/'
 ];
 
+
 $phpmailer_found = false;
 foreach ($phpmailer_paths as $base_path) {
     if (file_exists($base_path . 'Exception.php')) {
