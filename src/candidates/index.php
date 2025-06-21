@@ -39,7 +39,7 @@ class EmailConfig {
     public static $SMTP_PORT = 587;
     public static $SMTP_SECURE = 'tls';
     public static $SMTP_USERNAME = 'info@nocturnalrecruitment.co.uk';
-    public static $SMTP_PASSWORD = '@Michael1693250341';
+    public static $SMTP_PASSWORD = 'access220';
     public static $FROM_EMAIL = 'info@nocturnalrecruitment.co.uk';
     public static $FROM_NAME = 'Nocturnal Recruitment';
     public static $USE_SMTP = true;
