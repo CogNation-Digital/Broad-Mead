@@ -1,0 +1,35 @@
+<?php
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+// Include Composer autoloader
+require 'vendor/autoload.php'; // adjust if PHPMailer is in a different folder
+
+$mail = new PHPMailer(true);
+
+try {
+    // Server settings
+    $mail->SMTPDebug = 2; // Verbose debug output (change to 0 to disable)
+    $mail->isSMTP();
+    $mail->Host       = 'smtp.nocturnalrecruitment.co.uk';
+    $mail->SMTPAuth   = true;
+    $mail->Username   = 'info@nocturnalrecruitment.co.uk';
+    $mail->Password   = 'access220';
+    $mail->SMTPSecure = 'tls';
+    $mail->Port       = 587;
+
+    // Recipients
+    $mail->setFrom('info@nocturnalrecruitment.co.uk', 'Nocturnal Recruitment');
+    $mail->addAddress('your_test_email@example.com', 'Test Recipient'); // Replace with your own test email
+
+    // Content
+    $mail->isHTML(true);
+    $mail->Subject = 'SMTP Test Email';
+    $mail->Body    = '<b>This is a test email using PHPMailer SMTP.</b>';
+    $mail->AltBody = 'This is a test email using PHPMailer SMTP.';
+
+    $mail->send();
+    echo "✅ Test email sent successfully!";
+} catch (Exception $e) {
+    echo "❌ Email could not be sent. Mailer Error: {$mail->ErrorInfo}";
+}
