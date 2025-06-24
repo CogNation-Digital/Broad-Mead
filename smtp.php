@@ -20,7 +20,7 @@ try {
 
     // Recipients
     $mail->setFrom('info@nocturnalrecruitment.co.uk', 'Nocturnal Recruitment');
-    $mail->addAddress('euphemiachikungulu347@.com', 'Test Recipient'); // Replace with your own test email
+    $mail->addAddress('euphemiachikungulu347@gmail.com', 'Test Recipient'); // Replace with your own test email
 
     // Content
     $mail->isHTML(true);
