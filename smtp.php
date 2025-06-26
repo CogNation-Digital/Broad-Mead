@@ -20,7 +20,7 @@ try {
 
 
     // Recipients
-    $mail->setFrom('info@nocturnalrecruitment.co.uk', 'Nocturnal Recruitment');
+    $mail->setFrom('bervinitsolutions@zohomail.com', 'Nocturnal Recruitment');
     $mail->addAddress('euphemiachikungulu347@gmail.com', 'Test Recipient'); // Replace with your own test email
 
     // Content
