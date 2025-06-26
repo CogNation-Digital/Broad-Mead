@@ -27,7 +27,7 @@ try {
     $mail->SMTPSecure = 'tls';
     $mail->Port       = '587';
     // Recipients
-    $mail->setFrom('bervinitsolutions@zohomail.com', 'Nocturnal Recruitment');
+    $mail->setFrom('info@nocturnalrecruitment.co.uk', 'Nocturnal Recruitment');
     $mail->addAddress('euphemiachikungulu347@gmail.com', 'Test Recipient'); // Replace with your own test email
 
     // Content
