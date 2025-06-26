@@ -15,8 +15,9 @@ try {
     // $mail->SMTPAuth   = true;
     // $mail->Username   = 'info@nocturnalrecruitment.co.uk';
     // $mail->Password   = 'access220';
-    // $mail->SMTPSecure = 'tls';
-    // $mail->Port       = 587;
+    $mail->SMTPSecure = 'tls';
+    $mail->Port       = 587;
+
 
 
     // Recipients
