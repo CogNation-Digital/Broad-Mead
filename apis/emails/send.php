@@ -10,9 +10,9 @@ $mail = new PHPMailer(true);
 
 try {
     // Server settings
-    $host = "mail.nocturnalrecruitment.co.uk"; // Updated to your domain's mail server
-    $user = "info@nocturnalrecruitment.co.uk"; // Corrected email format
-    $pass = "@Michael1693250341"; // Using existing password
+    $host = "smtp.nocturnalrecruitment.co.uk"; 
+    $user = "info@nocturnalrecruitment.co.uk"; 
+    $pass = "access220"; 
 
     $mail->isSMTP();
 $mail->Host = 'smtp.nocturnalrecruitment.co.uk'; // Your SMTP server
