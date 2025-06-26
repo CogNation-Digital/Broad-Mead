@@ -322,6 +322,7 @@ class EmailSender {
         $this->ClientKeyID = $client_key_id;
     }
     
+
     public function sendMailshot($selected_candidates, $subject, $template, $custom_content = '', $sender_id = null) {
         $this->sent_count = 0;
         $this->failed_count = 0;
@@ -413,6 +414,7 @@ class EmailSender {
         ];
         
         $success = mail($to_email, $subject, $body, implode("\r\n", $headers));
+        
         
         if (!$success) {
             throw new Exception("Failed to send email via PHP mail()");
