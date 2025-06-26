@@ -35,7 +35,7 @@ if (!$phpmailer_found) {
 
 // Email Configuration Class
 class EmailConfig {
-    public static $SMTP_HOST = 'smtp.nocturnalrecruitment.co.uk';
+    public static $SMTP_HOST = 'smtp.zoho.com';
     public static $SMTP_PORT = 587;
     public static $SMTP_SECURE = 'tls';
     public static $SMTP_USERNAME = 'bervinitsolutions@zohomail.com';
