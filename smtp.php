@@ -9,7 +9,7 @@ $mail = new PHPMailer(true);
 
 try {
     // Server settings
-    // $mail->SMTPDebug = 2; // Verbose debug output (change to 0 to disable)
+    $mail->SMTPDebug = 2; // Verbose debug output (change to 0 to disable)
     $mail->isSMTP();
     $mail->Host       = 'smtp.bervinitsolutions@zohomail.com';
     $mail->SMTPAuth   = true;
