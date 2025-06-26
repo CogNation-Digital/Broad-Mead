@@ -9,14 +9,15 @@ $mail = new PHPMailer(true);
 
 try {
     // Server settings
-    $mail->SMTPDebug = 2; // Verbose debug output (change to 0 to disable)
-    $mail->isSMTP();
-    $mail->Host       = 'smtp.nocturnalrecruitment.co.uk';
-    $mail->SMTPAuth   = true;
-    $mail->Username   = 'info@nocturnalrecruitment.co.uk';
-    $mail->Password   = 'access220';
-    $mail->SMTPSecure = 'tls';
-    $mail->Port       = 587;
+    // $mail->SMTPDebug = 2; // Verbose debug output (change to 0 to disable)
+    // $mail->isSMTP();
+    // $mail->Host       = 'smtp.nocturnalrecruitment.co.uk';
+    // $mail->SMTPAuth   = true;
+    // $mail->Username   = 'info@nocturnalrecruitment.co.uk';
+    // $mail->Password   = 'access220';
+    // $mail->SMTPSecure = 'tls';
+    // $mail->Port       = 587;
+
 
     // Recipients
     $mail->setFrom('info@nocturnalrecruitment.co.uk', 'Nocturnal Recruitment');
@@ -33,3 +34,4 @@ try {
 } catch (Exception $e) {
     echo "❌ Email could not be sent. Mailer Error: {$mail->ErrorInfo}";
 }
+
