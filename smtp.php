@@ -11,7 +11,7 @@ try {
     // Server settings
     $mail->SMTPDebug = 2; // Verbose debug output (change to 0 to disable)
     $mail->isSMTP();
-    $mail->Host       = ' smtp.zoho.com';
+    $mail->Host = 'smtp.zoho.com';   // Correct
     $mail->SMTPAuth   = true;
     $mail->Username   = 'bervinitsolutions@zohomail.com';
     $mail->Password   = '!3erv!n@6!S4@Z0H0';
