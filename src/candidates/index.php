@@ -37,7 +37,7 @@ if (!$phpmailer_found) {
 class EmailConfig {
     public static $SMTP_HOST = 'smtp.zoho.com';
     public static $SMTP_PORT = 587;
-    public static $SMTP_SECURE = 'tsl';
+    public static $SMTP_SECURE = 'tls';
     public static $SMTP_USERNAME = 'euphemiachikungulu347@zoho.com';
     public static $SMTP_PASSWORD = 'Brave220';
     public static $FROM_EMAIL = 'euphemiachikungulu347@zoho.com';
