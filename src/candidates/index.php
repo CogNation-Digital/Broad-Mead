@@ -35,13 +35,13 @@ if (!$phpmailer_found) {
 
 // Email Configuration Class
 class EmailConfig {
-    public static $SMTP_HOST = 'smtp.nocturnalrecruitment.co.uk';
+    public static $SMTP_HOST = 'smtp.zoho.com';
     public static $SMTP_PORT = 587;
-    public static $SMTP_SECURE = 'tls';
-    public static $SMTP_USERNAME = 'info@nocturnalrecruitment.co.uk';
-    public static $SMTP_PASSWORD = 'access220';
-    public static $FROM_EMAIL = 'info@nocturnalrecruitment.co.uk';
-    public static $FROM_NAME = 'Nocturnal Recruitment';
+    public static $SMTP_SECURE = 'tsl';
+    public static $SMTP_USERNAME = 'euphemiachikungulu347@zoho.com';
+    public static $SMTP_PASSWORD = 'Brave220';
+    public static $FROM_EMAIL = 'euphemiachikungulu347@zoho.com';
+    public static $FROM_NAME = 'Euphemia Chikungulu';
     public static $USE_SMTP = true;
     
     public static function getHost() {
@@ -415,7 +415,7 @@ class EmailSender {
         
         $success = mail($to_email, $subject, $body, implode("\r\n", $headers));
         
-        
+
         if (!$success) {
             throw new Exception("Failed to send email via PHP mail()");
         }
