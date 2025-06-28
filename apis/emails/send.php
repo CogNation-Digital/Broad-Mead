@@ -35,8 +35,9 @@ try {
     $mail->SMTPAuth = true;
     $mail->Username = 'info@nocturnalrecruitment.co.uk'; // Your email
     $mail->Password = 'access220'; // Your password for info@nocturnalrecruitment.co.uk
-    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // TLS encryption
-    $mail->Port = 587; // Standard port for TLS
+    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // SSL
+    $mail->Port = 465;
+    
 
     // *** IMPORTANT: Enable detailed debugging for troubleshooting ***
     $mail->SMTPDebug = SMTP::DEBUG_SERVER;// Shows SMTP server communication
