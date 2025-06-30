@@ -34,47 +34,38 @@ if (!$phpmailer_found) {
 }
 
 // Email Configuration Class
+$phpmailer_found = true; // Assume true because Composer autoload is used.
+// If you ever experience 'Class not found' errors for PHPMailer,
+// then you might need to re-evaluate the autoload.php path or your Composer setup.
+
+
+// Email Configuration Class - UPDATED FOR GMAIL AND REPLY-TO
 class EmailConfig {
-    public static $SMTP_HOST = 'smtp.zoho.com';
-    public static $SMTP_PORT = 587;
-    public static $SMTP_SECURE = 'tls';
-    public static $SMTP_USERNAME = 'euphemiachikungulu347@zoho.com';
-    public static $SMTP_PASSWORD = 'Brave220';
-    public static $FROM_EMAIL = 'euphemiachikungulu347@zoho.com';
-    public static $FROM_NAME = 'Euphemia Chikungulu';
-    public static $USE_SMTP = true;
-    
-    public static function getHost() {
-        return self::$SMTP_HOST;
-    }
-    
-    public static function getPort() {
-        return self::$SMTP_PORT;
-    }
-    
-    public static function getSecure() {
-        return self::$SMTP_SECURE;
-    }
-    
-    public static function getUsername() {
-        return self::$SMTP_USERNAME;
-    }
-    
-    public static function getPassword() {
-        return self::$SMTP_PASSWORD;
-    }
-    
-    public static function getFromEmail() {
-        return self::$FROM_EMAIL;
-    }
-    
-    public static function getFromName() {
-        return self::$FROM_NAME;
-    }
-    
-    public static function useSmtp() {
-        return self::$USE_SMTP;
-    }
+    // --- GMAIL SMTP SETTINGS ---
+    public static $SMTP_HOST = 'smtp.gmail.com'; // Gmail SMTP Host
+    public static $SMTP_PORT = 465; // Gmail SMTPS Port
+    public static $SMTP_SECURE = PHPMailer::ENCRYPTION_SMTPS; // Use PHPMailer's constant for SMTPS
+    public static $SMTP_USERNAME = 'recruitmentnocturnal@gmail.com'; // Your sending Gmail address
+    public static $SMTP_PASSWORD = 'hbaa qcvq wxkk kmcm'; // !!! REPLACE THIS WITH YOUR ACTUAL GMAIL APP PASSWORD !!!
+    public static $FROM_EMAIL = 'recruitmentnocturnal@gmail.com'; // Your sending Gmail address
+    public static $FROM_NAME = 'Nocturnal Recruitment'; // Display name for the sender
+
+    // --- REPLY-TO SETTINGS ---
+    public static $REPLY_TO_EMAIL = 'info@nocturnalrecruitment.co.uk'; // The email for replies
+    public static $REPLY_TO_NAME = 'Nocturnal Recruitment'; // Display name for replies
+
+    public static $USE_SMTP = true; // Keep this true to use SMTP
+
+    public static function getHost() { return self::$SMTP_HOST; }
+    public static function getPort() { return self::$SMTP_PORT; }
+    public static function getSecure() { return self::$SMTP_SECURE; }
+    public static function getUsername() { return self::$SMTP_USERNAME; }
+    public static function getPassword() { return self::$SMTP_PASSWORD; }
+    public static function getFromEmail() { return self::$FROM_EMAIL; }
+    public static function getFromName() { return self::$FROM_NAME; }
+    public static function getReplyToEmail() { return self::$REPLY_TO_EMAIL; } // New getter
+    public static function getReplyToName() { return self::$REPLY_TO_NAME; }   // New getter
+    public static function useSmtp() { return self::$USE_SMTP; }
 }
 
 // Enhanced Email Templates Class with Custom Template Support
