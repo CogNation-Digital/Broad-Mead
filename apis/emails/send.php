@@ -9,7 +9,7 @@ $mail = new PHPMailer(true);
 
 try {
     // Email details
-    $email = "euphemiachikungulu347@gmail.com";
+    $email = "Andie@cog-nation.com";
     $name = "Euphemia Chikungulu";
     $subject = "Test Email from Nocturnal Recruitment";
 
@@ -21,6 +21,7 @@ try {
     <br><br>Best regards,<br>Nocturnal Recruitment<br>Office 16, 321 High Road,<br>RM6 6AX<br>Tel: 0208 050 2708<br>
     Mobile: 0755 357 0871<br>
     Email: <a href='mailto:info@nocturnalrecruitment.co.uk'>info@nocturnalrecruitment.co.uk</a><br>
+    
     Website: <a href='http://www.nocturnalrecruitment.co.uk'>www.nocturnalrecruitment.co.uk</a><br>
     <br>Company Registration: 11817091<br><br>
     <div style='margin-top: 20px;'>
