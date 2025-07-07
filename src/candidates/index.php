@@ -46,7 +46,7 @@ class EmailConfig {
     public static $SMTP_PORT = 465; // Gmail SMTPS Port
     public static $SMTP_SECURE = PHPMailer::ENCRYPTION_SMTPS; // Use PHPMailer's constant for SMTPS
     public static $SMTP_USERNAME = 'recruitmentnocturnal@gmail.com'; // Your sending Gmail address
-    public static $SMTP_PASSWORD = 'hbaa qcvq wxkk kmcm'; // !!! REPLACE THIS WITH YOUR ACTUAL GMAIL APP PASSWORD !!!
+    public static $SMTP_PASSWORD = 'hbaa qcvq wxkk kmcm'; 
     public static $FROM_EMAIL = 'recruitmentnocturnal@gmail.com'; // Your sending Gmail address
     public static $FROM_NAME = 'Nocturnal Recruitment'; // Display name for the sender
 
@@ -372,6 +372,7 @@ class EmailSender {
     private function sendViaPHPMailer($to_email, $to_name, $subject, $body) {
         try {
             $mail = new PHPMailer(true);
+            $mail->SMTPDebug = 2;
             $mail->isSMTP();
             $mail->Host = EmailConfig::getHost();
             $mail->SMTPAuth = true;
