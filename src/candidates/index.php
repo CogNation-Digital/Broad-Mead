@@ -24,6 +24,8 @@ class EmailConfig {
     public static $REPLY_TO_NAME = 'Nocturnal Recruitment';
     public static $USE_SMTP = true;
 
+
+    
     public static function getHost() { return self::$SMTP_HOST; }
     public static function getPort() { return self::$SMTP_PORT; }
     public static function getSecure() { return self::$SMTP_SECURE; }
