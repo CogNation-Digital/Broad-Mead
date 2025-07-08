@@ -3,52 +3,23 @@ if (!isset($_COOKIE['USERID'])) {
     header("location: $LINK/login ");
 }
 
-// Include PHPMailer - adjust path as needed
+// 1. USE COMPOSER AUTOLOADER INSTEAD OF MANUAL PATHS
+require_once __DIR__ . '/../../vendor/autoload.php'; // Adjust path as needed
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-
-// Try different possible paths to find PHPMailer
-$phpmailer_paths = [
-    'PHPMailer/src/',
-    '../PHPMailer/src/',
-    '../../PHPMailer/src/',
-    $_SERVER['DOCUMENT_ROOT'] . '/PHPMailer/src/',
-    $_SERVER['DOCUMENT_ROOT'] . '/broadmead/PHPMailer/src/',
-    // 'C:/xampppppp/htdocs/broadmead/PHPMailer/src/'
-];
-
-
-$phpmailer_found = false;
-foreach ($phpmailer_paths as $base_path) {
-    if (file_exists($base_path . 'Exception.php')) {
-        require_once $base_path . 'Exception.php';
-        require_once $base_path . 'PHPMailer.php';
-        require_once $base_path . 'SMTP.php';
-        $phpmailer_found = true;
-        break;
-    }
-}
-
-if (!$phpmailer_found) {
-    error_log("PHPMailer not found - falling back to basic mail() function");
-}
-
-// Email Configuration Class
-$phpmailer_found = true; // Assume true because Composer autoload is used.
-// If you ever experience 'Class not found' errors for PHPMailer,
-// then you might need to re-evaluate the autoload.php path or your Composer setup.
 
 
 // Email Configuration Class - UPDATED FOR GMAIL AND REPLY-TO
 class EmailConfig {
-    // --- GMAIL SMTP SETTINGS ---
-    public static $SMTP_HOST = 'smtp.gmail.com'; // Gmail SMTP Host
-    public static $SMTP_PORT = 465; // Gmail SMTPS Port
-    public static $SMTP_SECURE = PHPMailer::ENCRYPTION_SMTPS; // Use PHPMailer's constant for SMTPS
-    public static $SMTP_USERNAME = 'recruitmentnocturnal@gmail.com'; // Your sending Gmail address
-    public static $SMTP_PASSWORD = 'hbaa qcvq wxkk kmcm'; 
-    public static $FROM_EMAIL = 'recruitmentnocturnal@gmail.com'; // Your sending Gmail address
-    public static $FROM_NAME = 'Nocturnal Recruitment'; // Display name for the sender
+    // --- Titan Mail SMTP SETTINGS ---
+    public static $SMTP_HOST = 'smtp.titan.email';
+    public static $SMTP_PORT = 587;
+    public static $SMTP_SECURE = PHPMailer::ENCRYPTION_STARTTLS;
+    public static $SMTP_USERNAME = 'learn@natec.icu';
+    public static $SMTP_PASSWORD = '@WhiteDiamond0100';
+    public static $FROM_EMAIL = 'learn@natec.icu';
+    public static $FROM_NAME = 'Recruitment Team';
 
     // --- REPLY-TO SETTINGS ---
     public static $REPLY_TO_EMAIL = 'info@nocturnalrecruitment.co.uk'; // The email for replies
@@ -347,13 +318,42 @@ class EmailSender {
     }
     
     private function getCandidateEmails($candidate_ids) {
-        $placeholders = str_repeat('?,', count($candidate_ids) - 1) . '?';
-        $query = "SELECT CandidateID, Name, Email FROM _candidates WHERE CandidateID IN ($placeholders) AND Email IS NOT NULL AND Email != ''";
+        $emails = [];
+        $found_ids = [];
+
+        // 1. Query the primary '_candidates' table
+        if (!empty($candidate_ids)) {
+            $placeholders = str_repeat('?,', count($candidate_ids) - 1) . '?';
+            $query1 = "SELECT CandidateID, Name, Email FROM _candidates WHERE CandidateID IN ($placeholders) AND Email IS NOT NULL AND Email != ''";
+            $stmt1 = $this->conn->prepare($query1);
+            $stmt1->execute($candidate_ids);
+            $results1 = $stmt1->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($results1 as $row) {
+                $emails[] = $row;
+                $found_ids[] = $row['CandidateID'];
+            }
+        }
+
+        // 2. Find which IDs were not found in the first table
+        $remaining_ids = array_diff($candidate_ids, $found_ids);
+
+        // 3. Query the legacy 'candidates' table for the remaining IDs
+        if (!empty($remaining_ids)) {
+            $placeholders = str_repeat('?,', count($remaining_ids) - 1) . '?';
+            // Note: The legacy table might have different column names. Adjust if necessary.
+            // This assumes 'id' is the primary key and it corresponds to 'CandidateID'.
+            $query2 = "SELECT id as CandidateID, CONCAT(first_name, ' ', last_name) as Name, email as Email FROM candidates WHERE id IN ($placeholders) AND email IS NOT NULL AND email != ''";
+            $stmt2 = $this->conn->prepare($query2);
+            $stmt2->execute(array_values($remaining_ids));
+            $results2 = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+            
+            foreach ($results2 as $row) {
+                $emails[] = $row;
+            }
+        }
         
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute($candidate_ids);
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $emails;
     }
     
     private function sendSingleEmail($candidate, $subject, $template_name, $custom_content = '') {
@@ -372,7 +372,6 @@ class EmailSender {
     private function sendViaPHPMailer($to_email, $to_name, $subject, $body) {
         try {
             $mail = new PHPMailer(true);
-            $mail->SMTPDebug = 2;
             $mail->isSMTP();
             $mail->Host = EmailConfig::getHost();
             $mail->SMTPAuth = true;
