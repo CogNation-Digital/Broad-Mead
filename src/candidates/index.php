@@ -270,6 +270,72 @@ class EmailTemplates {
     }
 }
 
+
+// Initialize EmailTemplates with database connection
+EmailTemplates::setConnection($conn);
+
+// MAILSHOT HANDLING - Updated with better error reporting
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates'])) {
+    error_log("=== MAILSHOT PROCESSING START ===");
+    
+    $selected_candidates = $_POST['selected_candidates'];
+    $subject = trim($_POST['subject']);
+    $template = $_POST['template'];
+    $custom_content = isset($_POST['custom_content']) ? trim($_POST['custom_content']) : '';
+    
+    // Validate inputs
+    $errors = [];
+    if (empty($selected_candidates)) {
+        $errors[] = "No candidates selected.";
+    }
+    if (empty($subject)) {
+        $errors[] = "Email subject is required.";
+    }
+    if (empty($template)) {
+        $errors[] = "Email template is required.";
+    }
+    
+    if (empty($errors)) {
+        try {
+            // Test SMTP connection first
+            $testMail = new PHPMailer(true);
+            $testMail->isSMTP();
+            $testMail->Host = EmailConfig::getHost();
+            $testMail->SMTPAuth = true;
+            $testMail->Username = EmailConfig::getUsername();
+            $testMail->Password = EmailConfig::getPassword();
+            $testMail->SMTPSecure = EmailConfig::getSecure();
+            $testMail->Port = EmailConfig::getPort();
+            
+            if (!$testMail->smtpConnect()) {
+                throw new Exception("Failed to connect to SMTP server");
+            }
+            
+            // If SMTP test passed, proceed with mailshot
+            $emailSender = new EmailSender($conn, $ClientKeyID);
+            $result = $emailSender->sendMailshot($selected_candidates, $subject, $template, $custom_content, $USERID);
+            
+            if ($result['sent'] > 0) {
+                $success_message = "Mailshot sent successfully! " . $result['sent'] . " emails sent";
+                if ($result['failed'] > 0) {
+                    $success_message .= ", " . $result['failed'] . " failed.";
+                }
+                
+                $NOTIFICATION = "$NAME sent a mailshot with subject '$subject' to " . $result['sent'] . " candidates.";
+                Notify($USERID, $ClientKeyID, $NOTIFICATION);
+            } else {
+                $error_message = "Failed to send mailshot. " . implode('; ', $result['errors']);
+            }
+            
+        } catch (Exception $e) {
+            $error_message = "Error sending mailshot: " . $e->getMessage();
+            error_log("Mailshot failed: " . $e->getMessage());
+        }
+    } else {
+        $error_message = implode('<br>', $errors);
+    }
+}
+
 // Email Sender Class - Updated to support custom templates
 class EmailSender {
     private $conn;
@@ -412,6 +478,7 @@ class EmailSender {
     }
     
 
+    
     private function sendViaPHPMail($to_email, $to_name, $subject, $body) {
         $headers = [
             'MIME-Version: 1.0',
