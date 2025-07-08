@@ -283,7 +283,7 @@ class EmailSender {
         $this->ClientKeyID = $client_key_id;
     }
 
-    public function sendMailshot($selected_candidates, $subject, $template, $custom_content = '', $sender_id = null) {
+     public function sendMailshot($selected_candidates, $subject, $template, $custom_content = '', $sender_id = null) {
         $this->sent_count = 0;
         $this->failed_count = 0;
         $this->errors = [];
@@ -296,14 +296,22 @@ class EmailSender {
         
         foreach ($candidate_emails as $candidate) {
             try {
-                $this->sendSingleEmail($candidate, $subject, $template, $custom_content);
-                $this->logEmailSent($candidate['CandidateID'], $subject, $template, $sender_id);
-                $this->sent_count++;
-                usleep(500000);
+                $result = $this->sendSingleEmail($candidate, $subject, $template, $custom_content);
+                
+                if ($result === true) {
+                    $this->logEmailSent($candidate['CandidateID'], $subject, $template, $sender_id);
+                    $this->sent_count++;
+                    // Small delay between emails to avoid rate limiting
+                    usleep(500000); // 0.5 seconds
+                } else {
+                    $this->failed_count++;
+                    $this->errors[] = "Failed to send to {$candidate['Email']}: $result";
+                    error_log("Mailshot error for {$candidate['Email']}: $result");
+                }
             } catch (Exception $e) {
                 $this->failed_count++;
-                $this->errors[] = "Failed to send to {$candidate['Email']}: " . $e->getMessage();
-                error_log("Mailshot error for {$candidate['Email']}: " . $e->getMessage());
+                $this->errors[] = "Error sending to {$candidate['Email']}: " . $e->getMessage();
+                error_log("Mailshot exception for {$candidate['Email']}: " . $e->getMessage());
             }
         }
         
@@ -314,6 +322,7 @@ class EmailSender {
             'total' => count($candidate_emails)
         ];
     }
+    
     
     private function getCandidateEmails($candidate_ids) {
         $emails = [];
