@@ -368,17 +368,15 @@ class EmailSender {
         $email_subject = !empty($subject) ? $subject : $template['subject'];
         $email_body = $template['body'] . EmailTemplates::getEmailSignature();
         
-        global $phpmailer_found;
-        if ($phpmailer_found && EmailConfig::useSmtp()) {
-            return $this->sendViaPHPMailer($candidate['Email'], $candidate['Name'], $email_subject, $email_body);
-        } else {
-            return $this->sendViaPHPMail($candidate['Email'], $candidate['Name'], $email_subject, $email_body);
-        }
+        // Always use PHPMailer if available
+        return $this->sendViaPHPMailer($candidate['Email'], $candidate['Name'], $email_subject, $email_body);
     }
     
     private function sendViaPHPMailer($to_email, $to_name, $subject, $body) {
+        $mail = new PHPMailer(true);
+        
         try {
-            $mail = new PHPMailer(true);
+            // SMTP Configuration
             $mail->isSMTP();
             $mail->Host = EmailConfig::getHost();
             $mail->SMTPAuth = true;
@@ -386,21 +384,33 @@ class EmailSender {
             $mail->Password = EmailConfig::getPassword();
             $mail->SMTPSecure = EmailConfig::getSecure();
             $mail->Port = EmailConfig::getPort();
+            
+            // Test SMTP connection first
+            if (!$mail->smtpConnect()) {
+                throw new Exception("SMTP connection failed");
+            }
+            
+            // Email content
             $mail->setFrom(EmailConfig::getFromEmail(), EmailConfig::getFromName());
-            $mail->addReplyTo(EmailConfig::getFromEmail(), EmailConfig::getFromName());
+            $mail->addReplyTo(EmailConfig::getReplyToEmail(), EmailConfig::getReplyToName());
             $mail->addAddress($to_email, $to_name);
             $mail->isHTML(true);
             $mail->Subject = $subject;
             $mail->Body = $body;
             $mail->AltBody = strip_tags($body);
-            $mail->send();
-            error_log("Email sent successfully to: $to_email via PHPMailer");
+            
+            if (!$mail->send()) {
+                throw new Exception($mail->ErrorInfo);
+            }
+            
+            error_log("Email sent successfully to: $to_email");
             return true;
         } catch (Exception $e) {
-            error_log("PHPMailer Error: " . $e->getMessage());
-            return $this->sendViaPHPMail($to_email, $to_name, $subject, $body);
+            error_log("PHPMailer Error for $to_email: " . $e->getMessage());
+            throw $e; // Re-throw for handling in calling function
         }
     }
+    
 
     private function sendViaPHPMail($to_email, $to_name, $subject, $body) {
         $headers = [
