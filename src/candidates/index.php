@@ -25,16 +25,15 @@ class EmailConfig {
     public static $USE_SMTP = true;
 
 
-    
-    public static function getHost() { return self::$SMTP_HOST; }
+     public static function getHost() { return self::$SMTP_HOST; }
     public static function getPort() { return self::$SMTP_PORT; }
     public static function getSecure() { return self::$SMTP_SECURE; }
     public static function getUsername() { return self::$SMTP_USERNAME; }
     public static function getPassword() { return self::$SMTP_PASSWORD; }
     public static function getFromEmail() { return self::$FROM_EMAIL; }
     public static function getFromName() { return self::$FROM_NAME; }
-    public static function getReplyToEmail() { return self::$REPLY_TO_EMAIL; } // New getter
-    public static function getReplyToName() { return self::$REPLY_TO_NAME; }   // New getter
+    public static function getReplyToEmail() { return self::$REPLY_TO_EMAIL; }
+    public static function getReplyToName() { return self::$REPLY_TO_NAME; }
     public static function useSmtp() { return self::$USE_SMTP; }
 }
 
