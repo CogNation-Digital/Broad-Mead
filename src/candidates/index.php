@@ -12,7 +12,7 @@ use PHPMailer\PHPMailer\Exception;
 
 // Email Configuration Class - UPDATED FOR GMAIL AND REPLY-TO
 class EmailConfig {
-    // --- Titan Mail SMTP SETTINGS ---
+    // Titan Mail SMTP Settings
     public static $SMTP_HOST = 'smtp.titan.email';
     public static $SMTP_PORT = 587;
     public static $SMTP_SECURE = PHPMailer::ENCRYPTION_STARTTLS;
@@ -20,12 +20,9 @@ class EmailConfig {
     public static $SMTP_PASSWORD = '@WhiteDiamond0100';
     public static $FROM_EMAIL = 'learn@natec.icu';
     public static $FROM_NAME = 'Recruitment Team';
-
-    // --- REPLY-TO SETTINGS ---
-    public static $REPLY_TO_EMAIL = 'info@nocturnalrecruitment.co.uk'; // The email for replies
-    public static $REPLY_TO_NAME = 'Nocturnal Recruitment'; // Display name for replies
-
-    public static $USE_SMTP = true; // Keep this true to use SMTP
+    public static $REPLY_TO_EMAIL = 'info@nocturnalrecruitment.co.uk';
+    public static $REPLY_TO_NAME = 'Nocturnal Recruitment';
+    public static $USE_SMTP = true;
 
     public static function getHost() { return self::$SMTP_HOST; }
     public static function getPort() { return self::$SMTP_PORT; }
