@@ -39,494 +39,499 @@ class EmailConfig {
 }
 
 // Enhanced Email Templates Class with Custom Template Support
-class EmailTemplates {
-    private static $conn;
+// class EmailTemplates {
+//     private static $conn;
     
-    public static function setConnection($database_connection) {
-        self::$conn = $database_connection;
-        self::createCustomTemplatesTable();
-    }
+//     public static function setConnection($database_connection) {
+//         self::$conn = $database_connection;
+//         self::createCustomTemplatesTable();
+//     }
     
-    private static function createCustomTemplatesTable() {
-        try {
-            $create_table = "CREATE TABLE IF NOT EXISTS custom_email_templates (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                ClientKeyID VARCHAR(50) NOT NULL,
-                template_name VARCHAR(100) NOT NULL,
-                template_subject VARCHAR(255) NOT NULL,
-                template_body TEXT NOT NULL,
-                created_by INT NOT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                is_active TINYINT(1) DEFAULT 1,
-                INDEX idx_client (ClientKeyID),
-                INDEX idx_created_by (created_by),
-                UNIQUE KEY unique_template (ClientKeyID, template_name)
-            )";
-            self::$conn->exec($create_table);
-        } catch (Exception $e) {
-            error_log("Failed to create custom templates table: " . $e->getMessage());
-        }
-    }
+//     private static function createCustomTemplatesTable() {
+//         try {
+//             $create_table = "CREATE TABLE IF NOT EXISTS custom_email_templates (
+//                 id INT AUTO_INCREMENT PRIMARY KEY,
+//                 ClientKeyID VARCHAR(50) NOT NULL,
+//                 template_name VARCHAR(100) NOT NULL,
+//                 template_subject VARCHAR(255) NOT NULL,
+//                 template_body TEXT NOT NULL,
+//                 created_by INT NOT NULL,
+//                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+//                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+//                 is_active TINYINT(1) DEFAULT 1,
+//                 INDEX idx_client (ClientKeyID),
+//                 INDEX idx_created_by (created_by),
+//                 UNIQUE KEY unique_template (ClientKeyID, template_name)
+//             )";
+//             self::$conn->exec($create_table);
+//         } catch (Exception $e) {
+//             error_log("Failed to create custom templates table: " . $e->getMessage());
+//         }
+//     }
     
-    public static function saveCustomTemplate($ClientKeyID, $template_name, $subject, $body, $created_by) {
-        try {
-            $query = "INSERT INTO custom_email_templates (ClientKeyID, template_name, template_subject, template_body, created_by) 
-                     VALUES (?, ?, ?, ?, ?) 
-                     ON DUPLICATE KEY UPDATE 
-                     template_subject = VALUES(template_subject), 
-                     template_body = VALUES(template_body), 
-                     updated_at = CURRENT_TIMESTAMP";
+    // public static function saveCustomTemplate($ClientKeyID, $template_name, $subject, $body, $created_by) {
+    //     try {
+    //         $query = "INSERT INTO custom_email_templates (ClientKeyID, template_name, template_subject, template_body, created_by) 
+    //                  VALUES (?, ?, ?, ?, ?) 
+    //                  ON DUPLICATE KEY UPDATE 
+    //                  template_subject = VALUES(template_subject), 
+    //                  template_body = VALUES(template_body), 
+    //                  updated_at = CURRENT_TIMESTAMP";
             
-            $stmt = self::$conn->prepare($query);
-            $stmt->execute([$ClientKeyID, $template_name, $subject, $body, $created_by]);
-            return true;
-        } catch (Exception $e) {
-            error_log("Failed to save custom template: " . $e->getMessage());
-            return false;
-        }
-    }
+    //         $stmt = self::$conn->prepare($query);
+    //         $stmt->execute([$ClientKeyID, $template_name, $subject, $body, $created_by]);
+    //         return true;
+    //     } catch (Exception $e) {
+    //         error_log("Failed to save custom template: " . $e->getMessage());
+    //         return false;
+    //     }
+    // }
     
-    public static function getCustomTemplates($ClientKeyID) {
-        try {
-            $query = "SELECT * FROM custom_email_templates WHERE ClientKeyID = ? AND is_active = 1 ORDER BY template_name";
-            $stmt = self::$conn->prepare($query);
-            $stmt->execute([$ClientKeyID]);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (Exception $e) {
-            error_log("Failed to get custom templates: " . $e->getMessage());
-            return [];
-        }
-    }
+    // public static function getCustomTemplates($ClientKeyID) {
+    //     try {
+    //         $query = "SELECT * FROM custom_email_templates WHERE ClientKeyID = ? AND is_active = 1 ORDER BY template_name";
+    //         $stmt = self::$conn->prepare($query);
+    //         $stmt->execute([$ClientKeyID]);
+    //         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    //     } catch (Exception $e) {
+    //         error_log("Failed to get custom templates: " . $e->getMessage());
+    //         return [];
+    //     }
+    // }
     
-    public static function getCustomTemplate($ClientKeyID, $template_name) {
-        try {
-            $query = "SELECT * FROM custom_email_templates WHERE ClientKeyID = ? AND template_name = ? AND is_active = 1";
-            $stmt = self::$conn->prepare($query);
-            $stmt->execute([$ClientKeyID, $template_name]);
-            return $stmt->fetch(PDO::FETCH_ASSOC);
-        } catch (Exception $e) {
-            error_log("Failed to get custom template: " . $e->getMessage());
-            return false;
-        }
-    }
+    // public static function getCustomTemplate($ClientKeyID, $template_name) {
+    //     try {
+    //         $query = "SELECT * FROM custom_email_templates WHERE ClientKeyID = ? AND template_name = ? AND is_active = 1";
+    //         $stmt = self::$conn->prepare($query);
+    //         $stmt->execute([$ClientKeyID, $template_name]);
+    //         return $stmt->fetch(PDO::FETCH_ASSOC);
+    //     } catch (Exception $e) {
+    //         error_log("Failed to get custom template: " . $e->getMessage());
+    //         return false;
+    //     }
+    // }
     
-    public static function deleteCustomTemplate($ClientKeyID, $template_name) {
-        try {
-            $query = "UPDATE custom_email_templates SET is_active = 0 WHERE ClientKeyID = ? AND template_name = ?";
-            $stmt = self::$conn->prepare($query);
-            $stmt->execute([$ClientKeyID, $template_name]);
-            return true;
-        } catch (Exception $e) {
-            error_log("Failed to delete custom template: " . $e->getMessage());
-            return false;
-        }
-    }
+    // public static function deleteCustomTemplate($ClientKeyID, $template_name) {
+    //     try {
+    //         $query = "UPDATE custom_email_templates SET is_active = 0 WHERE ClientKeyID = ? AND template_name = ?";
+    //         $stmt = self::$conn->prepare($query);
+    //         $stmt->execute([$ClientKeyID, $template_name]);
+    //         return true;
+    //     } catch (Exception $e) {
+    //         error_log("Failed to delete custom template: " . $e->getMessage());
+    //         return false;
+    //     }
+    // }
     
-    public static function getTemplate($template_name, $candidate_name = '', $custom_content = '', $ClientKeyID = null) {
-        // Check if it's a custom template first
-        if ($ClientKeyID && strpos($template_name, 'custom_') === 0) {
-            $custom_template_name = substr($template_name, 7); // Remove 'custom_' prefix
-            $custom_template = self::getCustomTemplate($ClientKeyID, $custom_template_name);
+    // public static function getTemplate($template_name, $candidate_name = '', $custom_content = '', $ClientKeyID = null) {
+    //     // Check if it's a custom template first
+    //     if ($ClientKeyID && strpos($template_name, 'custom_') === 0) {
+    //         $custom_template_name = substr($template_name, 7); // Remove 'custom_' prefix
+    //         $custom_template = self::getCustomTemplate($ClientKeyID, $custom_template_name);
             
-            if ($custom_template) {
-                $body = $custom_template['template_body'];
+    //         if ($custom_template) {
+    //             $body = $custom_template['template_body'];
                 
-                // Replace placeholders
-                $body = str_replace('[CANDIDATE_NAME]', htmlspecialchars($candidate_name), $body);
-                $body = str_replace('[CUSTOM_CONTENT]', nl2br(htmlspecialchars($custom_content)), $body);
+    //             // Replace placeholders
+    //             $body = str_replace('[CANDIDATE_NAME]', htmlspecialchars($candidate_name), $body);
+    //             $body = str_replace('[CUSTOM_CONTENT]', nl2br(htmlspecialchars($custom_content)), $body);
                 
-                return [
-                    'subject' => $custom_template['template_subject'],
-                    'body' => $body
-                ];
-            }
-        }
+    //             return [
+    //                 'subject' => $custom_template['template_subject'],
+    //                 'body' => $body
+    //             ];
+    //         }
+    //     }
         
         // Default templates
-        $templates = [
-            'job_alert' => [
-                'subject' => 'New Job Opportunities Available',
-                'body' => "
-                    <html>
-                    <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
-                        <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-                            <h2 style='color: #2c3e50;'>Hello " . htmlspecialchars($candidate_name) . ",</h2>
-                            <p>We have exciting new job opportunities that match your profile!</p>
-                            <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-                                <p>" . nl2br(htmlspecialchars($custom_content)) . "</p>
-                            </div>
-                            <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
-                        </div>
-                    </body>
-                    </html>
-                "
-            ],
-            'newsletter' => [
-                'subject' => 'Nocturnal Recruitment Newsletter',
-                'body' => "
-                    <html>
-                    <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
-                        <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-                            <h2 style='color: #2c3e50;'>Hello " . htmlspecialchars($candidate_name) . ",</h2>
-                            <p>Here's our latest newsletter with industry updates and opportunities.</p>
-                            <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-                                <p>" . nl2br(htmlspecialchars($custom_content)) . "</p>
-                            </div>
-                            <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
-                        </div>
-                    </body>
-                    </html>
-                "
-            ],
-            'event_invitation' => [
-                'subject' => 'You\'re Invited to Our Event',
-                'body' => "
-                    <html>
-                    <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
-                        <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-                            <h2 style='color: #2c3e50;'>Hello " . htmlspecialchars($candidate_name) . ",</h2>
-                            <p>We'd like to invite you to our upcoming event!</p>
-                            <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-                                <p>" . nl2br(htmlspecialchars($custom_content)) . "</p>
-                            </div>
-                            <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
-                        </div>
-                    </body>
-                    </html>
-                "
-            ],
-            'follow_up' => [
-                'subject' => 'Following Up on Your Application',
-                'body' => "
-                    <html>
-                    <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
-                        <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-                            <h2 style='color: #2c3e50;'>Hello " . htmlspecialchars($candidate_name) . ",</h2>
-                            <p>We wanted to follow up regarding your recent application.</p>
-                            <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-                                <p>" . nl2br(htmlspecialchars($custom_content)) . "</p>
-                            </div>
-                            <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
-                        </div>
-                    </body>
-                    </html>
-                "
-            ],
-            'welcome' => [
-                'subject' => 'Welcome to Nocturnal Recruitment',
-                'body' => "
-                    <html>
-                    <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
-                        <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-                            <h2 style='color: #2c3e50;'>Hello " . htmlspecialchars($candidate_name) . "!</h2>
-                            <p>Thank you for joining Nocturnal Recruitment. We're excited to help you find your next opportunity.</p>
-                            <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-                                <p>" . nl2br(htmlspecialchars($custom_content)) . "</p>
-                            </div>
-                            <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
-                        </div>
-                    </body>
-                    </html>
-                "
-            ]
-        ];
+//         $templates = [
+//             'job_alert' => [
+//                 'subject' => 'New Job Opportunities Available',
+//                 'body' => "
+//                     <html>
+//                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+//                         <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
+//                             <h2 style='color: #2c3e50;'>Hello " . htmlspecialchars($candidate_name) . ",</h2>
+//                             <p>We have exciting new job opportunities that match your profile!</p>
+//                             <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
+//                                 <p>" . nl2br(htmlspecialchars($custom_content)) . "</p>
+//                             </div>
+//                             <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
+//                         </div>
+//                     </body>
+//                     </html>
+//                 "
+//             ],
+//             'newsletter' => [
+//                 'subject' => 'Nocturnal Recruitment Newsletter',
+//                 'body' => "
+//                     <html>
+//                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+//                         <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
+//                             <h2 style='color: #2c3e50;'>Hello " . htmlspecialchars($candidate_name) . ",</h2>
+//                             <p>Here's our latest newsletter with industry updates and opportunities.</p>
+//                             <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
+//                                 <p>" . nl2br(htmlspecialchars($custom_content)) . "</p>
+//                             </div>
+//                             <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
+//                         </div>
+//                     </body>
+//                     </html>
+//                 "
+//             ],
+//             'event_invitation' => [
+//                 'subject' => 'You\'re Invited to Our Event',
+//                 'body' => "
+//                     <html>
+//                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+//                         <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
+//                             <h2 style='color: #2c3e50;'>Hello " . htmlspecialchars($candidate_name) . ",</h2>
+//                             <p>We'd like to invite you to our upcoming event!</p>
+//                             <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
+//                                 <p>" . nl2br(htmlspecialchars($custom_content)) . "</p>
+//                             </div>
+//                             <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
+//                         </div>
+//                     </body>
+//                     </html>
+//                 "
+//             ],
+//             'follow_up' => [
+//                 'subject' => 'Following Up on Your Application',
+//                 'body' => "
+//                     <html>
+//                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+//                         <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
+//                             <h2 style='color: #2c3e50;'>Hello " . htmlspecialchars($candidate_name) . ",</h2>
+//                             <p>We wanted to follow up regarding your recent application.</p>
+//                             <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
+//                                 <p>" . nl2br(htmlspecialchars($custom_content)) . "</p>
+//                             </div>
+//                             <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
+//                         </div>
+//                     </body>
+//                     </html>
+//                 "
+//             ],
+//             'welcome' => [
+//                 'subject' => 'Welcome to Nocturnal Recruitment',
+//                 'body' => "
+//                     <html>
+//                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+//                         <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
+//                             <h2 style='color: #2c3e50;'>Hello " . htmlspecialchars($candidate_name) . "!</h2>
+//                             <p>Thank you for joining Nocturnal Recruitment. We're excited to help you find your next opportunity.</p>
+//                             <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
+//                                 <p>" . nl2br(htmlspecialchars($custom_content)) . "</p>
+//                             </div>
+//                             <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
+//                         </div>
+//                     </body>
+//                     </html>
+//                 "
+//             ]
+//         ];
         
-        return isset($templates[$template_name]) ? $templates[$template_name] : $templates['job_alert'];
-    }
+//         return isset($templates[$template_name]) ? $templates[$template_name] : $templates['job_alert'];
+//     }
     
-    public static function getEmailSignature() {
-        return '
-<div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #f0f0f0; font-family: Arial, sans-serif;">
-    <table style="width: 100%; max-width: 600px;">
-        <tr>
-            <td style="text-align: center; padding-bottom: 20px;">
-                <img src="https://nocturnalrecruitment.co.uk/logo.png" alt="Nocturnal Recruitment" style="max-width: 200px; height: auto;">
-            </td>
-        </tr>
-        <tr>
-            <td style="text-align: center; color: #333; font-size: 14px; line-height: 1.6;">
-                <strong>Nocturnal Recruitment</strong><br>
-                Office 16, 321 High Road, RM6 6AX<br><br>
+//     public static function getEmailSignature() {
+//         return '
+// <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #f0f0f0; font-family: Arial, sans-serif;">
+//     <table style="width: 100%; max-width: 600px;">
+//         <tr>
+//             <td style="text-align: center; padding-bottom: 20px;">
+//                 <img src="https://nocturnalrecruitment.co.uk/logo.png" alt="Nocturnal Recruitment" style="max-width: 200px; height: auto;">
+//             </td>
+//         </tr>
+//         <tr>
+//             <td style="text-align: center; color: #333; font-size: 14px; line-height: 1.6;">
+//                 <strong>Nocturnal Recruitment</strong><br>
+//                 Office 16, 321 High Road, RM6 6AX<br><br>
                 
-                <div style="margin: 15px 0;">
-                    <a href="tel:02080502708" style="color: #007bff; text-decoration: none;">0208 050 2708</a> &nbsp;&nbsp;
-                    <a href="tel:07553570871" style="color: #007bff; text-decoration: none;">0755 357 0871</a><br>
-                    <a href="mailto:chax@nocturnalrecruitment.co.uk" style="color: #007bff; text-decoration: none;">chax@nocturnalrecruitment.co.uk</a><br>
-                    <a href="https://www.nocturnalrecruitment.co.uk" style="color: #007bff; text-decoration: none;">www.nocturnalrecruitment.co.uk</a>
-                </div>
+//                 <div style="margin: 15px 0;">
+//                     <a href="tel:02080502708" style="color: #007bff; text-decoration: none;">0208 050 2708</a> &nbsp;&nbsp;
+//                     <a href="tel:07553570871" style="color: #007bff; text-decoration: none;">0755 357 0871</a><br>
+//                     <a href="mailto:chax@nocturnalrecruitment.co.uk" style="color: #007bff; text-decoration: none;">chax@nocturnalrecruitment.co.uk</a><br>
+//                     <a href="https://www.nocturnalrecruitment.co.uk" style="color: #007bff; text-decoration: none;">www.nocturnalrecruitment.co.uk</a>
+//                 </div>
                 
-                <div style="margin: 20px 0; font-size: 12px; color: #666;">
-                    <strong>Company Registration – 11817091</strong>
-                </div>
+//                 <div style="margin: 20px 0; font-size: 12px; color: #666;">
+//                     <strong>Company Registration – 11817091</strong>
+//                 </div>
                 
-                <div style="margin-top: 25px; padding: 15px; background-color: #f8f9fa; border-radius: 5px; font-size: 11px; color: #666; text-align: left;">
-                    <strong>Disclaimer*</strong> This email is intended only for the use of the addressee named above and may be confidential or legally privileged. If you are not the addressee, you must not read it and must not use any information contained in nor copy it nor inform any person other than Nocturnal Recruitment or the addressee of its existence or contents. If you have received this email in error, please delete it and notify our team at <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #007bff;">info@nocturnalrecruitment.co.uk</a>
-                </div>
-            </td>
-        </tr>
-    </table>
-</div>';
-    }
-}
+//                 <div style="margin-top: 25px; padding: 15px; background-color: #f8f9fa; border-radius: 5px; font-size: 11px; color: #666; text-align: left;">
+//                     <strong>Disclaimer*</strong> This email is intended only for the use of the addressee named above and may be confidential or legally privileged. If you are not the addressee, you must not read it and must not use any information contained in nor copy it nor inform any person other than Nocturnal Recruitment or the addressee of its existence or contents. If you have received this email in error, please delete it and notify our team at <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #007bff;">info@nocturnalrecruitment.co.uk</a>
+//                 </div>
+//             </td>
+//         </tr>
+//     </table>
+// </div>';
+//     }
+// }
+
+
+
+
+
 
 
 // Initialize EmailTemplates with database connection
-EmailTemplates::setConnection($conn);
+// EmailTemplates::setConnection($conn);
 
-// MAILSHOT HANDLING - Updated with better error reporting
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates'])) {
-    error_log("=== MAILSHOT PROCESSING START ===");
+// // MAILSHOT HANDLING - Updated with better error reporting
+// if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates'])) {
+//     error_log("=== MAILSHOT PROCESSING START ===");
     
-    $selected_candidates = $_POST['selected_candidates'];
-    $subject = trim($_POST['subject']);
-    $template = $_POST['template'];
-    $custom_content = isset($_POST['custom_content']) ? trim($_POST['custom_content']) : '';
+//     $selected_candidates = $_POST['selected_candidates'];
+//     $subject = trim($_POST['subject']);
+//     $template = $_POST['template'];
+//     $custom_content = isset($_POST['custom_content']) ? trim($_POST['custom_content']) : '';
     
-    // Validate inputs
-    $errors = [];
-    if (empty($selected_candidates)) {
-        $errors[] = "No candidates selected.";
-    }
-    if (empty($subject)) {
-        $errors[] = "Email subject is required.";
-    }
-    if (empty($template)) {
-        $errors[] = "Email template is required.";
-    }
+//     // Validate inputs
+//     $errors = [];
+//     if (empty($selected_candidates)) {
+//         $errors[] = "No candidates selected.";
+//     }
+//     if (empty($subject)) {
+//         $errors[] = "Email subject is required.";
+//     }
+//     if (empty($template)) {
+//         $errors[] = "Email template is required.";
+//     }
     
-    if (empty($errors)) {
-        try {
-            // Test SMTP connection first
-            $testMail = new PHPMailer(true);
-            $testMail->isSMTP();
-            $testMail->Host = EmailConfig::getHost();
-            $testMail->SMTPAuth = true;
-            $testMail->Username = EmailConfig::getUsername();
-            $testMail->Password = EmailConfig::getPassword();
-            $testMail->SMTPSecure = EmailConfig::getSecure();
-            $testMail->Port = EmailConfig::getPort();
+//     if (empty($errors)) {
+//         try {
+//             // Test SMTP connection first
+//             $testMail = new PHPMailer(true);
+//             $testMail->isSMTP();
+//             $testMail->Host = EmailConfig::getHost();
+//             $testMail->SMTPAuth = true;
+//             $testMail->Username = EmailConfig::getUsername();
+//             $testMail->Password = EmailConfig::getPassword();
+//             $testMail->SMTPSecure = EmailConfig::getSecure();
+//             $testMail->Port = EmailConfig::getPort();
             
-            if (!$testMail->smtpConnect()) {
-                throw new Exception("Failed to connect to SMTP server");
-            }
+//             if (!$testMail->smtpConnect()) {
+//                 throw new Exception("Failed to connect to SMTP server");
+//             }
             
-            // If SMTP test passed, proceed with mailshot
-            $emailSender = new EmailSender($conn, $ClientKeyID);
-            $result = $emailSender->sendMailshot($selected_candidates, $subject, $template, $custom_content, $USERID);
+//             // If SMTP test passed, proceed with mailshot
+//             $emailSender = new EmailSender($conn, $ClientKeyID);
+//             $result = $emailSender->sendMailshot($selected_candidates, $subject, $template, $custom_content, $USERID);
             
-            if ($result['sent'] > 0) {
-                $success_message = "Mailshot sent successfully! " . $result['sent'] . " emails sent";
-                if ($result['failed'] > 0) {
-                    $success_message .= ", " . $result['failed'] . " failed.";
-                }
+//             if ($result['sent'] > 0) {
+//                 $success_message = "Mailshot sent successfully! " . $result['sent'] . " emails sent";
+//                 if ($result['failed'] > 0) {
+//                     $success_message .= ", " . $result['failed'] . " failed.";
+//                 }
                 
-                $NOTIFICATION = "$NAME sent a mailshot with subject '$subject' to " . $result['sent'] . " candidates.";
-                Notify($USERID, $ClientKeyID, $NOTIFICATION);
-            } else {
-                $error_message = "Failed to send mailshot. " . implode('; ', $result['errors']);
-            }
+//                 $NOTIFICATION = "$NAME sent a mailshot with subject '$subject' to " . $result['sent'] . " candidates.";
+//                 Notify($USERID, $ClientKeyID, $NOTIFICATION);
+//             } else {
+//                 $error_message = "Failed to send mailshot. " . implode('; ', $result['errors']);
+//             }
             
-        } catch (Exception $e) {
-            $error_message = "Error sending mailshot: " . $e->getMessage();
-            error_log("Mailshot failed: " . $e->getMessage());
-        }
-    } else {
-        $error_message = implode('<br>', $errors);
-    }
-}
+//         } catch (Exception $e) {
+//             $error_message = "Error sending mailshot: " . $e->getMessage();
+//             error_log("Mailshot failed: " . $e->getMessage());
+//         }
+//     } else {
+//         $error_message = implode('<br>', $errors);
+//     }
+// }
 
-// Email Sender Class - Updated to support custom templates
-class EmailSender {
-    private $conn;
-    private $sent_count = 0;
-    private $failed_count = 0;
-    private $errors = [];
-    private $ClientKeyID;
+// // Email Sender Class - Updated to support custom templates
+// class EmailSender {
+//     private $conn;
+//     private $sent_count = 0;
+//     private $failed_count = 0;
+//     private $errors = [];
+//     private $ClientKeyID;
     
-    public function __construct($database_connection, $client_key_id = null) {
-        $this->conn = $database_connection;
-        $this->ClientKeyID = $client_key_id;
-    }
+//     public function __construct($database_connection, $client_key_id = null) {
+//         $this->conn = $database_connection;
+//         $this->ClientKeyID = $client_key_id;
+//     }
 
-     public function sendMailshot($selected_candidates, $subject, $template, $custom_content = '', $sender_id = null) {
-        $this->sent_count = 0;
-        $this->failed_count = 0;
-        $this->errors = [];
+//      public function sendMailshot($selected_candidates, $subject, $template, $custom_content = '', $sender_id = null) {
+//         $this->sent_count = 0;
+//         $this->failed_count = 0;
+//         $this->errors = [];
         
-        $candidate_emails = $this->getCandidateEmails($selected_candidates);
+//         $candidate_emails = $this->getCandidateEmails($selected_candidates);
         
-        if (empty($candidate_emails)) {
-            throw new Exception("No valid candidate emails found.");
-        }
+//         if (empty($candidate_emails)) {
+//             throw new Exception("No valid candidate emails found.");
+//         }
         
-        foreach ($candidate_emails as $candidate) {
-            try {
-                $result = $this->sendSingleEmail($candidate, $subject, $template, $custom_content);
+//         foreach ($candidate_emails as $candidate) {
+//             try {
+//                 $result = $this->sendSingleEmail($candidate, $subject, $template, $custom_content);
                 
-                if ($result === true) {
-                    $this->logEmailSent($candidate['CandidateID'], $subject, $template, $sender_id);
-                    $this->sent_count++;
-                    // Small delay between emails to avoid rate limiting
-                    usleep(500000); // 0.5 seconds
-                } else {
-                    $this->failed_count++;
-                    $this->errors[] = "Failed to send to {$candidate['Email']}: $result";
-                    error_log("Mailshot error for {$candidate['Email']}: $result");
-                }
-            } catch (Exception $e) {
-                $this->failed_count++;
-                $this->errors[] = "Error sending to {$candidate['Email']}: " . $e->getMessage();
-                error_log("Mailshot exception for {$candidate['Email']}: " . $e->getMessage());
-            }
-        }
+//                 if ($result === true) {
+//                     $this->logEmailSent($candidate['CandidateID'], $subject, $template, $sender_id);
+//                     $this->sent_count++;
+//                     // Small delay between emails to avoid rate limiting
+//                     usleep(500000); // 0.5 seconds
+//                 } else {
+//                     $this->failed_count++;
+//                     $this->errors[] = "Failed to send to {$candidate['Email']}: $result";
+//                     error_log("Mailshot error for {$candidate['Email']}: $result");
+//                 }
+//             } catch (Exception $e) {
+//                 $this->failed_count++;
+//                 $this->errors[] = "Error sending to {$candidate['Email']}: " . $e->getMessage();
+//                 error_log("Mailshot exception for {$candidate['Email']}: " . $e->getMessage());
+//             }
+//         }
         
-        return [
-            'sent' => $this->sent_count,
-            'failed' => $this->failed_count,
-            'errors' => $this->errors,
-            'total' => count($candidate_emails)
-        ];
-    }
+//         return [
+//             'sent' => $this->sent_count,
+//             'failed' => $this->failed_count,
+//             'errors' => $this->errors,
+//             'total' => count($candidate_emails)
+//         ];
+//     }
     
     
-    private function getCandidateEmails($candidate_ids) {
-        $emails = [];
-        $found_ids = [];
+//     private function getCandidateEmails($candidate_ids) {
+//         $emails = [];
+//         $found_ids = [];
 
-        // 1. Query the primary '_candidates' table
-        if (!empty($candidate_ids)) {
-            $placeholders = str_repeat('?,', count($candidate_ids) - 1) . '?';
-            $query1 = "SELECT CandidateID, Name, Email FROM _candidates WHERE CandidateID IN ($placeholders) AND Email IS NOT NULL AND Email != ''";
-            $stmt1 = $this->conn->prepare($query1);
-            $stmt1->execute($candidate_ids);
-            $results1 = $stmt1->fetchAll(PDO::FETCH_ASSOC);
+//         // 1. Query the primary '_candidates' table
+//         if (!empty($candidate_ids)) {
+//             $placeholders = str_repeat('?,', count($candidate_ids) - 1) . '?';
+//             $query1 = "SELECT CandidateID, Name, Email FROM _candidates WHERE CandidateID IN ($placeholders) AND Email IS NOT NULL AND Email != ''";
+//             $stmt1 = $this->conn->prepare($query1);
+//             $stmt1->execute($candidate_ids);
+//             $results1 = $stmt1->fetchAll(PDO::FETCH_ASSOC);
 
-            foreach ($results1 as $row) {
-                $emails[] = $row;
-                $found_ids[] = $row['CandidateID'];
-            }
-        }
+//             foreach ($results1 as $row) {
+//                 $emails[] = $row;
+//                 $found_ids[] = $row['CandidateID'];
+//             }
+//         }
 
-        // 2. Find which IDs were not found in the first table
-        $remaining_ids = array_diff($candidate_ids, $found_ids);
+//         // 2. Find which IDs were not found in the first table
+//         $remaining_ids = array_diff($candidate_ids, $found_ids);
 
-        // 3. Query the legacy 'candidates' table for the remaining IDs
-        if (!empty($remaining_ids)) {
-            $placeholders = str_repeat('?,', count($remaining_ids) - 1) . '?';
-            // Note: The legacy table might have different column names. Adjust if necessary.
-            // This assumes 'id' is the primary key and it corresponds to 'CandidateID'.
-            $query2 = "SELECT id as CandidateID, CONCAT(first_name, ' ', last_name) as Name, email as Email FROM candidates WHERE id IN ($placeholders) AND email IS NOT NULL AND email != ''";
-            $stmt2 = $this->conn->prepare($query2);
-            $stmt2->execute(array_values($remaining_ids));
-            $results2 = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+//         // 3. Query the legacy 'candidates' table for the remaining IDs
+//         if (!empty($remaining_ids)) {
+//             $placeholders = str_repeat('?,', count($remaining_ids) - 1) . '?';
+//             // Note: The legacy table might have different column names. Adjust if necessary.
+//             // This assumes 'id' is the primary key and it corresponds to 'CandidateID'.
+//             $query2 = "SELECT id as CandidateID, CONCAT(first_name, ' ', last_name) as Name, email as Email FROM candidates WHERE id IN ($placeholders) AND email IS NOT NULL AND email != ''";
+//             $stmt2 = $this->conn->prepare($query2);
+//             $stmt2->execute(array_values($remaining_ids));
+//             $results2 = $stmt2->fetchAll(PDO::FETCH_ASSOC);
             
-            foreach ($results2 as $row) {
-                $emails[] = $row;
-            }
-        }
+//             foreach ($results2 as $row) {
+//                 $emails[] = $row;
+//             }
+//         }
         
-        return $emails;
-    }
+//         return $emails;
+//     }
     
-    private function sendSingleEmail($candidate, $subject, $template_name, $custom_content = '') {
-        $template = EmailTemplates::getTemplate($template_name, $candidate['Name'], $custom_content, $this->ClientKeyID);
-        $email_subject = !empty($subject) ? $subject : $template['subject'];
-        $email_body = $template['body'] . EmailTemplates::getEmailSignature();
+//     private function sendSingleEmail($candidate, $subject, $template_name, $custom_content = '') {
+//         $template = EmailTemplates::getTemplate($template_name, $candidate['Name'], $custom_content, $this->ClientKeyID);
+//         $email_subject = !empty($subject) ? $subject : $template['subject'];
+//         $email_body = $template['body'] . EmailTemplates::getEmailSignature();
         
-        // Always use PHPMailer if available
-        return $this->sendViaPHPMailer($candidate['Email'], $candidate['Name'], $email_subject, $email_body);
-    }
+//         // Always use PHPMailer if available
+//         return $this->sendViaPHPMailer($candidate['Email'], $candidate['Name'], $email_subject, $email_body);
+//     }
     
-    private function sendViaPHPMailer($to_email, $to_name, $subject, $body) {
-        $mail = new PHPMailer(true);
+//     private function sendViaPHPMailer($to_email, $to_name, $subject, $body) {
+//         $mail = new PHPMailer(true);
         
-        try {
-            // SMTP Configuration
-            $mail->isSMTP();
-            $mail->Host = EmailConfig::getHost();
-            $mail->SMTPAuth = true;
-            $mail->Username = EmailConfig::getUsername();
-            $mail->Password = EmailConfig::getPassword();
-            $mail->SMTPSecure = EmailConfig::getSecure();
-            $mail->Port = EmailConfig::getPort();
+//         try {
+//             // SMTP Configuration
+//             $mail->isSMTP();
+//             $mail->Host = EmailConfig::getHost();
+//             $mail->SMTPAuth = true;
+//             $mail->Username = EmailConfig::getUsername();
+//             $mail->Password = EmailConfig::getPassword();
+//             $mail->SMTPSecure = EmailConfig::getSecure();
+//             $mail->Port = EmailConfig::getPort();
             
-            // Test SMTP connection first
-            if (!$mail->smtpConnect()) {
-                throw new Exception("SMTP connection failed");
-            }
+//             // Test SMTP connection first
+//             if (!$mail->smtpConnect()) {
+//                 throw new Exception("SMTP connection failed");
+//             }
             
-            // Email content
-            $mail->setFrom(EmailConfig::getFromEmail(), EmailConfig::getFromName());
-            $mail->addReplyTo(EmailConfig::getReplyToEmail(), EmailConfig::getReplyToName());
-            $mail->addAddress($to_email, $to_name);
-            $mail->isHTML(true);
-            $mail->Subject = $subject;
-            $mail->Body = $body;
-            $mail->AltBody = strip_tags($body);
+//             // Email content
+//             $mail->setFrom(EmailConfig::getFromEmail(), EmailConfig::getFromName());
+//             $mail->addReplyTo(EmailConfig::getReplyToEmail(), EmailConfig::getReplyToName());
+//             $mail->addAddress($to_email, $to_name);
+//             $mail->isHTML(true);
+//             $mail->Subject = $subject;
+//             $mail->Body = $body;
+//             $mail->AltBody = strip_tags($body);
             
-            if (!$mail->send()) {
-                throw new Exception($mail->ErrorInfo);
-            }
+//             if (!$mail->send()) {
+//                 throw new Exception($mail->ErrorInfo);
+//             }
             
-            error_log("Email sent successfully to: $to_email");
-            return true;
-        } catch (Exception $e) {
-            error_log("PHPMailer Error for $to_email: " . $e->getMessage());
-            throw $e; // Re-throw for handling in calling function
-        }
-    }
+//             error_log("Email sent successfully to: $to_email");
+//             return true;
+//         } catch (Exception $e) {
+//             error_log("PHPMailer Error for $to_email: " . $e->getMessage());
+//             throw $e; // Re-throw for handling in calling function
+//         }
+//     }
     
 
     
-    private function sendViaPHPMail($to_email, $to_name, $subject, $body) {
-        $headers = [
-            'MIME-Version: 1.0',
-            'Content-type: text/html; charset=UTF-8',
-            'From: ' . EmailConfig::getFromName() . ' <' . EmailConfig::getFromEmail() . '>',
-            'Reply-To: ' . EmailConfig::getFromEmail(),
-            'X-Mailer: PHP/' . phpversion()
-        ];
+//     private function sendViaPHPMail($to_email, $to_name, $subject, $body) {
+//         $headers = [
+//             'MIME-Version: 1.0',
+//             'Content-type: text/html; charset=UTF-8',
+//             'From: ' . EmailConfig::getFromName() . ' <' . EmailConfig::getFromEmail() . '>',
+//             'Reply-To: ' . EmailConfig::getFromEmail(),
+//             'X-Mailer: PHP/' . phpversion()
+//         ];
         
-        $success = mail($to_email, $subject, $body, implode("\r\n", $headers));
+//         $success = mail($to_email, $subject, $body, implode("\r\n", $headers));
         
 
-        if (!$success) {
-            throw new Exception("Failed to send email via PHP mail()");
-        }
+//         if (!$success) {
+//             throw new Exception("Failed to send email via PHP mail()");
+//         }
         
-        error_log("Email sent successfully to: $to_email via PHP mail()");
-        return true;
-    }
+//         error_log("Email sent successfully to: $to_email via PHP mail()");
+//         return true;
+//     }
     
-    private function logEmailSent($candidate_id, $subject, $template, $sender_id) {
-        try {
-            $create_table = "CREATE TABLE IF NOT EXISTS email_log (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                CandidateID VARCHAR(50) NOT NULL,
-                Subject VARCHAR(255) NOT NULL,
-                Template VARCHAR(50) NOT NULL,
-                SentBy INT NULL,
-                SentAt DATETIME NOT NULL,
-                Status ENUM('sent', 'failed', 'bounced') DEFAULT 'sent',
-                ErrorMessage TEXT NULL,
-                INDEX idx_candidate (CandidateID),
-                INDEX idx_sent_at (SentAt),
-                INDEX idx_sent_by (SentBy)
-            )";
-            $this->conn->exec($create_table);
+//     private function logEmailSent($candidate_id, $subject, $template, $sender_id) {
+//         try {
+//             $create_table = "CREATE TABLE IF NOT EXISTS email_log (
+//                 id INT AUTO_INCREMENT PRIMARY KEY,
+//                 CandidateID VARCHAR(50) NOT NULL,
+//                 Subject VARCHAR(255) NOT NULL,
+//                 Template VARCHAR(50) NOT NULL,
+//                 SentBy INT NULL,
+//                 SentAt DATETIME NOT NULL,
+//                 Status ENUM('sent', 'failed', 'bounced') DEFAULT 'sent',
+//                 ErrorMessage TEXT NULL,
+//                 INDEX idx_candidate (CandidateID),
+//                 INDEX idx_sent_at (SentAt),
+//                 INDEX idx_sent_by (SentBy)
+//             )";
+//             $this->conn->exec($create_table);
             
-            $query = "INSERT INTO email_log (CandidateID, Subject, Template, SentBy, SentAt, Status) VALUES (?, ?, ?, ?, NOW(), 'sent')";
-            $stmt = $this->conn->prepare($query);
-            $stmt->execute([$candidate_id, $subject, $template, $sender_id]);
-        } catch (Exception $e) {
-            error_log("Failed to log email: " . $e->getMessage());
-        }
-    }
-}
+//             $query = "INSERT INTO email_log (CandidateID, Subject, Template, SentBy, SentAt, Status) VALUES (?, ?, ?, ?, NOW(), 'sent')";
+//             $stmt = $this->conn->prepare($query);
+//             $stmt->execute([$candidate_id, $subject, $template, $sender_id]);
+//         } catch (Exception $e) {
+//             error_log("Failed to log email: " . $e->getMessage());
+//         }
+//     }
+// }
 
-// Initialize EmailTemplates with database connection
-EmailTemplates::setConnection($conn);
+// // Initialize EmailTemplates with database connection
+// EmailTemplates::setConnection($conn);
 
 // Initialize variables
 $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : 'all';
@@ -546,32 +551,32 @@ $kpi_metric = isset($_GET['kpi_metric']) ? $_GET['kpi_metric'] : 'overview';
 $kpi_start_date = isset($_GET['kpi_start_date']) ? $_GET['kpi_start_date'] : '';
 $kpi_end_date = isset($_GET['kpi_end_date']) ? $_GET['kpi_end_date'] : '';
 
-// Handle custom template creation
-if (isset($_POST['save_custom_template'])) {
-    $template_name = trim($_POST['custom_template_name']);
-    $template_subject = trim($_POST['custom_template_subject']);
-    $template_body = trim($_POST['custom_template_body']);
+// // Handle custom template creation
+// if (isset($_POST['save_custom_template'])) {
+//     $template_name = trim($_POST['custom_template_name']);
+//     $template_subject = trim($_POST['custom_template_subject']);
+//     $template_body = trim($_POST['custom_template_body']);
     
-    if (!empty($template_name) && !empty($template_subject) && !empty($template_body)) {
-        if (EmailTemplates::saveCustomTemplate($ClientKeyID, $template_name, $template_subject, $template_body, $USERID)) {
-            $success_message = "Custom email template '$template_name' saved successfully!";
-        } else {
-            $error_message = "Failed to save custom template. Please try again.";
-        }
-    } else {
-        $error_message = "All fields are required for custom template.";
-    }
-}
+//     if (!empty($template_name) && !empty($template_subject) && !empty($template_body)) {
+//         if (EmailTemplates::saveCustomTemplate($ClientKeyID, $template_name, $template_subject, $template_body, $USERID)) {
+//             $success_message = "Custom email template '$template_name' saved successfully!";
+//         } else {
+//             $error_message = "Failed to save custom template. Please try again.";
+//         }
+//     } else {
+//         $error_message = "All fields are required for custom template.";
+//     }
+// }
 
-// Handle custom template deletion
-if (isset($_POST['delete_custom_template'])) {
-    $template_name = $_POST['template_to_delete'];
-    if (EmailTemplates::deleteCustomTemplate($ClientKeyID, $template_name)) {
-        $success_message = "Custom template '$template_name' deleted successfully!";
-    } else {
-        $error_message = "Failed to delete custom template.";
-    }
-}
+// // Handle custom template deletion
+// if (isset($_POST['delete_custom_template'])) {
+//     $template_name = $_POST['template_to_delete'];
+//     if (EmailTemplates::deleteCustomTemplate($ClientKeyID, $template_name)) {
+//         $success_message = "Custom template '$template_name' deleted successfully!";
+//     } else {
+//         $error_message = "Failed to delete custom template.";
+//     }
+// }
 
 // KPI Functions (keeping existing functions)
 function getDateRangeForPeriod($period) {
@@ -751,69 +756,69 @@ if (isset($_POST['Search'])) {
     }
 }
 
-// MAILSHOT HANDLING - Updated to support custom templates
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates'])) {
-    error_log("=== MAILSHOT PROCESSING START ===");
+// // MAILSHOT HANDLING - Updated to support custom templates
+// if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates'])) {
+//     error_log("=== MAILSHOT PROCESSING START ===");
     
-    $selected_candidates = $_POST['selected_candidates'];
-    $subject = trim($_POST['subject']);
-    $template = $_POST['template'];
-    $custom_content = isset($_POST['custom_content']) ? trim($_POST['custom_content']) : '';
+//     $selected_candidates = $_POST['selected_candidates'];
+//     $subject = trim($_POST['subject']);
+//     $template = $_POST['template'];
+//     $custom_content = isset($_POST['custom_content']) ? trim($_POST['custom_content']) : '';
     
-    $errors = [];
-    if (empty($selected_candidates)) {
-        $errors[] = "No candidates selected.";
-    }
-    if (empty($subject)) {
-        $errors[] = "Email subject is required.";
-    }
-    if (empty($template)) {
-        $errors[] = "Email template is required.";
-    }
+//     $errors = [];
+//     if (empty($selected_candidates)) {
+//         $errors[] = "No candidates selected.";
+//     }
+//     if (empty($subject)) {
+//         $errors[] = "Email subject is required.";
+//     }
+//     if (empty($template)) {
+//         $errors[] = "Email template is required.";
+//     }
     
-    if (empty($errors)) {
-        try {
-            $emailSender = new EmailSender($conn, $ClientKeyID);
-            $result = $emailSender->sendMailshot($selected_candidates, $subject, $template, $custom_content, $USERID);
+//     if (empty($errors)) {
+//         try {
+//             $emailSender = new EmailSender($conn, $ClientKeyID);
+//             $result = $emailSender->sendMailshot($selected_candidates, $subject, $template, $custom_content, $USERID);
             
-            if ($result['sent'] > 0) {
-                $success_message = "Mailshot sent successfully! " . $result['sent'] . " emails sent";
-                if ($result['failed'] > 0) {
-                    $success_message .= ", " . $result['failed'] . " failed.";
-                }
+//             if ($result['sent'] > 0) {
+//                 $success_message = "Mailshot sent successfully! " . $result['sent'] . " emails sent";
+//                 if ($result['failed'] > 0) {
+//                     $success_message .= ", " . $result['failed'] . " failed.";
+//                 }
                 
-                $NOTIFICATION = "$NAME sent a mailshot with subject '$subject' to " . $result['sent'] . " candidates.";
-                Notify($USERID, $ClientKeyID, $NOTIFICATION);
-            } else {
-                $error_message = "Failed to send mailshot. " . implode('; ', $result['errors']);
-            }
+//                 $NOTIFICATION = "$NAME sent a mailshot with subject '$subject' to " . $result['sent'] . " candidates.";
+//                 Notify($USERID, $ClientKeyID, $NOTIFICATION);
+//             } else {
+//                 $error_message = "Failed to send mailshot. " . implode('; ', $result['errors']);
+//             }
             
-        } catch (Exception $e) {
-            $error_message = "Error sending mailshot: " . $e->getMessage();
-        }
-    } else {
-        $error_message = implode('<br>', $errors);
-    }
-}
+//         } catch (Exception $e) {
+//             $error_message = "Error sending mailshot: " . $e->getMessage();
+//         }
+//     } else {
+//         $error_message = implode('<br>', $errors);
+//     }
+// }
 
-$SearchID = isset($_GET['q']) ? $_GET['q'] : '';
+// $SearchID = isset($_GET['q']) ? $_GET['q'] : '';
 
-// Handle candidate deletion
-if (isset($_POST['DeletCandidate'])) {
-    $ID = $_POST['ID'];
-    $name = $_POST['name'];
-    $reason = $_POST['reason'];
+// // Handle candidate deletion
+// if (isset($_POST['DeletCandidate'])) {
+//     $ID = $_POST['ID'];
+//     $name = $_POST['name'];
+//     $reason = $_POST['reason'];
 
-    $stmt = $conn->prepare("DELETE FROM `_candidates` WHERE CandidateID = :ID");
-    $stmt->bindParam(':ID', $ID);
+//     $stmt = $conn->prepare("DELETE FROM `_candidates` WHERE CandidateID = :ID");
+//     $stmt->bindParam(':ID', $ID);
 
-    if ($stmt->execute()) {
-        $NOTIFICATION = "$NAME has successfully deleted the candidate named '$name'. Reason for deletion: $reason.";
-        Notify($USERID, $ClientKeyID, $NOTIFICATION);
-    } else {
-        echo "Error deleting record";
-    }
-}
+//     if ($stmt->execute()) {
+//         $NOTIFICATION = "$NAME has successfully deleted the candidate named '$name'. Reason for deletion: $reason.";
+//         Notify($USERID, $ClientKeyID, $NOTIFICATION);
+//     } else {
+//         echo "Error deleting record";
+//     }
+// }
 
 // Get available job titles and locations for dropdowns
 $job_titles_query = "SELECT DISTINCT JobTitle FROM _candidates WHERE ClientKeyID = '$ClientKeyID' AND JobTitle IS NOT NULL AND JobTitle != '' ORDER BY JobTitle";
@@ -825,7 +830,7 @@ $locations_stmt = $conn->query($locations_query);
 $locations = $locations_stmt->fetchAll(PDO::FETCH_COLUMN);
 
 // Get custom templates
-$custom_templates = EmailTemplates::getCustomTemplates($ClientKeyID);
+// $custom_templates = EmailTemplates::getCustomTemplates($ClientKeyID);
 
 // Calculate KPIs if in KPI mode
 $kpi_data = [];
@@ -1983,7 +1988,7 @@ if (!isset($ProfilePlaceholder)) {
 </form>
 <?php endif; ?>
 
-                            <?php if (isset($_GET['q']) || !empty($keyword_filter) || !empty($location_filter) || !empty($position_filter) || !empty($email_keywords)): ?>
+        <?php if (isset($_GET['q']) || !empty($keyword_filter) || !empty($location_filter) || !empty($position_filter) || !empty($email_keywords)): ?>
                                 <div style="margin-top: 10px;">
                                     <a href="<?php echo $LINK; ?>/candidates?mode=<?php echo $mode; ?>&isTab=<?php echo $isTab; ?>">
                                         <button class="btn btn-primary">
