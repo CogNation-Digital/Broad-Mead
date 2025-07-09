@@ -150,368 +150,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
         }
     }
 }
+
+
+function getMailshotOptions($db) {
+    $job_titles_query = "SELECT DISTINCT JobTitle FROM _candidates WHERE JobTitle IS NOT NULL AND JobTitle != '' ORDER BY JobTitle";
+    $job_titles_stmt = $db->query($job_titles_query);
+    $job_titles = $job_titles_stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    $locations_query = "SELECT DISTINCT City FROM _candidates WHERE City IS NOT NULL AND City != '' ORDER BY City";
+    $locations_stmt = $db->query($locations_query);
+    $locations = $locations_stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    return [$job_titles, $locations];
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates'])) {
+    $selected_candidates = $_POST['selected_candidates'];
+    $subject = $_POST['subject'];
+    $template = $_POST['template'];
+    
+    $success_message = "Mailshot with subject '" . htmlspecialchars($subject) . "' sent to " . count($selected_candidates) . " candidates successfully!";
+}
 ?>
 
-<!-- <!DOCTYPE html>
-<html lang="en">
+
+
+
+
 <?php include "../../includes/head.php"; ?>
-<style>
-.filter-section {
-    background-color: #f8f9fa;
-    padding: 20px;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    border: 1px solid #dee2e6;
-}
+<body data-pc-preset="preset-1" data-pc-sidebar-caption="true" data-pc-layout="vertical" data-pc-direction="ltr" data-pc-theme_contrast="" data-pc-theme="<?php echo $theme; ?>">
+    <?php include "../../includes/sidebar.php"; ?>
+    <?php include "../../includes/header.php"; ?>
+    <?php include "../../includes/toast.php"; ?>
 
-.filter-row {
-    margin-bottom: 15px;
-}
-
-.filter-label {
-    font-weight: 600;
-    margin-bottom: 5px;
-    color: #495057;
-    font-size: 14px;
-}
-
-.filter-input {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    font-size: 14px;
-}
-
-.filter-button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-right: 10px;
-}
-
-.filter-button:hover {
-    background-color: #0056b3;
-}
-
-.clear-button {
-    background-color: #6c757d;
-    color: white;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.clear-button:hover {
-    background-color: #545b62;
-}
-
-.mode-switch {
-    margin-bottom: 20px;
-    padding: 15px;
-    background-color: #e9ecef;
-    border-radius: 8px;
-}
-
-.mode-button {
-    background-color: #6c757d;
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-right: 10px;
-    text-decoration: none;
-    display: inline-block;
-}
-
-.mode-button.active {
-    background-color: #007bff;
-}
-
-.mode-button:hover {
-    text-decoration: none;
-    color: white;
-    background-color: #0056b3;
-}
-
-.distance-filter {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.distance-input {
-    width: 80px;
-}
-
-.distance-badge {
-    background-color: #e9ecef;
-    color: #495057;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 12px;
-    margin-left: 5px;
-}
-
-.results-info {
-    margin-bottom: 15px;
-    color: #6c757d;
-    font-size: 14px;
-    padding: 10px;
-    background-color: #f8f9fa;
-    border-radius: 4px;
-}
-
-.mailshot-actions {
-    margin-top: 20px;
-    padding: 15px;
-    background-color: #e9ecef;
-    border-radius: 5px;
-}
-
-.select-all-container {
-    margin-bottom: 15px;
-}
-
-.candidate-checkbox {
-    width: 18px;
-    height: 18px;
-}
-
-.success-message {
-    background-color: #d4edda;
-    color: #155724;
-    padding: 15px;
-    border-radius: 5px;
-    margin-bottom: 20px;
-    border: 1px solid #c3e6cb;
-}
-
-.error-message {
-    background-color: #f8d7da;
-    color: #721c24;
-    padding: 15px;
-    border-radius: 5px;
-    margin-bottom: 20px;
-    border: 1px solid #f5c6cb;
-}
-
-.mailshot-info {
-    background-color: #d1ecf1;
-    color: #0c5460;
-    padding: 15px;
-    border-radius: 5px;
-    margin-bottom: 20px;
-    border: 1px solid #bee5eb;
-}
-
-.enhanced-search-icon {
-    color: #007bff;
-    margin-right: 5px;
-}
-
-.filter-active {
-    background-color: #fff3cd;
-    border-color: #ffeaa7;
-}
-
-.kpi-info {
-    background-color: #fff3cd;
-    color: #856404;
-    padding: 15px;
-    border-radius: 5px;
-    margin-bottom: 20px;
-    border: 1px solid #ffeaa7;
-}
-
-.kpi-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.kpi-card {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    border-left: 4px solid #007bff;
-}
-
-.kpi-card.success {
-    border-left-color: #28a745;
-}
-
-.kpi-card.warning {
-    border-left-color: #ffc107;
-}
-
-.kpi-card.danger {
-    border-left-color: #dc3545;
-}
-
-.kpi-card.info {
-    border-left-color: #17a2b8;
-}
-
-.kpi-card h3 {
-    margin: 0 0 10px 0;
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #2c3e50;
-}
-
-.kpi-card p {
-    margin: 0;
-    color: #6c757d;
-    font-weight: 500;
-}
-
-.kpi-card .growth {
-    font-size: 0.9rem;
-    margin-top: 5px;
-}
-
-.growth.positive {
-    color: #28a745;
-}
-
-.growth.negative {
-    color: #dc3545;
-}
-
-.growth.neutral {
-    color: #6c757d;
-}
-
-.kpi-charts {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.chart-container {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.chart-container h4 {
-    margin-bottom: 20px;
-    color: #2c3e50;
-    font-weight: 600;
-}
-
-.kpi-tables {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-}
-
-.kpi-table-container {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.kpi-table-container h4 {
-    margin-bottom: 15px;
-    color: #2c3e50;
-    font-weight: 600;
-}
-
-.kpi-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.kpi-table th,
-.kpi-table td {
-    padding: 10px;
-    text-align: left;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.kpi-table th {
-    background-color: #f8f9fa;
-    font-weight: 600;
-    color: #495057;
-}
-
-/* Custom Template Styles */
-.custom-template-section {
-    background-color: #f8f9fa;
-    padding: 20px;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    border: 1px solid #dee2e6;
-}
-
-.template-list {
-    max-height: 200px;
-    overflow-y: auto;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    padding: 10px;
-    background-color: white;
-}
-
-.template-item {
-    padding: 8px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: between;
-    align-items: center;
-}
-
-.template-item:last-child {
-    border-bottom: none;
-}
-
-.template-name {
-    font-weight: 600;
-    color: #495057;
-}
-
-.template-subject {
-    font-size: 12px;
-    color: #6c757d;
-    margin-top: 2px;
-}
-
-.template-actions {
-    margin-left: auto;
-}
-
-.btn-sm {
-    padding: 4px 8px;
-    font-size: 12px;
-}
-
-@media (max-width: 768px) {
-    .kpi-cards {
-        grid-template-columns: 1fr;
-    }
-    
-    .kpi-charts {
-        grid-template-columns: 1fr;
-    }
-    
-    .kpi-tables {
-        grid-template-columns: 1fr;
-    }
-}
-</style> -->
-
+    <div class="pc-container" style="margin-left: 280px;">
+        <div class="pc-content">
+            <?php include "../../includes/breadcrumb.php"; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
