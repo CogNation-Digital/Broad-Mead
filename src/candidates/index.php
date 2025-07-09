@@ -38,813 +38,121 @@ class EmailConfig {
     public static function useSmtp() { return self::$USE_SMTP; }
 }
 
-// Enhanced Email Templates Class with Custom Template Support
-// class EmailTemplates {
-//     private static $conn;
-    
-//     public static function setConnection($database_connection) {
-//         self::$conn = $database_connection;
-//         self::createCustomTemplatesTable();
-//     }
-    
-//     private static function createCustomTemplatesTable() {
-//         try {
-//             $create_table = "CREATE TABLE IF NOT EXISTS custom_email_templates (
-//                 id INT AUTO_INCREMENT PRIMARY KEY,
-//                 ClientKeyID VARCHAR(50) NOT NULL,
-//                 template_name VARCHAR(100) NOT NULL,
-//                 template_subject VARCHAR(255) NOT NULL,
-//                 template_body TEXT NOT NULL,
-//                 created_by INT NOT NULL,
-//                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-//                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-//                 is_active TINYINT(1) DEFAULT 1,
-//                 INDEX idx_client (ClientKeyID),
-//                 INDEX idx_created_by (created_by),
-//                 UNIQUE KEY unique_template (ClientKeyID, template_name)
-//             )";
-//             self::$conn->exec($create_table);
-//         } catch (Exception $e) {
-//             error_log("Failed to create custom templates table: " . $e->getMessage());
-//         }
-//     }
-    
-    // public static function saveCustomTemplate($ClientKeyID, $template_name, $subject, $body, $created_by) {
-    //     try {
-    //         $query = "INSERT INTO custom_email_templates (ClientKeyID, template_name, template_subject, template_body, created_by) 
-    //                  VALUES (?, ?, ?, ?, ?) 
-    //                  ON DUPLICATE KEY UPDATE 
-    //                  template_subject = VALUES(template_subject), 
-    //                  template_body = VALUES(template_body), 
-    //                  updated_at = CURRENT_TIMESTAMP";
-            
-    //         $stmt = self::$conn->prepare($query);
-    //         $stmt->execute([$ClientKeyID, $template_name, $subject, $body, $created_by]);
-    //         return true;
-    //     } catch (Exception $e) {
-    //         error_log("Failed to save custom template: " . $e->getMessage());
-    //         return false;
-    //     }
-    // }
-    
-    // public static function getCustomTemplates($ClientKeyID) {
-    //     try {
-    //         $query = "SELECT * FROM custom_email_templates WHERE ClientKeyID = ? AND is_active = 1 ORDER BY template_name";
-    //         $stmt = self::$conn->prepare($query);
-    //         $stmt->execute([$ClientKeyID]);
-    //         return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    //     } catch (Exception $e) {
-    //         error_log("Failed to get custom templates: " . $e->getMessage());
-    //         return [];
-    //     }
-    // }
-    
-    // public static function getCustomTemplate($ClientKeyID, $template_name) {
-    //     try {
-    //         $query = "SELECT * FROM custom_email_templates WHERE ClientKeyID = ? AND template_name = ? AND is_active = 1";
-    //         $stmt = self::$conn->prepare($query);
-    //         $stmt->execute([$ClientKeyID, $template_name]);
-    //         return $stmt->fetch(PDO::FETCH_ASSOC);
-    //     } catch (Exception $e) {
-    //         error_log("Failed to get custom template: " . $e->getMessage());
-    //         return false;
-    //     }
-    // }
-    
-    // public static function deleteCustomTemplate($ClientKeyID, $template_name) {
-    //     try {
-    //         $query = "UPDATE custom_email_templates SET is_active = 0 WHERE ClientKeyID = ? AND template_name = ?";
-    //         $stmt = self::$conn->prepare($query);
-    //         $stmt->execute([$ClientKeyID, $template_name]);
-    //         return true;
-    //     } catch (Exception $e) {
-    //         error_log("Failed to delete custom template: " . $e->getMessage());
-    //         return false;
-    //     }
-    // }
-    
-    // public static function getTemplate($template_name, $candidate_name = '', $custom_content = '', $ClientKeyID = null) {
-    //     // Check if it's a custom template first
-    //     if ($ClientKeyID && strpos($template_name, 'custom_') === 0) {
-    //         $custom_template_name = substr($template_name, 7); // Remove 'custom_' prefix
-    //         $custom_template = self::getCustomTemplate($ClientKeyID, $custom_template_name);
-            
-    //         if ($custom_template) {
-    //             $body = $custom_template['template_body'];
-                
-    //             // Replace placeholders
-    //             $body = str_replace('[CANDIDATE_NAME]', htmlspecialchars($candidate_name), $body);
-    //             $body = str_replace('[CUSTOM_CONTENT]', nl2br(htmlspecialchars($custom_content)), $body);
-                
-    //             return [
-    //                 'subject' => $custom_template['template_subject'],
-    //                 'body' => $body
-    //             ];
-    //         }
-    //     }
-        
-        // Default templates
-//         $templates = [
-//             'job_alert' => [
-//                 'subject' => 'New Job Opportunities Available',
-//                 'body' => "
-//                     <html>
-//                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
-//                         <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-//                             <h2 style='color: #2c3e50;'>Hello " . htmlspecialchars($candidate_name) . ",</h2>
-//                             <p>We have exciting new job opportunities that match your profile!</p>
-//                             <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-//                                 <p>" . nl2br(htmlspecialchars($custom_content)) . "</p>
-//                             </div>
-//                             <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
-//                         </div>
-//                     </body>
-//                     </html>
-//                 "
-//             ],
-//             'newsletter' => [
-//                 'subject' => 'Nocturnal Recruitment Newsletter',
-//                 'body' => "
-//                     <html>
-//                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
-//                         <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-//                             <h2 style='color: #2c3e50;'>Hello " . htmlspecialchars($candidate_name) . ",</h2>
-//                             <p>Here's our latest newsletter with industry updates and opportunities.</p>
-//                             <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-//                                 <p>" . nl2br(htmlspecialchars($custom_content)) . "</p>
-//                             </div>
-//                             <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
-//                         </div>
-//                     </body>
-//                     </html>
-//                 "
-//             ],
-//             'event_invitation' => [
-//                 'subject' => 'You\'re Invited to Our Event',
-//                 'body' => "
-//                     <html>
-//                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
-//                         <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-//                             <h2 style='color: #2c3e50;'>Hello " . htmlspecialchars($candidate_name) . ",</h2>
-//                             <p>We'd like to invite you to our upcoming event!</p>
-//                             <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-//                                 <p>" . nl2br(htmlspecialchars($custom_content)) . "</p>
-//                             </div>
-//                             <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
-//                         </div>
-//                     </body>
-//                     </html>
-//                 "
-//             ],
-//             'follow_up' => [
-//                 'subject' => 'Following Up on Your Application',
-//                 'body' => "
-//                     <html>
-//                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
-//                         <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-//                             <h2 style='color: #2c3e50;'>Hello " . htmlspecialchars($candidate_name) . ",</h2>
-//                             <p>We wanted to follow up regarding your recent application.</p>
-//                             <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-//                                 <p>" . nl2br(htmlspecialchars($custom_content)) . "</p>
-//                             </div>
-//                             <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
-//                         </div>
-//                     </body>
-//                     </html>
-//                 "
-//             ],
-//             'welcome' => [
-//                 'subject' => 'Welcome to Nocturnal Recruitment',
-//                 'body' => "
-//                     <html>
-//                     <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
-//                         <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-//                             <h2 style='color: #2c3e50;'>Hello " . htmlspecialchars($candidate_name) . "!</h2>
-//                             <p>Thank you for joining Nocturnal Recruitment. We're excited to help you find your next opportunity.</p>
-//                             <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-//                                 <p>" . nl2br(htmlspecialchars($custom_content)) . "</p>
-//                             </div>
-//                             <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
-//                         </div>
-//                     </body>
-//                     </html>
-//                 "
-//             ]
-//         ];
-        
-//         return isset($templates[$template_name]) ? $templates[$template_name] : $templates['job_alert'];
-//     }
-    
-//     public static function getEmailSignature() {
-//         return '
-// <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #f0f0f0; font-family: Arial, sans-serif;">
-//     <table style="width: 100%; max-width: 600px;">
-//         <tr>
-//             <td style="text-align: center; padding-bottom: 20px;">
-//                 <img src="https://nocturnalrecruitment.co.uk/logo.png" alt="Nocturnal Recruitment" style="max-width: 200px; height: auto;">
-//             </td>
-//         </tr>
-//         <tr>
-//             <td style="text-align: center; color: #333; font-size: 14px; line-height: 1.6;">
-//                 <strong>Nocturnal Recruitment</strong><br>
-//                 Office 16, 321 High Road, RM6 6AX<br><br>
-                
-//                 <div style="margin: 15px 0;">
-//                     <a href="tel:02080502708" style="color: #007bff; text-decoration: none;">0208 050 2708</a> &nbsp;&nbsp;
-//                     <a href="tel:07553570871" style="color: #007bff; text-decoration: none;">0755 357 0871</a><br>
-//                     <a href="mailto:chax@nocturnalrecruitment.co.uk" style="color: #007bff; text-decoration: none;">chax@nocturnalrecruitment.co.uk</a><br>
-//                     <a href="https://www.nocturnalrecruitment.co.uk" style="color: #007bff; text-decoration: none;">www.nocturnalrecruitment.co.uk</a>
-//                 </div>
-                
-//                 <div style="margin: 20px 0; font-size: 12px; color: #666;">
-//                     <strong>Company Registration – 11817091</strong>
-//                 </div>
-                
-//                 <div style="margin-top: 25px; padding: 15px; background-color: #f8f9fa; border-radius: 5px; font-size: 11px; color: #666; text-align: left;">
-//                     <strong>Disclaimer*</strong> This email is intended only for the use of the addressee named above and may be confidential or legally privileged. If you are not the addressee, you must not read it and must not use any information contained in nor copy it nor inform any person other than Nocturnal Recruitment or the addressee of its existence or contents. If you have received this email in error, please delete it and notify our team at <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #007bff;">info@nocturnalrecruitment.co.uk</a>
-//                 </div>
-//             </td>
-//         </tr>
-//     </table>
-// </div>';
-//     }
-// }
-
-
-
-
-
-
-
-// Initialize EmailTemplates with database connection
-// EmailTemplates::setConnection($conn);
-
-// // MAILSHOT HANDLING - Updated with better error reporting
-// if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates'])) {
-//     error_log("=== MAILSHOT PROCESSING START ===");
-    
-//     $selected_candidates = $_POST['selected_candidates'];
-//     $subject = trim($_POST['subject']);
-//     $template = $_POST['template'];
-//     $custom_content = isset($_POST['custom_content']) ? trim($_POST['custom_content']) : '';
-    
-//     // Validate inputs
-//     $errors = [];
-//     if (empty($selected_candidates)) {
-//         $errors[] = "No candidates selected.";
-//     }
-//     if (empty($subject)) {
-//         $errors[] = "Email subject is required.";
-//     }
-//     if (empty($template)) {
-//         $errors[] = "Email template is required.";
-//     }
-    
-//     if (empty($errors)) {
-//         try {
-//             // Test SMTP connection first
-//             $testMail = new PHPMailer(true);
-//             $testMail->isSMTP();
-//             $testMail->Host = EmailConfig::getHost();
-//             $testMail->SMTPAuth = true;
-//             $testMail->Username = EmailConfig::getUsername();
-//             $testMail->Password = EmailConfig::getPassword();
-//             $testMail->SMTPSecure = EmailConfig::getSecure();
-//             $testMail->Port = EmailConfig::getPort();
-            
-//             if (!$testMail->smtpConnect()) {
-//                 throw new Exception("Failed to connect to SMTP server");
-//             }
-            
-//             // If SMTP test passed, proceed with mailshot
-//             $emailSender = new EmailSender($conn, $ClientKeyID);
-//             $result = $emailSender->sendMailshot($selected_candidates, $subject, $template, $custom_content, $USERID);
-            
-//             if ($result['sent'] > 0) {
-//                 $success_message = "Mailshot sent successfully! " . $result['sent'] . " emails sent";
-//                 if ($result['failed'] > 0) {
-//                     $success_message .= ", " . $result['failed'] . " failed.";
-//                 }
-                
-//                 $NOTIFICATION = "$NAME sent a mailshot with subject '$subject' to " . $result['sent'] . " candidates.";
-//                 Notify($USERID, $ClientKeyID, $NOTIFICATION);
-//             } else {
-//                 $error_message = "Failed to send mailshot. " . implode('; ', $result['errors']);
-//             }
-            
-//         } catch (Exception $e) {
-//             $error_message = "Error sending mailshot: " . $e->getMessage();
-//             error_log("Mailshot failed: " . $e->getMessage());
-//         }
-//     } else {
-//         $error_message = implode('<br>', $errors);
-//     }
-// }
-
-// // Email Sender Class - Updated to support custom templates
-// class EmailSender {
-//     private $conn;
-//     private $sent_count = 0;
-//     private $failed_count = 0;
-//     private $errors = [];
-//     private $ClientKeyID;
-    
-//     public function __construct($database_connection, $client_key_id = null) {
-//         $this->conn = $database_connection;
-//         $this->ClientKeyID = $client_key_id;
-//     }
-
-//      public function sendMailshot($selected_candidates, $subject, $template, $custom_content = '', $sender_id = null) {
-//         $this->sent_count = 0;
-//         $this->failed_count = 0;
-//         $this->errors = [];
-        
-//         $candidate_emails = $this->getCandidateEmails($selected_candidates);
-        
-//         if (empty($candidate_emails)) {
-//             throw new Exception("No valid candidate emails found.");
-//         }
-        
-//         foreach ($candidate_emails as $candidate) {
-//             try {
-//                 $result = $this->sendSingleEmail($candidate, $subject, $template, $custom_content);
-                
-//                 if ($result === true) {
-//                     $this->logEmailSent($candidate['CandidateID'], $subject, $template, $sender_id);
-//                     $this->sent_count++;
-//                     // Small delay between emails to avoid rate limiting
-//                     usleep(500000); // 0.5 seconds
-//                 } else {
-//                     $this->failed_count++;
-//                     $this->errors[] = "Failed to send to {$candidate['Email']}: $result";
-//                     error_log("Mailshot error for {$candidate['Email']}: $result");
-//                 }
-//             } catch (Exception $e) {
-//                 $this->failed_count++;
-//                 $this->errors[] = "Error sending to {$candidate['Email']}: " . $e->getMessage();
-//                 error_log("Mailshot exception for {$candidate['Email']}: " . $e->getMessage());
-//             }
-//         }
-        
-//         return [
-//             'sent' => $this->sent_count,
-//             'failed' => $this->failed_count,
-//             'errors' => $this->errors,
-//             'total' => count($candidate_emails)
-//         ];
-//     }
-    
-    
-//     private function getCandidateEmails($candidate_ids) {
-//         $emails = [];
-//         $found_ids = [];
-
-//         // 1. Query the primary '_candidates' table
-//         if (!empty($candidate_ids)) {
-//             $placeholders = str_repeat('?,', count($candidate_ids) - 1) . '?';
-//             $query1 = "SELECT CandidateID, Name, Email FROM _candidates WHERE CandidateID IN ($placeholders) AND Email IS NOT NULL AND Email != ''";
-//             $stmt1 = $this->conn->prepare($query1);
-//             $stmt1->execute($candidate_ids);
-//             $results1 = $stmt1->fetchAll(PDO::FETCH_ASSOC);
-
-//             foreach ($results1 as $row) {
-//                 $emails[] = $row;
-//                 $found_ids[] = $row['CandidateID'];
-//             }
-//         }
-
-//         // 2. Find which IDs were not found in the first table
-//         $remaining_ids = array_diff($candidate_ids, $found_ids);
-
-//         // 3. Query the legacy 'candidates' table for the remaining IDs
-//         if (!empty($remaining_ids)) {
-//             $placeholders = str_repeat('?,', count($remaining_ids) - 1) . '?';
-//             // Note: The legacy table might have different column names. Adjust if necessary.
-//             // This assumes 'id' is the primary key and it corresponds to 'CandidateID'.
-//             $query2 = "SELECT id as CandidateID, CONCAT(first_name, ' ', last_name) as Name, email as Email FROM candidates WHERE id IN ($placeholders) AND email IS NOT NULL AND email != ''";
-//             $stmt2 = $this->conn->prepare($query2);
-//             $stmt2->execute(array_values($remaining_ids));
-//             $results2 = $stmt2->fetchAll(PDO::FETCH_ASSOC);
-            
-//             foreach ($results2 as $row) {
-//                 $emails[] = $row;
-//             }
-//         }
-        
-//         return $emails;
-//     }
-    
-//     private function sendSingleEmail($candidate, $subject, $template_name, $custom_content = '') {
-//         $template = EmailTemplates::getTemplate($template_name, $candidate['Name'], $custom_content, $this->ClientKeyID);
-//         $email_subject = !empty($subject) ? $subject : $template['subject'];
-//         $email_body = $template['body'] . EmailTemplates::getEmailSignature();
-        
-//         // Always use PHPMailer if available
-//         return $this->sendViaPHPMailer($candidate['Email'], $candidate['Name'], $email_subject, $email_body);
-//     }
-    
-//     private function sendViaPHPMailer($to_email, $to_name, $subject, $body) {
-//         $mail = new PHPMailer(true);
-        
-//         try {
-//             // SMTP Configuration
-//             $mail->isSMTP();
-//             $mail->Host = EmailConfig::getHost();
-//             $mail->SMTPAuth = true;
-//             $mail->Username = EmailConfig::getUsername();
-//             $mail->Password = EmailConfig::getPassword();
-//             $mail->SMTPSecure = EmailConfig::getSecure();
-//             $mail->Port = EmailConfig::getPort();
-            
-//             // Test SMTP connection first
-//             if (!$mail->smtpConnect()) {
-//                 throw new Exception("SMTP connection failed");
-//             }
-            
-//             // Email content
-//             $mail->setFrom(EmailConfig::getFromEmail(), EmailConfig::getFromName());
-//             $mail->addReplyTo(EmailConfig::getReplyToEmail(), EmailConfig::getReplyToName());
-//             $mail->addAddress($to_email, $to_name);
-//             $mail->isHTML(true);
-//             $mail->Subject = $subject;
-//             $mail->Body = $body;
-//             $mail->AltBody = strip_tags($body);
-            
-//             if (!$mail->send()) {
-//                 throw new Exception($mail->ErrorInfo);
-//             }
-            
-//             error_log("Email sent successfully to: $to_email");
-//             return true;
-//         } catch (Exception $e) {
-//             error_log("PHPMailer Error for $to_email: " . $e->getMessage());
-//             throw $e; // Re-throw for handling in calling function
-//         }
-//     }
-    
-
-    
-//     private function sendViaPHPMail($to_email, $to_name, $subject, $body) {
-//         $headers = [
-//             'MIME-Version: 1.0',
-//             'Content-type: text/html; charset=UTF-8',
-//             'From: ' . EmailConfig::getFromName() . ' <' . EmailConfig::getFromEmail() . '>',
-//             'Reply-To: ' . EmailConfig::getFromEmail(),
-//             'X-Mailer: PHP/' . phpversion()
-//         ];
-        
-//         $success = mail($to_email, $subject, $body, implode("\r\n", $headers));
-        
-
-//         if (!$success) {
-//             throw new Exception("Failed to send email via PHP mail()");
-//         }
-        
-//         error_log("Email sent successfully to: $to_email via PHP mail()");
-//         return true;
-//     }
-    
-//     private function logEmailSent($candidate_id, $subject, $template, $sender_id) {
-//         try {
-//             $create_table = "CREATE TABLE IF NOT EXISTS email_log (
-//                 id INT AUTO_INCREMENT PRIMARY KEY,
-//                 CandidateID VARCHAR(50) NOT NULL,
-//                 Subject VARCHAR(255) NOT NULL,
-//                 Template VARCHAR(50) NOT NULL,
-//                 SentBy INT NULL,
-//                 SentAt DATETIME NOT NULL,
-//                 Status ENUM('sent', 'failed', 'bounced') DEFAULT 'sent',
-//                 ErrorMessage TEXT NULL,
-//                 INDEX idx_candidate (CandidateID),
-//                 INDEX idx_sent_at (SentAt),
-//                 INDEX idx_sent_by (SentBy)
-//             )";
-//             $this->conn->exec($create_table);
-            
-//             $query = "INSERT INTO email_log (CandidateID, Subject, Template, SentBy, SentAt, Status) VALUES (?, ?, ?, ?, NOW(), 'sent')";
-//             $stmt = $this->conn->prepare($query);
-//             $stmt->execute([$candidate_id, $subject, $template, $sender_id]);
-//         } catch (Exception $e) {
-//             error_log("Failed to log email: " . $e->getMessage());
-//         }
-//     }
-// }
-
-// // Initialize EmailTemplates with database connection
-// EmailTemplates::setConnection($conn);
-
-// Initialize variables
-$isTab = isset($_GET['isTab']) ? $_GET['isTab'] : 'all';
-$mode = isset($_GET['mode']) ? $_GET['mode'] : 'candidates';
-
-// Enhanced search parameters
-$keyword_filter = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
-$location_filter = isset($_GET['location']) ? trim($_GET['location']) : '';
-$position_filter = isset($_GET['position']) ? trim($_GET['position']) : '';
-$center_postcode = isset($_GET['center_postcode']) ? trim($_GET['center_postcode']) : '';
-$distance_miles = isset($_GET['distance_miles']) ? (int)$_GET['distance_miles'] : 0;
-$email_keywords = isset($_GET['email_keywords']) ? trim($_GET['email_keywords']) : '';
-
-// KPI filter parameters
-$kpi_period = isset($_GET['kpi_period']) ? $_GET['kpi_period'] : 'current_week';
-$kpi_metric = isset($_GET['kpi_metric']) ? $_GET['kpi_metric'] : 'overview';
-$kpi_start_date = isset($_GET['kpi_start_date']) ? $_GET['kpi_start_date'] : '';
-$kpi_end_date = isset($_GET['kpi_end_date']) ? $_GET['kpi_end_date'] : '';
-
-// // Handle custom template creation
-// if (isset($_POST['save_custom_template'])) {
-//     $template_name = trim($_POST['custom_template_name']);
-//     $template_subject = trim($_POST['custom_template_subject']);
-//     $template_body = trim($_POST['custom_template_body']);
-    
-//     if (!empty($template_name) && !empty($template_subject) && !empty($template_body)) {
-//         if (EmailTemplates::saveCustomTemplate($ClientKeyID, $template_name, $template_subject, $template_body, $USERID)) {
-//             $success_message = "Custom email template '$template_name' saved successfully!";
-//         } else {
-//             $error_message = "Failed to save custom template. Please try again.";
-//         }
-//     } else {
-//         $error_message = "All fields are required for custom template.";
-//     }
-// }
-
-// // Handle custom template deletion
-// if (isset($_POST['delete_custom_template'])) {
-//     $template_name = $_POST['template_to_delete'];
-//     if (EmailTemplates::deleteCustomTemplate($ClientKeyID, $template_name)) {
-//         $success_message = "Custom template '$template_name' deleted successfully!";
-//     } else {
-//         $error_message = "Failed to delete custom template.";
-//     }
-// }
-
-// KPI Functions (keeping existing functions)
-function getDateRangeForPeriod($period) {
-    $today = new DateTime();
-    
-    switch ($period) {
-        case 'current_week':
-            $start = clone $today;
-            $start->modify('monday this week');
-            $end = clone $start;
-            $end->modify('+6 days');
-            break;
-        case 'last_week':
-            $start = new DateTime('monday last week');
-            $end = clone $start;
-            $end->modify('+6 days');
-            break;
-        case 'current_month':
-            $start = new DateTime('first day of this month');
-            $end = new DateTime('last day of this month');
-            break;
-        case 'last_month':
-            $start = new DateTime('first day of last month');
-            $end = new DateTime('last day of last month');
-            break;
-        case 'current_quarter':
-            $quarter = ceil($today->format('n') / 3);
-            $start = new DateTime($today->format('Y') . '-' . (($quarter - 1) * 3 + 1) . '-01');
-            $end = clone $start;
-            $end->modify('+2 months')->modify('last day of this month');
-            break;
-        case 'current_year':
-            $start = new DateTime($today->format('Y') . '-01-01');
-            $end = new DateTime($today->format('Y') . '-12-31');
-            break;
-        default:
-            $start = clone $today;
-            $start->modify('monday this week');
-            $end = clone $start;
-            $end->modify('+6 days');
-    }
-    
-    return [
-        'start' => $start->format('Y-m-d'),
-        'end' => $end->format('Y-m-d')
-    ];
-}
-
-function calculateKPIs($conn, $ClientKeyID, $period, $start_date = null, $end_date = null) {
-    if ($start_date && $end_date) {
-        $dateRange = ['start' => $start_date, 'end' => $end_date];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
+    if (empty($_POST['selected_candidates'])) {
+        $error_message = "Please select at least one candidate.";
+    } elseif (empty($_POST['subject'])) {
+        $error_message = "Email subject is required.";
+    } elseif (empty($_POST['template'])) {
+        $error_message = "Please select an email template.";
     } else {
-        $dateRange = getDateRangeForPeriod($period);
-    }
-    
-    $kpis = [];
-    
-    try {
-        // Total Candidates
-        $stmt = $conn->prepare("SELECT COUNT(*) as total FROM _candidates WHERE ClientKeyID = ? AND Date BETWEEN ? AND ?");
-        $stmt->execute([$ClientKeyID, $dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
-        $kpis['total_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
-        
-        // New Candidates
-        $stmt = $conn->prepare("SELECT COUNT(*) as new_candidates FROM _candidates WHERE ClientKeyID = ? AND Date BETWEEN ? AND ?");
-        $stmt->execute([$ClientKeyID, $dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
-        $kpis['new_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['new_candidates'];
-        
-        // Active Candidates
-        $stmt = $conn->prepare("SELECT COUNT(*) as active FROM _candidates WHERE ClientKeyID = ? AND Status = 'Active' AND Date BETWEEN ? AND ?");
-        $stmt->execute([$ClientKeyID, $dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
-        $kpis['active_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['active'];
-        
-        // Inactive Candidates
-        $stmt = $conn->prepare("SELECT COUNT(*) as inactive FROM _candidates WHERE ClientKeyID = ? AND Status = 'Inactive' AND Date BETWEEN ? AND ?");
-        $stmt->execute([$ClientKeyID, $dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
-        $kpis['inactive_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['inactive'];
-        
-        // Archived Candidates
-        $stmt = $conn->prepare("SELECT COUNT(*) as archived FROM _candidates WHERE ClientKeyID = ? AND Status = 'Archived' AND Date BETWEEN ? AND ?");
-        $stmt->execute([$ClientKeyID, $dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
-        $kpis['archived_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['archived'];
-        
-        // Pending Compliance
-        $stmt = $conn->prepare("SELECT COUNT(*) as pending FROM _candidates WHERE ClientKeyID = ? AND Status = 'Pending Compliance' AND Date BETWEEN ? AND ?");
-        $stmt->execute([$ClientKeyID, $dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
-        $kpis['pending_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['pending'];
-        
-        // Top Job Titles
-        $stmt = $conn->prepare("SELECT JobTitle, COUNT(*) as count FROM _candidates WHERE ClientKeyID = ? AND Date BETWEEN ? AND ? AND JobTitle IS NOT NULL GROUP BY JobTitle ORDER BY count DESC LIMIT 5");
-        $stmt->execute([$ClientKeyID, $dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
-        $kpis['top_job_titles'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Top Cities
-        $stmt = $conn->prepare("SELECT City, COUNT(*) as count FROM _candidates WHERE ClientKeyID = ? AND Date BETWEEN ? AND ? AND City IS NOT NULL GROUP BY City ORDER BY count DESC LIMIT 5");
-        $stmt->execute([$ClientKeyID, $dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
-        $kpis['top_cities'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Created By Stats
-        $stmt = $conn->prepare("SELECT CreatedBy, COUNT(*) as count FROM _candidates WHERE ClientKeyID = ? AND Date BETWEEN ? AND ? GROUP BY CreatedBy ORDER BY count DESC");
-        $stmt->execute([$ClientKeyID, $dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
-        $kpis['created_by_stats'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Daily Registration Trend
-        $stmt = $conn->prepare("SELECT DATE(Date) as date, COUNT(*) as count FROM _candidates WHERE ClientKeyID = ? AND Date BETWEEN ? AND ? GROUP BY DATE(Date) ORDER BY date");
-        $stmt->execute([$ClientKeyID, $dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
-        $kpis['daily_trend'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Calculate growth rate
-        $previousPeriod = getPreviousPeriodRange($period, $dateRange);
-        $stmt = $conn->prepare("SELECT COUNT(*) as previous_total FROM _candidates WHERE ClientKeyID = ? AND Date BETWEEN ? AND ?");
-        $stmt->execute([$ClientKeyID, $previousPeriod['start'] . ' 00:00:00', $previousPeriod['end'] . ' 23:59:59']);
-        $previous_total = $stmt->fetch(PDO::FETCH_ASSOC)['previous_total'];
-        
-        if ($previous_total > 0) {
-            $kpis['growth_rate'] = round((($kpis['new_candidates'] - $previous_total) / $previous_total) * 100, 2);
-        } else {
-            $kpis['growth_rate'] = 0;
-        }
-        
-        $kpis['date_range'] = $dateRange;
-        
-    } catch (Exception $e) {
-        $kpis['error'] = $e->getMessage();
-    }
-    
-    return $kpis;
-}
+        $candidate_ids = $_POST['selected_candidates'];
+        $subject = $_POST['subject'];
 
-function getPreviousPeriodRange($period, $currentRange) {
-    $start = new DateTime($currentRange['start']);
-    $end = new DateTime($currentRange['end']);
-    $diff = $start->diff($end)->days + 1;
-    
-    $prevStart = clone $start;
-    $prevStart->modify("-{$diff} days");
-    $prevEnd = clone $end;
-    $prevEnd->modify("-{$diff} days");
-    
-    return [
-        'start' => $prevStart->format('Y-m-d'),
-        'end' => $prevEnd->format('Y-m-d')
-    ];
-}
+        $template = $_POST['template'];
 
-function calculateDistance($postcode1, $postcode2) {
-    return rand(1, 50);
-}
+        $templates = [
+            'job_alert' => [
+                'subject' => 'New Job Opportunities Matching Your Profile',
+                'body' => "Hello [Name],\n\nWe have new job opportunities that match your profile. Log in to your account to view them:\n\n[LoginLink]\n\nBest regards,\nThe Recruitment Team"
+            ],
+            'newsletter' => [
+                'subject' => 'Our Latest Industry Insights',
+                'body' => "Hello [Name],\n\nCheck out our latest newsletter with industry insights and job tips:\n\n[NewsletterLink]\n\nBest regards,\nThe Recruitment Team"
+            ],
+            'event_invitation' => [
+                'subject' => 'Invitation to Recruitment Event',
+                'body' => "Hello [Name],\n\nYou are invited to our upcoming recruitment event. Please RSVP here:\n\n[EventLink]\n\nBest regards,\nThe Recruitment Team"
+            ],
+            'follow_up' => [
+                'subject' => 'Following Up on Your Application',
+                'body' => "Hello [Name],\n\nFollowing up on your recent application. Any updates?\n\nBest regards,\nThe Recruitment Team"
+            ],
+            'welcome' => [
+                'subject' => 'Welcome to Our Candidate Network',
+                'body' => "Hello [Name],\n\nWelcome to our candidate database! We will contact you when we find a match.\n\nBest regards,\nThe Recruitment Team"
+            ]
+        ];
 
-// Handle legacy search
-if (isset($_POST['Search'])) {
-    $Name = isset($_POST['Name']) ? $_POST['Name'] : '';
-    $JobTitle = isset($_POST['JobTitle']) ? $_POST['JobTitle'] : '';
-    $IDNumber = isset($_POST['IDNumber']) ? $_POST['IDNumber'] : '';
-    $EmailAddress = isset($_POST['Email']) ? $_POST['Email'] : '';
-    $PhoneNumber = isset($_POST['Number']) ? $_POST['Number'] : '';
-    $Address = isset($_POST['Address']) ? $_POST['Address'] : '';
-    $Postcode = isset($_POST['Postcode']) ? $_POST['Postcode'] : '';
-    $City = isset($_POST['City']) ? $_POST['City'] : '';
-    
-    $SearchID = uniqid();
-    
-    if (!empty($SearchID)) {
-        $query = $conn->prepare("INSERT INTO `search_queries`(`SearchID`, `column`, `value`) VALUES (:SearchID, :column, :value)");
+        $template_details = $templates[$template] ?? [
+            'subject' => $subject,
+            'body' => "Hello [Name],\n\nThank you for being part of our network.\n\nBest regards,\nThe Recruitment Team"
+        ];
 
-        foreach ($_POST as $key => $value) {
-            if (!empty($value) && $key !== 'Search') {
-                $query->bindParam(':SearchID', $SearchID);
-                $query->bindParam(':column', $key);
-                $query->bindParam(':value', $value);
-                $query->execute();
+        $final_subject = empty($subject) ? $template_details['subject'] : $subject;
+        $base_body = $template_details['body'];
+        $from_email = "learn@natec.icu";
+
+        $success_count = 0;
+        $error_count = 0;
+        $error_details = [];
+
+        foreach ($candidate_ids as $candidate_id) {
+            try {
+                $stmt = $db_2->prepare("SELECT Name, Email FROM _candidates WHERE id = ?");
+                $stmt->execute([$candidate_id]);
+                $candidate = $stmt->fetch(PDO::FETCH_OBJ);
+
+                if (!$candidate) {
+                    $stmt = $db_1->prepare("SELECT CONCAT(first_name, ' ', last_name) as Name, email as Email FROM candidates WHERE id = ?");
+                    $stmt->execute([$candidate_id]);
+                    $candidate = $stmt->fetch(PDO::FETCH_OBJ);
+                }
+
+                if ($candidate && filter_var($candidate->Email, FILTER_VALIDATE_EMAIL)) {
+                    $to = $candidate->Email;
+                    $name = $candidate->Name ?: 'Candidate';
+
+                    $personalized_body = str_replace(
+                        ['[Name]', '[LoginLink]', '[NewsletterLink]', '[EventLink]'],
+                        [$name, 'https://broad-mead.com/login', 'https://broad-mead.com/newsletter', 'https://broad-mead.com/events'],
+                        $base_body
+                    );
+
+                    $result = sendTitanMail($to, $final_subject, $personalized_body, $from_email);
+
+                    if ($result === true) {
+                        $success_count++;
+                        $log_stmt = $db_2->prepare("INSERT INTO mailshot_logs (candidate_id, email, subject, template, body, status, error, sent_at) VALUES (?, ?, ?, ?, ?, 'sent', NULL, NOW())");
+                        $log_stmt->execute([$candidate_id, $to, $final_subject, $template, $personalized_body]);
+                    } else {
+                        $error_count++;
+                        $error_details[] = "Failed to send to: $to - $result";
+                        $log_stmt = $db_2->prepare("INSERT INTO mailshot_logs (candidate_id, email, subject, template, body, status, error, sent_at) VALUES (?, ?, ?, ?, ?, 'failed', ?, NOW())");
+                        $log_stmt->execute([$candidate_id, $to, $final_subject, $template, $personalized_body, $result]);
+                    }
+                } else {
+                    $error_count++;
+                    $candidate_email = $candidate->Email ?? 'N/A';
+                    $error_details[] = "Invalid email for candidate ID: $candidate_id (Email: $candidate_email)";
+                    $log_stmt = $db_2->prepare("INSERT INTO mailshot_logs (candidate_id, email, subject, template, body, status, error, sent_at) VALUES (?, ?, ?, ?, ?, 'invalid', NULL, NOW())");
+                    $log_stmt->execute([$candidate_id, $candidate_email, $final_subject, $template, 'Email validation failed - no message sent']);
+                }
+            } catch (Exception $e) {
+                $error_count++;
+                $error_details[] = "Error processing candidate ID: $candidate_id - " . $e->getMessage();
+                $candidate_email = isset($candidate) && isset($candidate->Email) ? $candidate->Email : 'N/A';
+                $log_stmt = $db_2->prepare("INSERT INTO mailshot_logs (candidate_id, email, subject, template, body, status, error, sent_at) VALUES (?, ?, ?, ?, ?, 'error', ?, NOW())");
+                $log_stmt->execute([$candidate_id, $candidate_email, $final_subject, $template, 'Exception occurred - no message sent', $e->getMessage()]);
             }
         }
 
-        header("location: $LINK/candidates/?q=$SearchID");
-        exit();
+        if ($error_count === 0) {
+            $success_message = "Mailshot sent successfully to $success_count candidates.";
+        } else {
+            $error_message = "Mailshot partially sent: $success_count succeeded, $error_count failed.";
+            if (!empty($error_details)) {
+                $error_message .= "\n\nError details:\n" . implode("\n", array_slice($error_details, 0, 5));
+                if (count($error_details) > 5) {
+                    $error_message .= "\n... and " . (count($error_details) - 5) . " more errors.";
+                }
+            }
+        }
     }
-}
-
-// // MAILSHOT HANDLING - Updated to support custom templates
-// if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates'])) {
-//     error_log("=== MAILSHOT PROCESSING START ===");
-    
-//     $selected_candidates = $_POST['selected_candidates'];
-//     $subject = trim($_POST['subject']);
-//     $template = $_POST['template'];
-//     $custom_content = isset($_POST['custom_content']) ? trim($_POST['custom_content']) : '';
-    
-//     $errors = [];
-//     if (empty($selected_candidates)) {
-//         $errors[] = "No candidates selected.";
-//     }
-//     if (empty($subject)) {
-//         $errors[] = "Email subject is required.";
-//     }
-//     if (empty($template)) {
-//         $errors[] = "Email template is required.";
-//     }
-    
-//     if (empty($errors)) {
-//         try {
-//             $emailSender = new EmailSender($conn, $ClientKeyID);
-//             $result = $emailSender->sendMailshot($selected_candidates, $subject, $template, $custom_content, $USERID);
-            
-//             if ($result['sent'] > 0) {
-//                 $success_message = "Mailshot sent successfully! " . $result['sent'] . " emails sent";
-//                 if ($result['failed'] > 0) {
-//                     $success_message .= ", " . $result['failed'] . " failed.";
-//                 }
-                
-//                 $NOTIFICATION = "$NAME sent a mailshot with subject '$subject' to " . $result['sent'] . " candidates.";
-//                 Notify($USERID, $ClientKeyID, $NOTIFICATION);
-//             } else {
-//                 $error_message = "Failed to send mailshot. " . implode('; ', $result['errors']);
-//             }
-            
-//         } catch (Exception $e) {
-//             $error_message = "Error sending mailshot: " . $e->getMessage();
-//         }
-//     } else {
-//         $error_message = implode('<br>', $errors);
-//     }
-// }
-
-// $SearchID = isset($_GET['q']) ? $_GET['q'] : '';
-
-// // Handle candidate deletion
-// if (isset($_POST['DeletCandidate'])) {
-//     $ID = $_POST['ID'];
-//     $name = $_POST['name'];
-//     $reason = $_POST['reason'];
-
-//     $stmt = $conn->prepare("DELETE FROM `_candidates` WHERE CandidateID = :ID");
-//     $stmt->bindParam(':ID', $ID);
-
-//     if ($stmt->execute()) {
-//         $NOTIFICATION = "$NAME has successfully deleted the candidate named '$name'. Reason for deletion: $reason.";
-//         Notify($USERID, $ClientKeyID, $NOTIFICATION);
-//     } else {
-//         echo "Error deleting record";
-//     }
-// }
-
-// Get available job titles and locations for dropdowns
-$job_titles_query = "SELECT DISTINCT JobTitle FROM _candidates WHERE ClientKeyID = '$ClientKeyID' AND JobTitle IS NOT NULL AND JobTitle != '' ORDER BY JobTitle";
-$job_titles_stmt = $conn->query($job_titles_query);
-$job_titles = $job_titles_stmt->fetchAll(PDO::FETCH_COLUMN);
-
-$locations_query = "SELECT DISTINCT City FROM _candidates WHERE ClientKeyID = '$ClientKeyID' AND City IS NOT NULL AND City != '' ORDER BY City";
-$locations_stmt = $conn->query($locations_query);
-$locations = $locations_stmt->fetchAll(PDO::FETCH_COLUMN);
-
-// Get custom templates
-// $custom_templates = EmailTemplates::getCustomTemplates($ClientKeyID);
-
-// Calculate KPIs if in KPI mode
-$kpi_data = [];
-if ($mode === 'kpi') {
-    $kpi_data = calculateKPIs($conn, $ClientKeyID, $kpi_period, $kpi_start_date, $kpi_end_date);
-}
-
-// Set default profile placeholder if not defined
-if (!isset($ProfilePlaceholder)) {
-    $ProfilePlaceholder = '/assets/images/user/avatar-1.jpg';
 }
 ?>
 
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <?php include "../../includes/head.php"; ?>
 <style>
@@ -1202,8 +510,542 @@ if (!isset($ProfilePlaceholder)) {
         grid-template-columns: 1fr;
     }
 }
-</style>
+</style> -->
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo $mode === 'kpi' ? 'KPI Reporting - Weekly Analytics' : ($mode === 'mailshot' ? 'Mailshot - Candidate Filtering' : 'Candidates - Email Filtering System'); ?></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.6/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="permission-indicator">
+                    <i class="fa fa-shield"></i>
+                    <strong>Access Granted:</strong> You have VIEW_CLIENTS permission and can access this candidates page.
+                    <?php if ($mode === 'kpi'): ?>
+                        You also have VIEW_KPIs permission for analytics.
+                    <?php endif; ?>
+                </div>
+
+                <div class="mode-switch">
+                    <h4 style="margin-bottom: 15px;">Mode Selection</h4>
+                    <a href="?mode=candidates" class="mode-button <?php echo $mode === 'candidates' ? 'active' : ''; ?>">
+                        <i class="fa fa-users"></i> View Candidates
+                    </a>
+                    <a href="?mode=mailshot" class="mode-button <?php echo $mode === 'mailshot' ? 'active' : ''; ?>">
+                        <i class="fa fa-paper-plane"></i> Create Mailshot
+                    </a>
+                    <?php 
+                    try {
+                        $stmt = $db_2->prepare("SELECT COUNT(*) as has_permission FROM userpermissions WHERE user_id = ? AND permission_name = 'VIEW_KPIs'");
+                        $stmt->execute([$_SESSION['user_id']]);
+                        $has_kpi_permission = $stmt->fetch(PDO::FETCH_ASSOC)['has_permission'] > 0;
+                        
+                        if ($has_kpi_permission): ?>
+                            <a href="?mode=kpi" class="mode-button <?php echo $mode === 'kpi' ? 'active' : ''; ?>">
+                                <i class="fa fa-bar-chart"></i> Weekly KPI Search
+                            </a>
+                        <?php endif;
+                    } catch (Exception $e) {}
+                    ?>
+                </div>
+
+                <h2 style="margin-bottom: 30px; color: #343a40;">
+                    <?php 
+                    if ($mode === 'kpi') {
+                        echo 'KPI Reporting - Weekly Analytics & Tracking';
+                    } elseif ($mode === 'mailshot') {
+                        echo 'Mailshot - Candidate Filtering';
+                    } else {
+                        echo 'Candidates - Email Filtering System';
+                    }
+                    ?>
+                </h2>
+
+                <?php if ($mode === 'kpi'): ?>
+                <div class="kpi-info">
+                    <h5><i class="fa fa-bar-chart"></i> KPI Reporting Dashboard</h5>
+                    <p><strong>Track and analyze your candidate metrics:</strong></p>
+                    <ul>
+                        <li>Monitor weekly, monthly, and quarterly candidate registration trends</li>
+                        <li>Analyze candidate status distributions and conversion rates</li>
+                        <li>Track top performing job titles and locations</li>
+                        <li>View team performance and candidate creation statistics</li>
+                        <li>Generate custom reports for specific date ranges</li>
+                    </ul>
+                </div>
+                <?php endif; ?>
+
+                <?php if (isset($success_message)): ?>
+                    <div class="success-message">
+                        <i class="fa fa-check-circle"></i> <?php echo $success_message; ?>
+                    </div>
+                <?php endif; ?>
+                
+                <?php require_once 'kpi_reporting.php'; ?>
+
+                <?php if ($mode !== 'kpi'): ?>
+                <div class="filter-section">
+                    <h5 style="margin-bottom: 20px; color: #495057;">
+                        <?php echo $mode === 'mailshot' ? 'Filter Candidates for Mailshot' : 'Email Filtering System'; ?>
+                    </h5>
+                    <form method="GET" action="">
+                        <input type="hidden" name="mode" value="<?php echo htmlspecialchars($mode); ?>">
+                        
+                        <?php if ($mode === 'candidates'): ?>
+                        <div class="row filter-row">
+                            <div class="col-md-3">
+                                <div class="filter-label">Keywords (Name, Email, Job Title)</div>
+                                <input type="text" name="keyword" class="filter-input" 
+                                       placeholder="Search by keywords..." 
+                                       value="<?php echo htmlspecialchars($keyword_filter); ?>">
+                            </div>
+                            <div class="col-md-3">
+                                <div class="filter-label">Location (City, Address, Postcode)</div>
+                                <input type="text" name="location" class="filter-input" 
+                                       placeholder="Search by location..." 
+                                       value="<?php echo htmlspecialchars($location_filter); ?>">
+                            </div>
+                            <div class="col-md-3">
+                                <div class="filter-label">Position Title</div>
+                                <input type="text" name="position" class="filter-input" 
+                                       placeholder="Search by position..." 
+                                       value="<?php echo htmlspecialchars($position_filter); ?>">
+                            </div>
+                            <div class="col-md-3">
+                                <div class="filter-label">Distance Filter</div>
+                                <div class="distance-filter">
+                                    <input type="text" name="center_postcode" class="filter-input" 
+                                           placeholder="Postcode" 
+                                           value="<?php echo htmlspecialchars($center_postcode); ?>">
+                                    <input type="number" name="distance_miles" class="filter-input distance-input" 
+                                           placeholder="Miles" min="1" max="100"
+                                           value="<?php echo $distance_miles > 0 ? htmlspecialchars($distance_miles) : ''; ?>">
+                                    <span>miles</span>
+                                </div>
+                            </div>
+                        </div>
+                        <?php else: ?>
+                        <div class="row filter-row">
+                            <div class="col-md-6">
+                                <div class="filter-label">Keywords (Name, Email, Job Title)</div>
+                                <input type="text" name="keyword" class="filter-input" 
+                                       placeholder="Search by keywords..." 
+                                       value="<?php echo htmlspecialchars($keyword_filter); ?>">
+                            </div>
+                            <div class="col-md-6">
+                                <div class="filter-label">Position Title</div>
+                                <select name="position" class="filter-input">
+                                    <option value="">All Positions</option>
+                                    <?php if (isset($job_titles)): ?>
+                                        <?php foreach ($job_titles as $job_title): ?>
+                                            <option value="<?php echo htmlspecialchars($job_title); ?>" 
+                                                    <?php echo $position_filter === $job_title ? 'selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($job_title); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row filter-row">
+                            <div class="col-md-6">
+                                <div class="filter-label">Location</div>
+                                <select name="location" class="filter-input">
+                                    <option value="">All Locations</option>
+                                    <?php if (isset($locations)): ?>
+                                        <?php foreach ($locations as $location): ?>
+                                            <option value="<?php echo htmlspecialchars($location); ?>" 
+                                                    <?php echo $location_filter === $location ? 'selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($location); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="filter-label">Distance Filter</div>
+                                <div class="distance-filter">
+                                    <input type="text" name="center_postcode" class="filter-input" 
+                                           placeholder="Postcode" 
+                                           value="<?php echo htmlspecialchars($center_postcode); ?>">
+                                    <input type="number" name="distance_miles" class="filter-input distance-input" 
+                                           placeholder="Miles" min="1" max="100"
+                                           value="<?php echo $distance_miles > 0 ? htmlspecialchars($distance_miles) : ''; ?>">
+                                    <span>miles</span>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <button type="submit" class="filter-button">
+                                    <i class="fa fa-search"></i> Apply Filters
+                                </button>
+                                <a href="?mode=<?php echo htmlspecialchars($mode); ?>" class="clear-button">
+                                    <i class="fa fa-times"></i> Clear Filters
+                                </a>
+                            </div>
+                        </div>
+                        <input type="hidden" name="status" value="<?php echo htmlspecialchars($status_filter); ?>">
+                    </form>
+                </div>
+
+                <?php if ($mode === 'candidates'): ?>
+                <div class="status-tabs">
+                    <a href="?mode=candidates&status=all&keyword=<?php echo urlencode($keyword_filter); ?>&location=<?php echo urlencode($location_filter); ?>&position=<?php echo urlencode($position_filter); ?>&center_postcode=<?php echo urlencode($center_postcode); ?>&distance_miles=<?php echo urlencode($distance_miles); ?>" 
+                       class="status-tab <?php echo $status_filter === 'all' ? 'active' : ''; ?>">All Candidates</a>
+                    <a href="?mode=candidates&status=active&keyword=<?php echo urlencode($keyword_filter); ?>&location=<?php echo urlencode($location_filter); ?>&position=<?php echo urlencode($position_filter); ?>&center_postcode=<?php echo urlencode($center_postcode); ?>&distance_miles=<?php echo urlencode($distance_miles); ?>" 
+                       class="status-tab <?php echo $status_filter === 'active' ? 'active' : ''; ?>">Active</a>
+                    <a href="?mode=candidates&status=archived&keyword=<?php echo urlencode($keyword_filter); ?>&location=<?php echo urlencode($location_filter); ?>&position=<?php echo urlencode($position_filter); ?>&center_postcode=<?php echo urlencode($center_postcode); ?>&distance_miles=<?php echo urlencode($distance_miles); ?>" 
+                       class="status-tab <?php echo $status_filter === 'archived' ? 'active' : ''; ?>">Archived</a>
+                    <a href="?mode=candidates&status=inactive&keyword=<?php echo urlencode($keyword_filter); ?>&location=<?php echo urlencode($location_filter); ?>&position=<?php echo urlencode($position_filter); ?>&center_postcode=<?php echo urlencode($center_postcode); ?>&distance_miles=<?php echo urlencode($distance_miles); ?>" 
+                       class="status-tab <?php echo $status_filter === 'inactive' ? 'active' : ''; ?>">Inactive</a>
+                    <a href="?mode=candidates&status=pending&keyword=<?php echo urlencode($keyword_filter); ?>&location=<?php echo urlencode($location_filter); ?>&position=<?php echo urlencode($position_filter); ?>&center_postcode=<?php echo urlencode($center_postcode); ?>&distance_miles=<?php echo urlencode($distance_miles); ?>" 
+                       class="status-tab <?php echo $status_filter === 'pending' ? 'active' : ''; ?>">Pending Compliance</a>
+                </div>
+                <?php endif; ?>
+
+                <?php
+                try {
+                    $query = "SELECT * FROM `_candidates` $where_clause ORDER BY id DESC";
+                    $stmt = $db_2->prepare($query);
+                    
+                    foreach ($params as $key => $value) {
+                        $stmt->bindValue($key, $value);
+                    }
+                    
+                    $stmt->execute();
+                    $candidates_new = $stmt->fetchAll(PDO::FETCH_OBJ);
+                    
+                    $candidates_old = [];
+                    try {
+                        $q = $db_1->query("SELECT * FROM `candidates` ORDER BY id DESC");
+                        $candidates_old = $q->fetchAll(PDO::FETCH_OBJ);
+                    } catch (Exception $e) {}
+                    
+                    $candidates = !empty($candidates_new) ? $candidates_new : $candidates_old;
+                    
+                } catch (Exception $e) {
+                    $candidates = [];
+                    echo "<div class='alert alert-warning'>Database query error: " . $e->getMessage() . "</div>";
+                }
+                
+                $distance_filtered_candidates = [];
+                if (!empty($center_postcode) && $distance_miles > 0) {
+                    foreach ($candidates as $candidate) {
+                        $postcode_field = isset($candidate->Postcode) ? $candidate->Postcode : (isset($candidate->postcode) ? $candidate->postcode : '');
+                        if (!empty($postcode_field)) {
+                            try {
+                                $distance = calculateDistanceBetweenPostcodes($center_postcode, $postcode_field);
+                                if ($distance <= $distance_miles) {
+                                    $candidate->distance = round($distance, 1);
+                                    $distance_filtered_candidates[] = $candidate;
+                                }
+                            } catch (Exception $e) {
+                                continue;
+                            }
+                        }
+                    }
+                    $candidates = $distance_filtered_candidates;
+                }
+                $total_results = count($candidates);
+                ?>
+                <div class="results-info">
+                    <strong><?php echo $total_results; ?></strong> candidates found
+                    <?php if ($mode === 'mailshot'): ?>
+                        for mailshot
+                    <?php endif; ?>
+                    <?php if (!empty($keyword_filter) || !empty($location_filter) || !empty($position_filter)): ?>
+                        with applied filters
+                    <?php endif; ?>
+                    <?php if (!empty($center_postcode) && $distance_miles > 0): ?>
+                        within <?php echo htmlspecialchars($distance_miles); ?> miles of <?php echo htmlspecialchars($center_postcode); ?>
+                    <?php endif; ?>
+                </div>
+
+                <?php if ($total_results > 0): ?>
+                    <?php if ($mode === 'mailshot'): ?>
+                    <form method="POST" action="">
+                        <div class="select-all-container">
+                            <label>
+                                <input type="checkbox" id="select-all" class="candidate-checkbox">
+                                Select All Candidates
+                            </label>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped" id="editableTable">
+                            <thead class="thead-light">
+                                <tr>
+                                    <?php if ($mode === 'mailshot'): ?>
+                                    <th width="40px">Select</th>
+                                    <?php endif; ?>
+                                    <th>#</th>
+                                    <?php if ($mode === 'candidates'): ?>
+                                    <th>Candidate ID</th>
+                                    <th>Status</th>
+                                    <?php endif; ?>
+                                    <th>Name</th>
+                                    <th>Email Address</th>
+                                    <?php if ($mode === 'candidates'): ?>
+                                    <th>Phone Number</th>
+                                    <?php endif; ?>
+                                    <th>Job Title</th>
+                                    <?php if ($mode === 'candidates'): ?>
+                                    <th>Address</th>
+                                    <th>City</th>
+                                    <th>Postcode</th>
+                                    <?php else: ?>
+                                    <th>Location</th>
+                                    <?php endif; ?>
+                                    <?php if (!empty($center_postcode) && $distance_miles > 0): ?>
+                                    <th>Distance</th>
+                                    <?php endif; ?>
+                                    <?php if ($mode === 'candidates'): ?>
+                                    <th>Created By</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                    <?php endif; ?>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                $n = 1;
+                                
+                                $createdByMapping = [
+                                    "1" => "Chax Shamwana",
+                                    "10" => "Millie Brown", 
+                                    "11" => "Jay Fuller",
+                                    "13" => "Jack Dowler",
+                                    "15" => "Alex Lapompe",
+                                    "2" => "Alex Lapompe",
+                                    "9" => "Jack Dowler"
+                                ];
+                                
+                                foreach ($candidates as $row) {
+                                    $name = '';
+                                    if (isset($row->Name)) {
+                                        $name = $row->Name;
+                                    } elseif (isset($row->first_name) && isset($row->last_name)) {
+                                        $name = $row->first_name . ' ' . $row->last_name;
+                                    }
+                                    
+                                    $status = $row->Status ?? $row->status ?? 'active';
+                                    $email = strtolower($row->Email ?? $row->email ?? '');
+                                    $phonenumber = $row->Number ?? $row->mobilenumber ?? '';
+                                    $Address = $row->Address ?? $row->address ?? '';
+                                    $city = $row->City ?? $row->city ?? '';
+                                    $postcode = $row->Postcode ?? $row->postcode ?? '';
+                                    $job_title = $row->JobTitle ?? $row->job_title ?? '';
+                                    $CandidateID = generateUUIDFromID($row->id);
+                                    $profileImage = $row->ProfileImage ?? (isset($row->profile) ? "https://broad-mead.com/" . $row->profile : '');
+                                    
+                                    $CreatedBy = "Unknown";
+                                    $createdByField = $row->CreatedBy ?? $row->createdBy ?? '';
+                                    if (array_key_exists($createdByField, $createdByMapping)) {
+                                        $CreatedBy = $createdByMapping[$createdByField];
+                                    }
+                                    
+                                    $status_class = 'status-' . strtolower($status);
+                                    
+                                    $date = 'N/A';
+                                    if (isset($row->Date)) {
+                                        $date = date('M d, Y', strtotime($row->Date));
+                                    } elseif (isset($row->created_at)) {
+                                        $date = date('M d, Y', strtotime($row->created_at));
+                                    }
+                                ?>
+                                    <tr data-id="<?php echo $row->id; ?>">
+                                        <?php if ($mode === 'mailshot'): ?>
+                                        <td class="text-center">
+                                            <input type="checkbox" name="selected_candidates[]" value="<?php echo $row->id; ?>" class="candidate-checkbox">
+                                        </td>
+                                        <?php endif; ?>
+                                        <td><?php echo str_pad($n++, 2, '0', STR_PAD_LEFT); ?></td>
+                                        <?php if ($mode === 'candidates'): ?>
+                                        <td>
+                                            <span class="candidate-id"><?php echo substr($CandidateID, 0, 5); ?></span>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge <?php echo $status_class; ?>">
+                                                <?php echo ucfirst($status); ?>
+                                            </span>
+                                        </td>
+                                        <?php endif; ?>
+                                        <td>
+                                            <div class="candidate-name-cell">
+                                                <?php if (!empty($profileImage)): ?>
+                                                    <img src="<?php echo htmlspecialchars($profileImage); ?>" alt="Profile" class="candidate-avatar">
+                                                <?php else: ?>
+                                                    <div class="candidate-avatar-placeholder">
+                                                        <?php echo strtoupper(substr($name, 0, 1)); ?>
+                                                    </div>
+                                                <?php endif; ?>
+                                                <div class="candidate-name"><?php echo htmlspecialchars($name); ?></div>
+                                            </div>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($email); ?></td>
+                                        <?php if ($mode === 'candidates'): ?>
+                                        <td><?php echo htmlspecialchars($phonenumber); ?></td>
+                                        <?php endif; ?>
+                                        <td><?php echo htmlspecialchars($job_title); ?></td>
+                                        <?php if ($mode === 'candidates'): ?>
+                                        <td><?php echo htmlspecialchars($Address); ?></td>
+                                        <td><?php echo htmlspecialchars($city); ?></td>
+                                        <td><?php echo htmlspecialchars($postcode); ?></td>
+                                        <?php else: ?>
+                                        <td><?php echo htmlspecialchars($city); ?></td>
+                                        <?php endif; ?>
+                                        <?php if (!empty($center_postcode) && $distance_miles > 0): ?>
+                                        <td>
+                                            <?php if (isset($row->distance)): ?>
+                                            <span class="distance-badge">
+                                                <?php echo $row->distance; ?> miles
+                                            </span>
+                                            <?php else: ?>
+                                            <span class="distance-badge">N/A</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <?php endif; ?>
+                                        <?php if ($mode === 'candidates'): ?>
+                                        <td><?php echo htmlspecialchars($CreatedBy); ?></td>
+                                        <td><?php echo htmlspecialchars($date); ?></td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn btn-sm btn-outline-primary" title="View Candidate">
+                                                    <i class="fa fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-secondary" title="Edit Candidate">
+                                                    <i class="fa fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" title="Delete Candidate">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                        <?php endif; ?>
+                                    </tr>
+                                <?php } ?>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <?php if ($mode === 'mailshot'): ?>
+                    <div class="mailshot-actions">
+                        <h5>Mailshot Actions</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="mailshot-subject">Email Subject</label>
+                                    <input type="text" name="subject" id="mailshot-subject" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="mailshot-template">Email Template</label>
+                                    <select name="template" id="mailshot-template" class="form-control" required>
+                                        <option value="">Select a template</option>
+                                        <option value="job_alert">Job Alert</option>
+                                        <option value="newsletter">Newsletter</option>
+                                        <option value="event_invitation">Event Invitation</option>
+                                        <option value="follow_up">Follow Up</option>
+                                        <option value="welcome">Welcome Email</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa fa-paper-plane"></i> Send Mailshot
+                            </button>
+                            <span class="text-muted ml-3">
+                                <i class="fa fa-info-circle"></i> 
+                                This will send emails to all selected candidates
+                            </span>
+                        </div>
+                    </div>
+                    </form>
+                    <?php endif; ?>
+
+                <?php else: ?>
+                    <div class="alert alert-info text-center">
+                        <h5>No candidates found</h5>
+                        <p>Try adjusting your search filters or <a href="?mode=<?php echo htmlspecialchars($mode); ?>">clear all filters</a> to see <?php echo $mode === 'mailshot' ? 'candidates for your mailshot' : 'all candidates'; ?>.</p>
+                    </div>
+                <?php endif; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.6/js/bootstrap.min.js"></script>
+    <script>
+        document.querySelectorAll('.filter-input').forEach(function(input) {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.form.submit();
+                }
+            });
+        });
+        
+        <?php if ($mode === 'mailshot'): ?>
+        const selectAllCheckbox = document.getElementById('select-all');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('input[name="selected_candidates[]"]');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+            });
+            
+            document.querySelectorAll('input[name="selected_candidates[]"]').forEach(function(checkbox) {
+                checkbox.addEventListener('change', function() {
+                    const allCheckboxes = document.querySelectorAll('input[name="selected_candidates[]"]');
+                    const checkedCheckboxes = document.querySelectorAll('input[name="selected_candidates[]"]:checked');
+                    selectAllCheckbox.checked = allCheckboxes.length === checkedCheckboxes.length;
+                });
+            });
+        }
+        <?php endif; ?>
+        
+        function highlightSearchTerms() {
+            const keyword = '<?php echo addslashes($keyword_filter); ?>';
+            const location = '<?php echo addslashes($location_filter); ?>';
+            const position = '<?php echo addslashes($position_filter); ?>';
+            
+            if (keyword || location || position) {
+                const terms = [keyword, location, position].filter(term => term.length > 0);
+                
+                terms.forEach(term => {
+                    if (term.length > 2) {
+                        const regex = new RegExp(`(${term})`, 'gi');
+                        document.querySelectorAll('tbody td').forEach(cell => {
+                            if (cell.innerHTML.match(regex)) {
+                                cell.innerHTML = cell.innerHTML.replace(regex, '<mark>$1</mark>');
+                            }
+                        });
+                    }
+                });
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', highlightSearchTerms);
+    </script>
+</body>
+</html>
 <body data-pc-preset="preset-1" data-pc-sidebar-caption="true" data-pc-layout="vertical" data-pc-direction="ltr" data-pc-theme_contrast="" data-pc-theme="<?php echo $theme; ?>">
     <?php include "../../includes/sidebar.php"; ?>
     <?php include "../../includes/header.php"; ?>
@@ -1213,993 +1055,40 @@ if (!isset($ProfilePlaceholder)) {
         <div class="pc-content">
             <?php include "../../includes/breadcrumb.php"; ?>
 
-            <div class="row">
-                <div class="col-sm-12">
-                    <!-- Mode Switch -->
-                    <div class="mode-switch">
-                        <h5 style="margin-bottom: 15px;">Mode Selection</h5>
-                        <a href="?mode=candidates" class="mode-button <?php echo $mode === 'candidates' ? 'active' : ''; ?>">
-                            <i class="ti ti-users"></i> View Candidates
-                        </a>
-                        <a href="?mode=mailshot" class="mode-button <?php echo $mode === 'mailshot' ? 'active' : ''; ?>">
-                            <i class="ti ti-mail"></i> Create Mailshot
-                        </a>
-                        <?php if (IsCheckPermission($USERID, "VIEW_KPIs") || IsCheckPermission($USERID, "VIEW_CANDIDATES")): ?>
-                        <a href="?mode=kpi" class="mode-button <?php echo $mode === 'kpi' ? 'active' : ''; ?>">
-                            <i class="ti ti-chart-bar"></i> Weekly KPI Search
-                        </a>
-                        <?php endif; ?>
-                    </div>
+     
 
-                    <?php if (isset($success_message)): ?>
-                        <div class="success-message">
-                            <i class="ti ti-check-circle"></i> <?php echo $success_message; ?>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if (isset($error_message)): ?>
-                        <div class="error-message">
-                            <i class="ti ti-alert-circle"></i> <?php echo $error_message; ?>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if ($mode === 'kpi'): ?>
-                    <div class="kpi-info">
-                        <h6><i class="ti ti-chart-bar"></i> KPI Reporting Dashboard</h6>
-                        <p><strong>Track and analyze your candidate metrics:</strong></p>
-                        <ul>
-                            <li>Monitor weekly, monthly, and quarterly candidate registration trends</li>
-                            <li>Analyze candidate status distributions and conversion rates</li>
-                            <li>Track top performing job titles and locations</li>
-                            <li>View team performance and candidate creation statistics</li>
-                            <li>Generate custom reports for specific date ranges</li>
-                        </ul>
-                    </div>
-
-                    <!-- KPI Filter Section -->
-                    <div class="filter-section">
-                        <h6 style="margin-bottom: 20px; color: #495057;">
-                            <i class="ti ti-filter enhanced-search-icon"></i> KPI Filters & Date Range
-                        </h6>
-                        <form method="GET" action="">
-                            <input type="hidden" name="mode" value="kpi">
-                            
-                            <div class="row filter-row">
-                                <div class="col-md-3">
-                                    <div class="filter-label">Time Period</div>
-                                    <select name="kpi_period" class="filter-input">
-                                        <option value="current_week" <?php echo $kpi_period === 'current_week' ? 'selected' : ''; ?>>Current Week</option>
-                                        <option value="last_week" <?php echo $kpi_period === 'last_week' ? 'selected' : ''; ?>>Last Week</option>
-                                        <option value="current_month" <?php echo $kpi_period === 'current_month' ? 'selected' : ''; ?>>Current Month</option>
-                                        <option value="last_month" <?php echo $kpi_period === 'last_month' ? 'selected' : ''; ?>>Last Month</option>
-                                        <option value="current_quarter" <?php echo $kpi_period === 'current_quarter' ? 'selected' : ''; ?>>Current Quarter</option>
-                                        <option value="current_year" <?php echo $kpi_period === 'current_year' ? 'selected' : ''; ?>>Current Year</option>
-                                        <option value="custom" <?php echo $kpi_period === 'custom' ? 'selected' : ''; ?>>Custom Range</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="filter-label">KPI Metric Focus</div>
-                                    <select name="kpi_metric" class="filter-input">
-                                        <option value="overview" <?php echo $kpi_metric === 'overview' ? 'selected' : ''; ?>>Overview Dashboard</option>
-                                        <option value="registrations" <?php echo $kpi_metric === 'registrations' ? 'selected' : ''; ?>>Registration Trends</option>
-                                        <option value="status_analysis" <?php echo $kpi_metric === 'status_analysis' ? 'selected' : ''; ?>>Status Analysis</option>
-                                        <option value="geographic" <?php echo $kpi_metric === 'geographic' ? 'selected' : ''; ?>>Geographic Distribution</option>
-                                        <option value="job_titles" <?php echo $kpi_metric === 'job_titles' ? 'selected' : ''; ?>>Job Title Analysis</option>
-                                        <option value="team_performance" <?php echo $kpi_metric === 'team_performance' ? 'selected' : ''; ?>>Team Performance</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="filter-label">Custom Start Date</div>
-                                    <input type="date" name="kpi_start_date" class="filter-input" 
-                                           value="<?php echo htmlspecialchars($kpi_start_date); ?>">
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="filter-label">Custom End Date</div>
-                                    <input type="date" name="kpi_end_date" class="filter-input" 
-                                           value="<?php echo htmlspecialchars($kpi_end_date); ?>">
-                                </div>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <button type="submit" class="filter-button">
-                                        <i class="ti ti-search"></i> Generate KPI Report
-                                    </button>
-                                    <a href="?mode=kpi" class="clear-button">
-                                        <i class="ti ti-refresh"></i> Reset Filters
-                                    </a>
-                                    <button type="button" class="filter-button" onclick="exportKPIReport()" style="background-color: #28a745;">
-                                        <i class="ti ti-download"></i> Export Report
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-
-                    <?php if (!empty($kpi_data) && !isset($kpi_data['error'])): ?>
-                    <!-- KPI Cards -->
-                    <div class="kpi-cards">
-                        <div class="kpi-card success">
-                            <h3><?php echo number_format($kpi_data['new_candidates']); ?></h3>
-                            <p>New Candidates</p>
-                            <div class="growth <?php echo $kpi_data['growth_rate'] >= 0 ? 'positive' : 'negative'; ?>">
-                                <i class="ti ti-trending-<?php echo $kpi_data['growth_rate'] >= 0 ? 'up' : 'down'; ?>"></i>
-                                <?php echo abs($kpi_data['growth_rate']); ?>% vs previous period
-                            </div>
-                        </div>
-                        
-                        <div class="kpi-card info">
-                            <h3><?php echo number_format($kpi_data['active_candidates']); ?></h3>
-                            <p>Active Candidates</p>
-                            <div class="growth neutral">
-                                <?php echo $kpi_data['total_candidates'] > 0 ? round(($kpi_data['active_candidates'] / $kpi_data['total_candidates']) * 100, 1) : 0; ?>% of total
-                            </div>
-                        </div>
-                        
-                        <div class="kpi-card warning">
-                            <h3><?php echo number_format($kpi_data['pending_candidates']); ?></h3>
-                            <p>Pending Compliance</p>
-                            <div class="growth neutral">
-                                Requires attention
-                            </div>
-                        </div>
-                        
-                        <div class="kpi-card danger">
-                            <h3><?php echo number_format($kpi_data['inactive_candidates']); ?></h3>
-                            <p>Inactive Candidates</p>
-                            <div class="growth neutral">
-                                <?php echo $kpi_data['total_candidates'] > 0 ? round(($kpi_data['inactive_candidates'] / $kpi_data['total_candidates']) * 100, 1) : 0; ?>% of total
-                            </div>
-                        </div>
-                        
-                        <div class="kpi-card">
-                            <h3><?php echo number_format($kpi_data['archived_candidates']); ?></h3>
-                            <p>Archived Candidates</p>
-                            <div class="growth neutral">
-                                Historical data
-                            </div>
-                        </div>
-                        
-                        <div class="kpi-card success">
-                            <h3><?php echo number_format($kpi_data['total_candidates']); ?></h3>
-                            <p>Total Candidates</p>
-                            <div class="growth neutral">
-                                <?php echo $kpi_data['date_range']['start']; ?> to <?php echo $kpi_data['date_range']['end']; ?>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Charts Section -->
-                    <div class="kpi-charts">
-                        <div class="chart-container">
-                            <h4><i class="ti ti-chart-line"></i> Daily Registration Trend</h4>
-                            <canvas id="dailyTrendChart" width="400" height="200"></canvas>
-                        </div>
-                        
-                        <div class="chart-container">
-                            <h4><i class="ti ti-chart-pie"></i> Status Distribution</h4>
-                            <canvas id="statusChart" width="400" height="200"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Tables Section -->
-                    <div class="kpi-tables">
-                        <div class="kpi-table-container">
-                            <h4><i class="ti ti-briefcase"></i> Top Job Titles</h4>
-                            <table class="kpi-table">
-                                <thead>
-                                    <tr>
-                                        <th>Job Title</th>
-                                        <th>Count</th>
-                                        <th>%</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($kpi_data['top_job_titles'] as $job): ?>
-                                    <tr>
-                                        <td><?php echo htmlspecialchars($job['JobTitle']); ?></td>
-                                        <td><?php echo $job['count']; ?></td>
-                                        <td><?php echo $kpi_data['total_candidates'] > 0 ? round(($job['count'] / $kpi_data['total_candidates']) * 100, 1) : 0; ?>%</td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        <div class="kpi-table-container">
-                            <h4><i class="ti ti-map-pin"></i> Top Cities</h4>
-                            <table class="kpi-table">
-                                <thead>
-                                    <tr>
-                                        <th>City</th>
-                                        <th>Count</th>
-                                        <th>%</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($kpi_data['top_cities'] as $city): ?>
-                                    <tr>
-                                        <td><?php echo htmlspecialchars($city['City']); ?></td>
-                                        <td><?php echo $city['count']; ?></td>
-                                        <td><?php echo $kpi_data['total_candidates'] > 0 ? round(($city['count'] / $kpi_data['total_candidates']) * 100, 1) : 0; ?>%</td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        <div class="kpi-table-container">
-                            <h4><i class="ti ti-users"></i> Team Performance</h4>
-                            <table class="kpi-table">
-                                <thead>
-                                    <tr>
-                                        <th>Created By</th>
-                                        <th>Count</th>
-                                        <th>%</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php 
-                                    foreach ($kpi_data['created_by_stats'] as $creator): 
-                                        $creatorName = $conn->query("SELECT Name FROM users WHERE UserID = '{$creator['CreatedBy']}'")->fetchColumn();
-                                        if (!$creatorName) $creatorName = 'Unknown';
-                                    ?>
-                                    <tr>
-                                        <td><?php echo htmlspecialchars($creatorName); ?></td>
-                                        <td><?php echo $creator['count']; ?></td>
-                                        <td><?php echo $kpi_data['total_candidates'] > 0 ? round(($creator['count'] / $kpi_data['total_candidates']) * 100, 1) : 0; ?>%</td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <?php elseif (isset($kpi_data['error'])): ?>
-                        <div class="alert alert-danger">
-                            <h6>Error generating KPI report</h6>
-                            <p><?php echo htmlspecialchars($kpi_data['error']); ?></p>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php elseif ($mode === 'mailshot'): ?>
-                    <div class="mailshot-info">
-                        <h6><i class="ti ti-info-circle"></i> Mailshot Mode - Now Using Professional SMTP</h6>
-                        <p><strong>Enhanced filtering for targeted campaigns:</strong></p>
-                        <ul>
-                            <li>✅ Professional SMTP email delivery via mail.nocturnalrecruitment.co.uk</li>
-                            <li>✅ Company branded email templates with signature</li>
-                            <li>✅ Email logging and tracking</li>
-                            <li>✅ Location-based filtering with distance radius</li>
-                            <li>✅ Position and skill-based targeting</li>
-                            <li>✅ Custom email templates - Create your own templates!</li>
-                        </ul>
-                    </div>
-
-                    <?php endif; ?>
-
-                    <?php if ($mode !== 'kpi'): ?>
-                    <!-- Enhanced Filter Section -->
-                    <div class="filter-section <?php echo (!empty($keyword_filter) || !empty($location_filter) || !empty($position_filter) || !empty($center_postcode)) ? 'filter-active' : ''; ?>">
-                        <h6 style="margin-bottom: 20px; color: #495057;">
-                            <i class="ti ti-filter enhanced-search-icon"></i>
-                            <?php echo $mode === 'mailshot' ? 'Enhanced Mailshot Filtering' : 'Advanced Email & CV Filtering'; ?>
-                        </h6>
-                        <form method="GET" action="">
-                            <input type="hidden" name="mode" value="<?php echo htmlspecialchars($mode); ?>">
-                            <input type="hidden" name="isTab" value="<?php echo htmlspecialchars($isTab); ?>">
-                            
-                            <div class="row filter-row">
-                                <div class="col-md-3">
-                                    <div class="filter-label">
-                                        <i class="ti ti-search"></i> Keywords (Name, Email, CV Content)
-                                    </div>
-                                    <input type="text" name="keyword" class="filter-input" 
-                                           placeholder="Search keywords..." 
-                                           value="<?php echo htmlspecialchars($keyword_filter); ?>">
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="filter-label">
-                                        <i class="ti ti-briefcase"></i> Position Title
-                                    </div>
-                                    <?php if ($mode === 'mailshot'): ?>
-                                    <select name="position" class="filter-input">
-                                        <option value="">All Positions</option>
-                                        <?php foreach ($job_titles as $job_title): ?>
-                                            <option value="<?php echo htmlspecialchars($job_title); ?>" 
-                                                    <?php echo $position_filter === $job_title ? 'selected' : ''; ?>>
-                                                <?php echo htmlspecialchars($job_title); ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <?php else: ?>
-                                    <input type="text" name="position" class="filter-input" 
-                                           placeholder="Job title..." 
-                                           value="<?php echo htmlspecialchars($position_filter); ?>">
-                                    <?php endif; ?>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="filter-label">
-                                        <i class="ti ti-map-pin"></i> Location
-                                    </div>
-                                    <?php if ($mode === 'mailshot'): ?>
-                                    <select name="location" class="filter-input">
-                                        <option value="">All Locations</option>
-                                        <?php foreach ($locations as $location): ?>
-                                            <option value="<?php echo htmlspecialchars($location); ?>" 
-                                                    <?php echo $location_filter === $location ? 'selected' : ''; ?>>
-                                                <?php echo htmlspecialchars($location); ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <?php else: ?>
-                                    <input type="text" name="location" class="filter-input" 
-                                           placeholder="City, address, postcode..." 
-                                           value="<?php echo htmlspecialchars($location_filter); ?>">
-                                    <?php endif; ?>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="filter-label">
-                                        <i class="ti ti-mail"></i> Email Keywords
-                                    </div>
-                                    <input type="text" name="email_keywords" class="filter-input" 
-                                           placeholder="Keywords from emails..." 
-                                           value="<?php echo htmlspecialchars($email_keywords); ?>">
-                                </div>
-                            </div>
-                            
-                            <div class="row filter-row">
-                                <div class="col-md-6">
-                                    <div class="filter-label">
-                                        <i class="ti ti-target"></i> Distance Filter
-                                    </div>
-                                    <div class="distance-filter">
-                                        <input type="text" name="center_postcode" class="filter-input" 
-                                               placeholder="Center postcode" 
-                                               value="<?php echo htmlspecialchars($center_postcode); ?>">
-                                        <span>within</span>
-                                        <input type="number" name="distance_miles" class="filter-input distance-input" 
-                                               placeholder="Miles" min="1" max="100"
-                                               value="<?php echo $distance_miles > 0 ? htmlspecialchars($distance_miles) : ''; ?>">
-                                        <span>miles</span>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 d-flex align-items-end">
-                                    <div>
-                                        <button type="submit" class="filter-button">
-                                            <i class="ti ti-search"></i> Apply Filters
-                                        </button>
-                                        <a href="?mode=<?php echo htmlspecialchars($mode); ?>&isTab=<?php echo htmlspecialchars($isTab); ?>" class="clear-button">
-                                            <i class="ti ti-x"></i> Clear Filters
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <h5 class="mb-0">
-                                    <?php 
-                                    if ($mode === 'mailshot') {
-                                        echo 'Mailshot - Candidate Selection';
-                                    } else {
-                                        echo 'Candidates';
-                                    }
-                                    ?>
-                                </h5>
-                                <div class="dropdown">
-                                    <a class="avtar avtar-s btn-link-secondary dropdown-toggle arrow-none" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="ti ti-dots-vertical f-18"></i></a>
-                                    <div class="dropdown-menu dropdown-menu-end">
-                                        <a class="dropdown-item" href="<?php echo $LINK; ?>/create_candidate?CandidateID=<?php echo isset($KeyID) ? $KeyID : ''; ?>">
-                                            <span class="text-success">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-                                                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4" color="currentColor" />
-                                                </svg>
-                                            </span>
-                                            Create
-                                        </a>
-                                        <a type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target=".bd-example-modal-lg">
-                                            <span>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-                                                    <path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5A6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5S14 7.01 14 9.5S11.99 14 9.5 14" />
-                                                </svg>
-                                            </span>
-                                            Legacy Search
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <ul class="nav nav-tabs analytics-tab" id="myTab" role="tablist" style="margin-left:30px;">
-                            <li class="nav-item" role="presentation">
-                                <a href="<?php echo $LINK; ?>/candidates?mode=<?php echo $mode; ?><?php echo !empty($SearchID) ? "&q=$SearchID" : "" ?>">
-                                    <button class="nav-link <?php echo ($isTab == "all") ? 'active' : ''; ?>">All Candidates</button>
-                                </a>
-                            </li>
-                            <?php
-                            $tabs = [
-                                ["name" => "Active", "index" => 1],
-                                ["name" => "Archived", "index" => 2],
-                                ["name" => "Inactive", "index" => 3],
-                                ["name" => "Pending Compliance", "index" => 4]
-                            ];
-                            ?>
-
-                            <ul class="nav">
-                                <?php foreach ($tabs as $tab): ?>
-                                    <li class="nav-item" role="presentation">
-                                        <a href="<?php echo $LINK; ?>/candidates?mode=<?php echo $mode; ?><?php echo !empty($SearchID) ? "&q=$SearchID" : "&i=" . $tab['index']; ?>&isTab=<?php echo $tab['name']; ?>">
-                                            <button class="nav-link <?php echo ($isTab == $tab['name']) ? 'active' : ''; ?>">
-                                                <?php echo $tab['name']; ?>
-                                            </button>
-                                        </a>
-                                    </li>
-                                <?php endforeach; ?>
-                            </ul>
-                        </ul>
-                        
-                        <div class="card-body">
-                            <?php if ($mode === 'mailshot'): ?>
-                            <!-- Mailshot Form -->
-                            <form method="POST" action="">
-                                <div class="select-all-container">
-                                    <label>
-                                        <input type="checkbox" id="select-all" class="candidate-checkbox">
-                                        <strong>Select All Candidates</strong>
-                                    </label>
-                                </div>
-                            <?php endif; ?>
-
-                            <div class="table-responsive dt-responsive">
-                                <?php if (IsCheckPermission($USERID, "VIEW_CANDIDATES")): ?>
-                                    <?php
-                                    // Build enhanced query with filters
-                                    $query = "SELECT * FROM `_candidates` WHERE ClientKeyID = '$ClientKeyID'";
-                                    $params = [];
-                                    
-                                    if ($isTab !== "all") {
-                                        $query .= " AND Status = :status";
-                                        $params[':status'] = $isTab;
-                                    }
-                                    
-                                    // Enhanced filtering
-                                    if (!empty($keyword_filter)) {
-                                        $query .= " AND (Name LIKE :keyword OR Email LIKE :keyword OR JobTitle LIKE :keyword)";
-                                        $params[':keyword'] = '%' . $keyword_filter . '%';
-                                    }
-                                    
-                                    if (!empty($location_filter)) {
-                                        $query .= " AND (City LIKE :location OR Address LIKE :location OR Postcode LIKE :location)";
-                                        $params[':location'] = '%' . $location_filter . '%';
-                                    }
-                                    
-                                    if (!empty($position_filter)) {
-                                        $query .= " AND JobTitle LIKE :position";
-                                        $params[':position'] = '%' . $position_filter . '%';
-                                    }
-                                    
-                                    if (!empty($email_keywords)) {
-                                        $query .= " AND (Email LIKE :email_keywords OR Notes LIKE :email_keywords)";
-                                        $params[':email_keywords'] = '%' . $email_keywords . '%';
-                                    }
-                                    
-                                    // Legacy search support
-                                    if (isset($_GET['q'])) {
-                                        $SearchID = $_GET['q'];
-                                        $qu = $conn->query("SELECT * FROM `search_queries` WHERE SearchID = '$SearchID'");
-                                        while ($r = $qu->fetchObject()) {
-                                            $column = $r->column;
-                                            $value = $r->value;
-                                            $query .= " AND " . $column . " LIKE '%$value%'";
-                                        }
-                                    }
-                                    
-                                    $query .= " ORDER BY Name ASC";
-                                    $stmt = $conn->prepare($query);
-                                    
-                                    foreach ($params as $key => $value) {
-                                        $stmt->bindValue($key, $value);
-                                    }
-                                    
-                                    $stmt->execute();
-                                    $candidates = $stmt->fetchAll(PDO::FETCH_OBJ);
-                                    
-                                    // Apply distance filter if specified
-                                    if (!empty($center_postcode) && $distance_miles > 0) {
-                                        $filtered_candidates = [];
-                                        foreach ($candidates as $candidate) {
-                                            if (!empty($candidate->Postcode)) {
-                                                $distance = calculateDistance($center_postcode, $candidate->Postcode);
-                                                if ($distance <= $distance_miles) {
-                                                    $candidate->distance = $distance;
-                                                    $filtered_candidates[] = $candidate;
-                                                }
-                                            }
-                                        }
-                                        $candidates = $filtered_candidates;
-                                    }
-                                    
-                                    $total_results = count($candidates);
-                                    ?>
-                                    
-                                    <!-- Results Info -->
-                                    <div class="results-info">
-                                        <strong><?php echo $total_results; ?></strong> candidates found
-                                        <?php if ($mode === 'mailshot'): ?>
-                                            for mailshot
-                                        <?php endif; ?>
-                                        <?php if (!empty($keyword_filter) || !empty($location_filter) || !empty($position_filter) || !empty($email_keywords)): ?>
-                                            with applied filters
-                                        <?php endif; ?>
-                                        <?php if (!empty($center_postcode) && $distance_miles > 0): ?>
-                                            within <?php echo $distance_miles; ?> miles of <?php echo htmlspecialchars($center_postcode); ?>
-                                        <?php endif; ?>
-                                    </div>
-
-                                    <table class="table table-bordered">
-                                        <thead>
-                                            <tr>
-                                                <?php if ($mode === 'mailshot'): ?>
-                                                <th width="40px">Select</th>
-                                                <?php endif; ?>
-                                                <th>#</th>
-                                                <th style="<?php echo $mode === 'mailshot' ? 'display: none;' : ''; ?>">
-                                                    <span id="selectAll" style="cursor: pointer;">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-                                                            <path fill="currentColor" d="m9.55 17.308l-4.97-4.97l.714-.713l4.256 4.256l9.156-9.156l.713.714z" />
-                                                        </svg>
-                                                    </span>
-                                                </th>
-                                                <th>Candidate ID</th>
-                                                <th>Status</th>
-                                                <th>Name</th>
-                                                <th>Email Address</th>
-                                                <?php if ($mode !== 'mailshot'): ?>
-                                                <th>Phone Number</th>
-                                                <?php endif; ?>
-                                                <th>Job Title</th>
-                                                <?php if ($mode !== 'mailshot'): ?>
-                                                <th>Location</th>
-                                                <?php else: ?>
-                                                <th>City</th>
-                                                <?php endif; ?>
-                                                <?php if (!empty($center_postcode) && $distance_miles > 0): ?>
-                                                <th>Distance</th>
-                                                <?php endif; ?>
-                                                <?php if ($mode !== 'mailshot'): ?>
-                                                <th>Created By</th>
-                                                <th>Date</th>
-                                                <th>Actions</th>
-                                                <?php endif; ?>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php
-                                            $n = 1;
-                                            foreach ($candidates as $row) {
-                                                $CreatedBy = $conn->query("SELECT Name FROM `users` WHERE UserID = '{$row->CreatedBy}' ")->fetchColumn();
-                                            ?>
-                                                <tr>
-                                                    <?php if ($mode === 'mailshot'): ?>
-                                                    <td class="text-center">
-                                                        <input type="checkbox" name="selected_candidates[]" value="<?php echo $row->CandidateID; ?>" class="candidate-checkbox">
-                                                    </td>
-                                                    <?php endif; ?>
-                                                    <td><?php echo $n++; ?></td>
-                                                    <td style="<?php echo $mode === 'mailshot' ? 'display: none;' : ''; ?>">
-                                                        <input class="form-check-input checkbox-item" type="checkbox" value="<?php echo $row->CandidateID; ?>" data-name="<?php echo $row->Name; ?>" id="flexCheckDefault<?php echo isset($row->id) ? $row->id : $row->CandidateID; ?>">
-                                                    </td>
-                                                    <td><?php echo empty($row->IDNumber) ? str_pad(isset($row->id) ? $row->id : 1, 5, '0', STR_PAD_LEFT) : $row->IDNumber; ?></td>
-                                                    <td>
-                                                        <?php if ($row->Status == "Active"): ?>
-                                                            <span class="badge bg-success">Active</span>
-                                                        <?php elseif ($row->Status == "Archived"): ?>
-                                                            <span class="badge bg-warning">Archived</span>
-                                                        <?php elseif ($row->Status == "Inactive"): ?>
-                                                            <span class="badge bg-danger"><?php echo $row->Status; ?></span>
-                                                        <?php elseif ($row->Status == "Pending Compliance"): ?>
-                                                            <span class="badge bg-info"><?php echo $row->Status; ?></span>
-                                                        <?php else: ?>
-                                                            <span class="badge bg-secondary">Unknown</span>
-                                                        <?php endif; ?>
-                                                    </td>
-                                                    <td>
-                                                        <a href="<?php echo $LINK; ?>/view_candidate/?ID=<?php echo $row->CandidateID; ?>">
-                                                            <div class="d-flex align-items-center">
-                                                                <div class="flex-shrink-0">
-                                                                    <img width="40" height="40" style="object-fit: cover;" src="<?php echo !empty($row->ProfileImage) ? $row->ProfileImage : $ProfilePlaceholder; ?>" onerror="this.onerror=null;this.src='<?php echo $ProfilePlaceholder; ?>'" alt="user image" class="img-radius wid-40">
-                                                                </div>
-                                                                <div class="flex-grow-1 ms-3">
-                                                                    <h6 class="mb-0"><?php echo htmlspecialchars($row->Name); ?></h6>
-                                                                </div>
-                                                            </div>
-                                                        </a>
-                                                    </td>
-                                                    <td><?php echo htmlspecialchars($row->Email); ?></td>
-                                                    <?php if ($mode !== 'mailshot'): ?>
-                                                    <td><?php echo htmlspecialchars($row->Number); ?></td>
-                                                    <?php endif; ?>
-                                                    <td><?php echo htmlspecialchars($row->JobTitle); ?></td>
-                                                    <td><?php echo htmlspecialchars($row->City); ?></td>
-                                                    <?php if (!empty($center_postcode) && $distance_miles > 0): ?>
-                                                    <td>
-                                                        <?php if (isset($row->distance)): ?>
-                                                        <span class="distance-badge">
-                                                            <?php echo $row->distance; ?> miles
-                                                        </span>
-                                                        <?php else: ?>
-                                                        <span class="distance-badge">N/A</span>
-                                                        <?php endif; ?>
-                                                    </td>
-                                                    <?php endif; ?>
-                                                    <?php if ($mode !== 'mailshot'): ?>
-                                                    <td><?php echo htmlspecialchars($CreatedBy); ?></td>
-                                                    <td><?php echo FormatDate($row->Date); ?></td>
-                                                    <td>
-                                                        <div class="dropdown">
-                                                            <a class="avtar avtar-s btn-link-secondary dropdown-toggle arrow-none" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="ti ti-dots-vertical f-18"></i></a>
-                                                            <div class="dropdown-menu dropdown-menu-end">
-                                                                <a class="dropdown-item" href="<?php echo $LINK; ?>/edit_candidate/?CandidateID=<?php echo $row->CandidateID; ?>" id="Edit">
-                                                                    <span class="text-info">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-                                                                            <path fill="currentColor" d="M4 20v-2.52L17.18 4.288q.155-.137.34-.212T17.907 4t.39.064q.19.063.35.228l1.067 1.074q.165.159.226.35q.06.19.06.38q0 .204-.068.39q-.069.185-.218.339L6.519 20zM17.504 7.589L19 6.111L17.889 5l-1.477 1.496z" />
-                                                                        </svg>
-                                                                    </span>
-                                                                    Edit</a>
-                                                                <?php if (IsCheckPermission($USERID, "DELETE_CANDIDATE")): ?>
-                                                                    <a class="dropdown-item delete" href="#" data-bs-toggle="modal" data-bs-target="#DeleteModal">
-                                                                        <span class="text-danger">
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 20 20">
-                                                                                <path fill="currentColor" d="M8.5 4h3a1.5 1.5 0 0 0-3 0m-1 0a2.5 2.5 0 0 1 5 0h5a.5.5 0 0 1 0 1h-1.054l-1.194 10.344A3 3 0 0 1 12.272 18H7.728a3 3 0 0 1-2.98-2.656L3.554 5H2.5a.5.5 0 0 1 0-1zM9 8a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0zm2.5-.5a.5.5 0 0 0-.5.5v6a.5.5 0 0 0 1 0V8a.5.5 0 0 0-.5-.5" />
-                                                                            </svg>
-                                                                        </span>
-                                                                        Delete</a>
-                                                                <?php endif; ?>
-                                                                <a class="dropdown-item" href="<?php echo $LINK; ?>/view_candidate/?ID=<?php echo $row->CandidateID; ?>">
-                                                                    <span class="text-warning">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 20 20">
-                                                                            <g fill="currentColor">
-                                                                                <path d="M6.5 12a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1zm0 3a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1z" />
-                                                                                <path fill-rule="evenodd" d="M11.185 1H4.5A1.5 1.5 0 0 0 3 2.5v15A1.5 1.5 0 0 0 4.5 19h11a1.5 1.5 0 0 0 1.5-1.5V7.202a1.5 1.5 0 0 0-.395-1.014l-4.314-4.702A1.5 1.5 0 0 0 11.185 1M4 2.5a.5.5 0 0 1 .5-.5h6.685a.5.5 0 0 1 .369.162l4.314 4.702a.5.5 0 0 1 .132.338V17.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5z" clip-rule="evenodd" />
-                                                                                <path d="M11 7h5.5a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5v-6a.5.5 0 0 1 1 0z" />
-                                                                            </g>
-                                                                        </svg>
-                                                                    </span>
-                                                                    View
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <?php endif; ?>
-                                                </tr>
-                                            <?php } ?>
-                                        </tbody>
-                                    </table>
-                                    
-                                    <?php if ($total_results == 0): ?>
-                                        <div class="alert alert-info text-center">
-                                            <h6>No candidates found</h6>
-                                            <p>Try adjusting your search filters or <a href="?mode=<?php echo htmlspecialchars($mode); ?>&isTab=<?php echo htmlspecialchars($isTab); ?>">clear all filters</a> to see more candidates.</p>
-                                        </div>
-                                    <?php endif; ?>
-                                    <?php else: ?>
-                                        <?php DeniedAccess(); ?>
-                                    <?php endif; ?>
-                            </div>
-                            
-                            
-<?php if ($mode === 'mailshot' && $total_results > 0): ?>
-<!-- Mailshot Actions -->
-<div class="mailshot-actions">
-    <div class="row">
-        <div class="col-md-8">
-            <h6>Mailshot Configuration</h6>
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="mailshot-subject" class="form-label">Email Subject *</label>
-                        <input type="text" name="subject" id="mailshot-subject" class="form-control" required 
-                               placeholder="Enter email subject">
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="mailshot-template" class="form-label">Email Template *</label>
-                        <div class="d-flex">
-                            <select name="template" id="mailshot-template" class="form-control" required style="margin-right: 10px;">
-                                <option value="">Select a template</option>
-                                <optgroup label="Default Templates">
-                                    <option value="job_alert">Job Alert</option>
-                                    <option value="newsletter">Newsletter</option>
-                                    <option value="event_invitation">Event Invitation</option>
-                                    <option value="follow_up">Follow Up</option>
-                                    <option value="welcome">Welcome Email</option>
-                                </optgroup>
-                                <?php if (!empty($custom_templates)): ?>
-                                <optgroup label="Custom Templates">
-                                    <?php foreach ($custom_templates as $template): ?>
-                                        <option value="custom_<?php echo htmlspecialchars($template['template_name']); ?>">
-                                            <?php echo htmlspecialchars($template['template_name']); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </optgroup>
-                                <?php endif; ?>
-                            </select>
-                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#CustomTemplateModal">
-                                <i class="ti ti-plus"></i> New
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="mb-3">
-                <label for="custom-content" class="form-label">Custom Content (Optional)</label>
-                <textarea name="custom_content" id="custom-content" class="form-control" rows="4" 
-                          placeholder="Add any custom content to include in the email..."></textarea>
-            </div>
-            <div class="mb-3">
-                <button type="submit" class="btn btn-primary" id="send-mailshot-btn">
-                    <i class="ti ti-mail"></i> Send Mailshot
-                </button>
-                <span class="text-muted ms-3">
-                    <i class="ti ti-info-circle"></i> 
-                    This will send emails to all selected candidates
-                </span>
-            </div>
-        </div>
-        
-        <div class="col-md-4">
-            <h6>Quick Template Management</h6>
-            <?php if (!empty($custom_templates)): ?>
-                <div class="template-list" style="max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px; padding: 10px; background-color: white;">
-                    <?php foreach ($custom_templates as $template): ?>
-                        <div class="template-item" style="padding: 8px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <div class="template-name" style="font-weight: 600; color: #495057; font-size: 13px;"><?php echo htmlspecialchars($template['template_name']); ?></div>
-                                <div class="template-subject" style="font-size: 11px; color: #6c757d; margin-top: 2px;"><?php echo htmlspecialchars(substr($template['template_subject'], 0, 30)) . (strlen($template['template_subject']) > 30 ? '...' : ''); ?></div>
-                            </div>
-                            <div class="template-actions">
-                                <button type="button" class="btn btn-sm btn-outline-info" onclick="useTemplate('custom_<?php echo htmlspecialchars($template['template_name']); ?>', '<?php echo htmlspecialchars($template['template_subject']); ?>')" title="Use Template">
-                                    <i class="ti ti-check"></i>
-                                </button>
-                                <form method="POST" style="display: inline;">
-                                    <input type="hidden" name="template_to_delete" value="<?php echo htmlspecialchars($template['template_name']); ?>">
-                                    <button type="submit" name="delete_custom_template" class="btn btn-sm btn-outline-danger" 
-                                            onclick="return confirm('Are you sure you want to delete this template?')" title="Delete Template">
-                                        <i class="ti ti-trash"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php else: ?>
-                <div class="alert alert-info" style="font-size: 12px; padding: 10px;">
-                    <i class="ti ti-info-circle"></i> No custom templates yet. Click "New" to create one!
-                </div>
-            <?php endif; ?>
-        </div>
-    </div>
-</div>
-</form>
-<?php endif; ?>
-
-        <?php if (isset($_GET['q']) || !empty($keyword_filter) || !empty($location_filter) || !empty($position_filter) || !empty($email_keywords)): ?>
-                                <div style="margin-top: 10px;">
-                                    <a href="<?php echo $LINK; ?>/candidates?mode=<?php echo $mode; ?>&isTab=<?php echo $isTab; ?>">
-                                        <button class="btn btn-primary">
-                                            <i class="ti ti-refresh"></i> Reset All Filters
-                                        </button>
-                                    </a>
-                                    <span style="margin-left: 20px;">
-                                        <strong><?php echo $total_results; ?></strong> 
-                                        <?php echo ($total_results == 1 ? 'candidate' : 'candidates'); ?> found
-                                    </span>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Delete Modal -->
-    <div id="DeleteModal" class="modal fade" tabindex="-1" aria-labelledby="DeleteModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirm Delete</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to delete? This action cannot be undone.</p>
-                    <div class="row" style="padding: 10px;">
-                        <input required type="text" class="form-control" id="reason" name="reason" placeholder="Give a reason">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-danger" id="confirmDelete">Confirm</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Template Preview Modal -->
-    <div id="TemplatePreviewModal" class="modal fade" tabindex="-1" aria-labelledby="TemplatePreviewModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Template Preview</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="template-preview-content">
-                        <!-- Template preview will be loaded here -->
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Legacy Advanced Search Modal -->
-    <div class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title h4">Legacy Advanced Search</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-info">
-                        <i class="ti ti-info-circle"></i>
-                        <strong>Note:</strong> Use the enhanced filtering above for better search capabilities including email keywords, distance filtering, and KPI reporting features.
-                    </div>
-                    <form method="POST">
-                        <div class="row">
-                            <div class="col-lg-12">
-                                <div class="mb-3">
-                                    <label class="form-label">Name</label>
-                                    <input type="text" name="Name" class="form-control">
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Candidate ID</label>
-                                    <input type="text" class="form-control" name="IDNumber">
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Job Title</label>
-                                    <input type="text" name="JobTitle" class="form-control">
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Email address</label>
-                                    <input type="text" class="form-control" name="Email">
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Phone Number</label>
-                                    <input type="text" class="form-control" name="Number">
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Address</label>
-                                    <input type="text" class="form-control" name="Address">
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Postcode</label>
-                                    <input type="text" class="form-control" name="Postcode">
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="mb-3">
-                                    <label class="form-label">City</label>
-                                    <input type="text" class="form-control" name="City">
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Created By</label>
-                                    <select name="CreatedBy" class="form-control">
-                                        <option value=""></option>
-                                        <?php
-                                        $q = "SELECT * FROM `users` WHERE ClientKeyID = '$ClientKeyID'";
-                                        $stmt = $conn->prepare($q);
-                                        $stmt->execute();
-                                        while ($row = $stmt->fetch(PDO::FETCH_OBJ)) { ?>
-                                            <option value="<?php echo $row->UserID; ?>"><?php echo htmlspecialchars($row->Name); ?></option>
-                                        <?php } ?>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="submit" name="Search" class="btn btn-primary">Search</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-<!-- Custom Template Modal -->
-<div id="CustomTemplateModal" class="modal fade" tabindex="-1" aria-labelledby="CustomTemplateModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Create Custom Email Template</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="POST" action="">
-                <div class="modal-body">
-                    <div class="alert alert-info">
-                        <i class="ti ti-info-circle"></i>
-                        <strong>Template Placeholders:</strong> Use <code>[CANDIDATE_NAME]</code> for the candidate's name and <code>[CUSTOM_CONTENT]</code> for the custom content field.
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Template Name *</label>
-                        <input type="text" name="custom_template_name" class="form-control" required 
-                               placeholder="e.g., Monthly Newsletter, Job Alert Special">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Default Subject *</label>
-                        <input type="text" name="custom_template_subject" class="form-control" required 
-                               placeholder="Default subject line for this template">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Template Body (HTML) *</label>
-                        <textarea name="custom_template_body" class="form-control" rows="12" required 
-                                  placeholder="<html><body><h2>Hello [CANDIDATE_NAME],</h2><p>Your custom message here...</p><div>[CUSTOM_CONTENT]</div><p>Best regards,<br>Your Team</p></body></html>"></textarea>
-                        <small class="form-text text-muted">You can use HTML formatting. The company signature will be automatically added.</small>
-                    </div>
-                    
+            <!-- <div class="pc-body">
+                <div class="container-fluid">
                     <div class="row">
-                        <div class="col-md-6">
-                            <h6>Quick Templates:</h6>
-                            <button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="loadQuickTemplate('basic')">Basic Template</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="loadQuickTemplate('newsletter')">Newsletter Style</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="loadQuickTemplate('job_alert')">Job Alert Style</button>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Preview:</h6>
-                            <div id="template-preview" style="border: 1px solid #ddd; padding: 10px; background-color: #f9f9f9; min-height: 100px; font-size: 12px;">
-                                <em>Template preview will appear here...</em>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" name="save_custom_template" class="btn btn-success">
-                        <i class="ti ti-device-floppy"></i> Save Template
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-</body>
+                        <div class="col-12">
+                            <div class="filter-section">
+                                <form method="GET" action="">
+                                    <div class="row filter-row">
+                                        <div class="col-md-3">
+                                            <label class="filter-label" for="keyword">Keyword</label>
+                                            <input type="text" id="keyword" name="keyword" class="filter-input filter-input-sm filter-input-lg filter-input-md filter-input-xs filter-input-xl filter-input-xxl filter-input-xxxl" value="<?php echo htmlspecialchars($keyword_filter); ?>" placeholder="Search by name, email, etc.">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="filter-label" for="location">Location</label>
+                                            <input type="text" id="location" name="location" class="filter-input filter-input-sm filter-input-lg filter-input-md filter-input-xs filter-input-xl filter-input-xxl filter-input-xxxl" value="<?php echo htmlspecialchars($location_filter); ?>" placeholder="City or postcode">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="filter-label" for="position">Position</label>
+                                            <select id="position" name="position" class="filter-input filter-input-sm filter-input-lg filter-input-md filter-input-xs filter-input-xl filter-input-xxl filter-input-xxxl">
+                                                <option value="">All Positions</option>
+                                                <?php foreach ($job_titles as $title): ?>
+                                                    <option value="<?php echo htmlspecialchars($title); ?>" <?php echo ($title === $position_filter) ? 'selected' : ''; ?>><?php echo htmlspecialchars($title); ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3 distance-filter">
+                                            <label class="filter-label" for="center_postcode">Center Postcode</label>
+                                            <input type="text" id="center_postcode" name="center_postcode" class="filter-input distance-input" value="<?php echo htmlspecialchars($center_postcode); ?>" placeholder="Postcode">
+                                            <input type="number" id="distance_miles" name="distance_miles" class="filter-input distance-input" value="<?php echo $distance_miles; ?>" placeholder="Miles">
+                                            <?php if ($distance_miles > 0): ?>
+                                                <span class="distance-badge"><?php echo $distance_miles; ?> miles</span>
+                                            <?php endif; ?>
+                                        </div> -->
 
 <?php include "../../includes/js.php"; ?>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -2548,5 +1437,5 @@ $(document).ready(function() {
     $('textarea[name="custom_template_body"]').on('input', updatePreview);
 });
 </script>
-
 </html>
+   
