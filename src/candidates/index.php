@@ -3,39 +3,39 @@ if (!isset($_COOKIE['USERID'])) {
     header("location: $LINK/login ");
 }
 
-// 1. USE COMPOSER AUTOLOADER INSTEAD OF MANUAL PATHS
-require_once __DIR__ . '/../../vendor/autoload.php'; // Adjust path as needed
+
+//todo: Enabble PRG Pattern
+//todo: Send to DB
+//todo: Send emails
+
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+require __DIR__ . '/../../vendor/autoload.php';
 
-// Email Configuration Class - UPDATED FOR GMAIL AND REPLY-TO
-class EmailConfig {
-    // Titan Mail SMTP Settings
-    public static $SMTP_HOST = 'smtp.titan.email';
-    public static $SMTP_PORT = 587;
-    public static $SMTP_SECURE = PHPMailer::ENCRYPTION_STARTTLS;
-    public static $SMTP_USERNAME = 'learn@natec.icu';
-    public static $SMTP_PASSWORD = '@WhiteDiamond0100';
-    public static $FROM_EMAIL = 'learn@natec.icu';
-    public static $FROM_NAME = 'Recruitment Team';
-    public static $REPLY_TO_EMAIL = 'info@nocturnalrecruitment.co.uk';
-    public static $REPLY_TO_NAME = 'Nocturnal Recruitment';
-    public static $USE_SMTP = true;
-
-
-    
-    public static function getHost() { return self::$SMTP_HOST; }
-    public static function getPort() { return self::$SMTP_PORT; }
-    public static function getSecure() { return self::$SMTP_SECURE; }
-    public static function getUsername() { return self::$SMTP_USERNAME; }
-    public static function getPassword() { return self::$SMTP_PASSWORD; }
-    public static function getFromEmail() { return self::$FROM_EMAIL; }
-    public static function getFromName() { return self::$FROM_NAME; }
-    public static function getReplyToEmail() { return self::$REPLY_TO_EMAIL; } // New getter
-    public static function getReplyToName() { return self::$REPLY_TO_NAME; }   // New getter
-    public static function useSmtp() { return self::$USE_SMTP; }
+// Email Configuration Class
+function sendTitanMail($to, $subject, $body, $fromEmail, $fromName = 'Recruitment Team') {
+    $mail = new PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->Host = 'smtp.titan.email';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'learn@natec.icu';
+        $mail->Password = '@WhiteDiamond0100'; //TODO: Replace with your actual password
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = 587;
+        $mail->setFrom($fromEmail, $fromName);
+        $mail->addAddress($to);
+        $mail->addReplyTo('info@nocturnalrecruitment.co.uk', 'Information');
+        $mail->isHTML(false);
+        $mail->Subject = $subject;
+        $mail->Body = $body;
+        $mail->send();
+        return true;
+    } catch (Exception $e) {
+        return $mail->ErrorInfo;
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
@@ -87,97 +87,820 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
         $error_count = 0;
         $error_details = [];
 
-        foreach ($candidate_ids as $candidate_id) {
-            try {
-                $stmt = $db_2->prepare("SELECT Name, Email FROM _candidates WHERE id = ?");
-                $stmt->execute([$candidate_id]);
-                $candidate = $stmt->fetch(PDO::FETCH_OBJ);
 
-                if (!$candidate) {
-                    $stmt = $db_1->prepare("SELECT CONCAT(first_name, ' ', last_name) as Name, email as Email FROM candidates WHERE id = ?");
-                    $stmt->execute([$candidate_id]);
-                    $candidate = $stmt->fetch(PDO::FETCH_OBJ);
-                }
+    }} else {   }
 
-                if ($candidate && filter_var($candidate->Email, FILTER_VALIDATE_EMAIL)) {
-                    $to = $candidate->Email;
-                    $name = $candidate->Name ?: 'Candidate';
+        
 
-                    $personalized_body = str_replace(
-                        ['[Name]', '[LoginLink]', '[NewsletterLink]', '[EventLink]'],
-                        [$name, 'https://broad-mead.com/login', 'https://broad-mead.com/newsletter', 'https://broad-mead.com/events'],
-                        $base_body
-                    );
+       foreach ($candidate_ids as $candidate_id) {
+    try {
+        // 1. First fetch candidate data
+        $stmt = $db_2->prepare("SELECT Name, Email FROM _candidates WHERE id = ?");
+        $stmt->execute([$candidate_id]);
+        $candidate = $stmt->fetch(PDO::FETCH_OBJ);
 
-                    $result = sendTitanMail($to, $final_subject, $personalized_body, $from_email);
 
-                    if ($result === true) {
-                        $success_count++;
-                        $log_stmt = $db_2->prepare("INSERT INTO mailshot_logs (candidate_id, email, subject, template, body, status, error, sent_at) VALUES (?, ?, ?, ?, ?, 'sent', NULL, NOW())");
-                        $log_stmt->execute([$candidate_id, $to, $final_subject, $template, $personalized_body]);
-                    } else {
-                        $error_count++;
-                        $error_details[] = "Failed to send to: $to - $result";
-                        $log_stmt = $db_2->prepare("INSERT INTO mailshot_logs (candidate_id, email, subject, template, body, status, error, sent_at) VALUES (?, ?, ?, ?, ?, 'failed', ?, NOW())");
-                        $log_stmt->execute([$candidate_id, $to, $final_subject, $template, $personalized_body, $result]);
-                    }
-                } else {
-                    $error_count++;
-                    $candidate_email = $candidate->Email ?? 'N/A';
-                    $error_details[] = "Invalid email for candidate ID: $candidate_id (Email: $candidate_email)";
-                    $log_stmt = $db_2->prepare("INSERT INTO mailshot_logs (candidate_id, email, subject, template, body, status, error, sent_at) VALUES (?, ?, ?, ?, ?, 'invalid', NULL, NOW())");
-                    $log_stmt->execute([$candidate_id, $candidate_email, $final_subject, $template, 'Email validation failed - no message sent']);
-                }
-            } catch (Exception $e) {
-                $error_count++;
-                $error_details[] = "Error processing candidate ID: $candidate_id - " . $e->getMessage();
-                $candidate_email = isset($candidate) && isset($candidate->Email) ? $candidate->Email : 'N/A';
-                $log_stmt = $db_2->prepare("INSERT INTO mailshot_logs (candidate_id, email, subject, template, body, status, error, sent_at) VALUES (?, ?, ?, ?, ?, 'error', ?, NOW())");
-                $log_stmt->execute([$candidate_id, $candidate_email, $final_subject, $template, 'Exception occurred - no message sent', $e->getMessage()]);
-            }
+        if (!$candidate) {
+            $stmt = $db_1->prepare("SELECT CONCAT(first_name, ' ', last_name) as Name, email as Email FROM candidates WHERE id = ?");
+            $stmt->execute([$candidate_id]);
+            $candidate = $stmt->fetch(PDO::FETCH_OBJ);
         }
 
-        if ($error_count === 0) {
-            $success_message = "Mailshot sent successfully to $success_count candidates.";
-        } else {
-            $error_message = "Mailshot partially sent: $success_count succeeded, $error_count failed.";
-            if (!empty($error_details)) {
-                $error_message .= "\n\nError details:\n" . implode("\n", array_slice($error_details, 0, 5));
-                if (count($error_details) > 5) {
-                    $error_message .= "\n... and " . (count($error_details) - 5) . " more errors.";
-                }
+        // 2. Validate candidate and email
+        if ($candidate && filter_var($candidate->Email, FILTER_VALIDATE_EMAIL)) {
+            $to = $candidate->Email;
+            $name = $candidate->Name ?: 'Candidate';
+
+            // 3. Personalize email content
+            $personalized_body = str_replace(
+                ['[Name]', '[LoginLink]', '[NewsletterLink]', '[EventLink]'],
+                [$name, 'https://broad-mead.com/login', 'https://broad-mead.com/newsletter', 'https://broad-mead.com/events'],
+                $base_body
+            );
+
+            // 4. FIRST log to database with 'processing' status
+            $log_stmt = $db_2->prepare("INSERT INTO mailshot_logs 
+                (candidate_id, email, subject, template, body, status, error, sent_at, smtp_response) 
+                VALUES (?, ?, ?, ?, ?, 'processing', NULL, NOW(), 'Pending dispatch')");
+            $log_stmt->execute([
+                $candidate_id, 
+                $to, 
+                $final_subject, 
+                $template, 
+                $personalized_body
+            ]);
+            $mailshot_log_id = $db_2->lastInsertId();
+
+            // 5. NOW attempt to send the email
+            $result = sendTitanMail($to, $final_subject, $personalized_body, $from_email);
+
+            // 6. Update log based on send result
+            if ($result === true) {
+                $update_stmt = $db_2->prepare("UPDATE mailshot_logs 
+                    SET status = 'sent', smtp_response = 'SMTP accepted for delivery'
+                    WHERE id = ?");
+                $update_stmt->execute([$mailshot_log_id]);
+                $success_count++;
+            } else {
+                $error_message = is_string($result) ? $result : 'Unknown error';
+                $update_stmt = $db_2->prepare("UPDATE mailshot_logs 
+                    SET status = 'failed', error = ?, smtp_response = ?
+                    WHERE id = ?");
+                $update_stmt->execute([$error_message, $error_message, $mailshot_log_id]);
+                $error_count++;
+                $error_details[] = "Failed to send to: $to - $error_message";
             }
+        } else {
+            // Invalid email case - still log it
+            $candidate_email = $candidate->Email ?? 'N/A';
+            $log_stmt = $db_2->prepare("INSERT INTO mailshot_logs 
+                (candidate_id, email, subject, template, body, status, error, sent_at, smtp_response) 
+                VALUES (?, ?, ?, ?, ?, 'invalid', 'Invalid email address', NOW(), 'No send attempted')");
+            $log_stmt->execute([
+                $candidate_id, 
+                $candidate_email, 
+                $final_subject, 
+                $template, 
+                'Email validation failed - no message sent'
+            ]);
+            $error_count++;
+            $error_details[] = "Invalid email for candidate ID: $candidate_id (Email: $candidate_email)";
+        }
+    } catch (Exception $e) {
+        // Log exceptions with candidate data if available
+        $candidate_email = isset($candidate) && isset($candidate->Email) ? $candidate->Email : 'N/A';
+        $log_stmt = $db_2->prepare("INSERT INTO mailshot_logs 
+            (candidate_id, email, subject, template, body, status, error, sent_at, smtp_response) 
+            VALUES (?, ?, ?, ?, ?, 'error', ?, NOW(), 'Exception occurred')");
+        $log_stmt->execute([
+            $candidate_id, 
+            $candidate_email, 
+            $final_subject, 
+            $template, 
+            'Exception occurred - no message sent', 
+            $e->getMessage()
+        ]);
+        $error_count++;
+        $error_details[] = "Error processing candidate ID: $candidate_id - " . $e->getMessage();
+    }
+}
+
+// Final status message
+if ($error_count === 0) {
+    $success_message = "Mailshot processing completed. Successfully sent to $success_count candidates.";
+} else {
+    $error_message = "Mailshot processing completed with issues: $success_count succeeded, $error_count failed.";
+    if (!empty($error_details)) {
+        $error_message .= "\n\nFirst 5 errors:\n" . implode("\n", array_slice($error_details, 0, 5));
+        if (count($error_details) > 5) {
+            $error_message .= "\n... plus " . (count($error_details) - 5) . " more errors.";
         }
     }
 }
 
+function checkUserPermission($required_permission) {
+    // Check if user is logged in
+    // if (!isset($_SESSION['user_id'])) {
+    //     header('Location: login.php');
+    //     exit();
+    // }
 
-function getMailshotOptions($db) {
+
+    $host = 'localhost';
+    $user = 'root';
+    $password = '';
+    $dbname = 'broadmead_v3'; 
+    
+    try {
+        $pdo = new PDO("mysql:host=$host;dbname=$dbname", $user, $password);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) as has_permission 
+            FROM userpermissions 
+            WHERE user_id = ? AND permission_name = ?
+        ");
+        $stmt->execute([$_SESSION['user_id'], $required_permission]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($result['has_permission'] == 0) {
+            header('HTTP/1.0 403 Forbidden');
+            echo "<div style='text-align: center; margin-top: 50px;'>
+                    <h2>Access Denied</h2>
+                    <p>You don't have permission to view this page.</p>
+                    <p>Required permission: $required_permission</p>
+                    <a href='dashboard.php'>Return to Dashboard</a>
+                  </div>";
+            exit();
+        }
+        
+        return true;
+        
+    } catch (PDOException $e) {
+        // error_log("Permission check error: " . $e->getMessage());
+        // header('HTTP/1.0 500 Internal Server Error');
+        // echo "<div style='text-align: center; margin-top: 50px;'>
+        //         <h2>System Error</h2>
+        //         <p>Unable to verify permissions. Please try again later.</p>
+        //       </div>";
+        // exit();
+    }
+}
+
+checkUserPermission('VIEW_CLIENTS');
+
+$host = 'localhost';
+$user = 'root';
+$password = '';
+$dbname1 = 'broadmead';
+$dbname2 = 'broadmead_v3';
+$dsn1 = 'mysql:host=' . $host . ';dbname=' . $dbname1;
+$dsn2 = 'mysql:host=' . $host . ';dbname=' . $dbname2;
+
+try {
+    $db_1 = new PDO($dsn1, $user, $password);
+    $db_1->setAttribute(PDO::ATTR_DEFAULT_STR_PARAM, PDO::PARAM_STR);
+    $db_1->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $db_2 = new PDO($dsn2, $user, $password);
+    $db_2->setAttribute(PDO::ATTR_DEFAULT_STR_PARAM, PDO::PARAM_STR);
+    $db_2->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    echo "<b>Error: </b> " . $e->getMessage();
+    exit;
+}
+
+$ClientKeyID = "5WEMfHw2aD2C35j8VsVmSQkpzZ2BI2dpqe8wLfqTmQYHPbnrBh";
+
+$mode = isset($_GET['mode']) ? $_GET['mode'] : 'candidates';
+
+if ($mode === 'kpi') {
+    checkUserPermission('VIEW_KPIs');
+}
+
+$keyword_filter = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
+$location_filter = isset($_GET['location']) ? trim($_GET['location']) : '';
+$position_filter = isset($_GET['position']) ? trim($_GET['position']) : '';
+$status_filter = isset($_GET['status']) ? $_GET['status'] : ($mode === 'mailshot' ? 'active' : 'all');
+
+$center_postcode = isset($_GET['center_postcode']) ? trim($_GET['center_postcode']) : '';
+$distance_miles = isset($_GET['distance_miles']) ? (int)$_GET['distance_miles'] : 0;
+
+$kpi_period = isset($_GET['kpi_period']) ? $_GET['kpi_period'] : 'current_week';
+$kpi_metric = isset($_GET['kpi_metric']) ? $_GET['kpi_metric'] : 'overview';
+$kpi_start_date = isset($_GET['kpi_start_date']) ? $_GET['kpi_start_date'] : '';
+$kpi_end_date = isset($_GET['kpi_end_date']) ? $_GET['kpi_end_date'] : '';
+
+$where_conditions = [];
+$params = [];
+
+if (!empty($keyword_filter)) {
+    $where_conditions[] = "(Name LIKE :keyword OR Email LIKE :keyword OR JobTitle LIKE :keyword)";
+    $params[':keyword'] = '%' . $keyword_filter . '%';
+}
+
+if (!empty($location_filter)) {
+    $where_conditions[] = "(City LIKE :location OR Address LIKE :location OR Postcode LIKE :location)";
+    $params[':location'] = '%' . $location_filter . '%';
+}
+
+if (!empty($position_filter)) {
+    $where_conditions[] = "JobTitle LIKE :position";
+    $params[':position'] = '%' . $position_filter . '%';
+}
+
+if ($status_filter !== 'all') {
+    $where_conditions[] = "Status = :status";
+    $params[':status'] = $status_filter;
+}
+
+$where_clause = '';
+if (!empty($where_conditions)) {
+    $where_clause = 'WHERE ' . implode(' AND ', $where_conditions);
+}
+
+// function generateUUID($length = 50) {
+//     $charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+//     $charactersLength = strlen($charset);
+//     $randomString = '';
+//     for ($i = 0; $i < $length; $i++) {
+//         $randomString .= $charset[random_int(0, $charactersLength - 1)];
+//     }
+//     return $randomString;
+// }
+
+// function generateUUIDFromID($id) {
+//     $hash = md5($id);
+//     $uuid = sprintf(
+//         '%08s-%04s-%04s-%04s-%12s',
+//         substr($hash, 0, 8),
+//         substr($hash, 8, 4),
+//         substr($hash, 12, 4),
+//         substr($hash, 16, 4),
+//         substr($hash, 20, 12)
+//     );
+//     return $uuid;
+// }
+
+function getPostcodeCoordinates($postcode) {
+    static $postcodeCache = [];
+    
+    if (isset($postcodeCache[$postcode])) {
+        return $postcodeCache[$postcode];
+    }
+    
+    $coordinates = [
+        'latitude' => 51.5 + (rand(-100, 100) / 1000),
+        'longitude' => -0.1 + (rand(-100, 100) / 1000)
+    ];
+    
+    $postcodeCache[$postcode] = $coordinates;
+    return $coordinates;
+}
+
+function calculateDistanceBetweenPostcodes($postcode1, $postcode2) {
+    $coords1 = getPostcodeCoordinates($postcode1);
+    $coords2 = getPostcodeCoordinates($postcode2);
+    
+    $earthRadius = 3959; // in miles
+    
+    $lat1 = deg2rad($coords1['latitude']);
+    $lon1 = deg2rad($coords1['longitude']);
+    $lat2 = deg2rad($coords2['latitude']);
+    $lon2 = deg2rad($coords2['longitude']);
+    
+    $latDelta = $lat2 - $lat1;
+    $lonDelta = $lon2 - $lon1;
+    
+    $a = sin($latDelta/2) * sin($latDelta/2) +
+         cos($lat1) * cos($lat2) * 
+         sin($lonDelta/2) * sin($lonDelta/2);
+    $c = 2 * atan2(sqrt($a), sqrt(1-$a));
+    
+    $distance = $earthRadius * $c;
+    return $distance;
+}
+
+function getDateRangeForPeriod($period) {
+    $today = new DateTime();
+    
+    switch ($period) {
+        case 'current_week':
+            $start = clone $today;
+            $start->modify('monday this week');
+            $end = clone $start;
+            $end->modify('+6 days');
+            break;
+        case 'last_week':
+            $start = new DateTime('monday last week');
+            $end = clone $start;
+            $end->modify('+6 days');
+            break;
+        case 'current_month':
+            $start = new DateTime('first day of this month');
+            $end = new DateTime('last day of this month');
+            break;
+        case 'last_month':
+            $start = new DateTime('first day of last month');
+            $end = new DateTime('last day of last month');
+            break;
+        case 'current_quarter':
+            $quarter = ceil($today->format('n') / 3);
+            $start = new DateTime($today->format('Y') . '-' . (($quarter - 1) * 3 + 1) . '-01');
+            $end = clone $start;
+            $end->modify('+2 months')->modify('last day of this month');
+            break;
+        case 'current_year':
+            $start = new DateTime($today->format('Y') . '-01-01');
+            $end = new DateTime($today->format('Y') . '-12-31');
+            break;
+        default:
+            $start = clone $today;
+            $start->modify('monday this week');
+            $end = clone $start;
+            $end->modify('+6 days');
+    }
+    
+    return [
+        'start' => $start->format('Y-m-d'),
+        'end' => $end->format('Y-m-d')
+    ];
+}
+
+function calculateKPIs($db, $period, $start_date = null, $end_date = null) {
+    if ($start_date && $end_date) {
+        $dateRange = ['start' => $start_date, 'end' => $end_date];
+    } else {
+        $dateRange = getDateRangeForPeriod($period);
+    }
+    
+    $kpis = [];
+
+    
+    
+    try {
+        $stmt = $db->prepare("SELECT COUNT(*) as total FROM _candidates WHERE Date BETWEEN ? AND ?");
+        $stmt->execute([$dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
+        $kpis['total_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        
+        $stmt = $db->prepare("SELECT COUNT(*) as new_candidates FROM _candidates WHERE Date BETWEEN ? AND ?");
+        $stmt->execute([$dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
+        $kpis['new_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['new_candidates'];
+        
+        $stmt = $db->prepare("SELECT COUNT(*) as active FROM _candidates WHERE Status = 'active' AND Date BETWEEN ? AND ?");
+        $stmt->execute([$dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
+        $kpis['active_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['active'];
+        
+        $stmt = $db->prepare("SELECT COUNT(*) as inactive FROM _candidates WHERE Status = 'inactive' AND Date BETWEEN ? AND ?");
+        $stmt->execute([$dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
+        $kpis['inactive_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['inactive'];
+        
+        $stmt = $db->prepare("SELECT COUNT(*) as archived FROM _candidates WHERE Status = 'archived' AND Date BETWEEN ? AND ?");
+        $stmt->execute([$dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
+        $kpis['archived_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['archived'];
+        
+        $stmt = $db->prepare("SELECT COUNT(*) as pending FROM _candidates WHERE Status = 'pending' AND Date BETWEEN ? AND ?");
+        $stmt->execute([$dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
+        $kpis['pending_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['pending'];
+        
+        $stmt = $db->prepare("SELECT JobTitle, COUNT(*) as count FROM _candidates WHERE Date BETWEEN ? AND ? AND JobTitle IS NOT NULL GROUP BY JobTitle ORDER BY count DESC LIMIT 5");
+        $stmt->execute([$dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
+        $kpis['top_job_titles'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $stmt = $db->prepare("SELECT City, COUNT(*) as count FROM _candidates WHERE Date BETWEEN ? AND ? AND City IS NOT NULL GROUP BY City ORDER BY count DESC LIMIT 5");
+        $stmt->execute([$dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
+        $kpis['top_cities'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $stmt = $db->prepare("SELECT CreatedBy, COUNT(*) as count FROM _candidates WHERE Date BETWEEN ? AND ? GROUP BY CreatedBy ORDER BY count DESC");
+        $stmt->execute([$dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
+        $kpis['created_by_stats'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $stmt = $db->prepare("SELECT DATE(Date) as date, COUNT(*) as count FROM _candidates WHERE Date BETWEEN ? AND ? GROUP BY DATE(Date) ORDER BY date");
+        $stmt->execute([$dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
+        $kpis['daily_trend'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $previousPeriod = getPreviousPeriodRange($period, $dateRange);
+        $stmt = $db->prepare("SELECT COUNT(*) as previous_total FROM _candidates WHERE Date BETWEEN ? AND ?");
+        $stmt->execute([$previousPeriod['start'] . ' 00:00:00', $previousPeriod['end'] . ' 23:59:59']);
+        $previous_total = $stmt->fetch(PDO::FETCH_ASSOC)['previous_total'];
+        
+        if ($previous_total > 0) {
+            $kpis['growth_rate'] = round((($kpis['new_candidates'] - $previous_total) / $previous_total) * 100, 2);
+        } else {
+            $kpis['growth_rate'] = 0;
+        }
+        
+        $kpis['date_range'] = $dateRange;
+        
+    } catch (Exception $e) {
+        $kpis['error'] = $e->getMessage();
+    }
+    
+    return $kpis;
+}
+
+function getPreviousPeriodRange($period, $currentRange) {
+    $start = new DateTime($currentRange['start']);
+    $end = new DateTime($currentRange['end']);
+    $diff = $start->diff($end)->days + 1;
+    
+    $prevStart = clone $start;
+    $prevStart->modify("-{$diff} days");
+    $prevEnd = clone $end;
+    $prevEnd->modify("-{$diff} days");
+    
+    return [
+        'start' => $prevStart->format('Y-m-d'),
+        'end' => $prevEnd->format('Y-m-d')
+    ];
+}
+
+// if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates'])) {
+//     $selected_candidates = $_POST['selected_candidates'];
+//     $subject = $_POST['subject'];
+//     $template = $_POST['template'];
+    
+//     $success_message = "Mailshot with subject '" . htmlspecialchars($subject) . "' sent to " . count($selected_candidates) . " candidates successfully!";
+// }
+
+if ($mode === 'mailshot') {
     $job_titles_query = "SELECT DISTINCT JobTitle FROM _candidates WHERE JobTitle IS NOT NULL AND JobTitle != '' ORDER BY JobTitle";
-    $job_titles_stmt = $db->query($job_titles_query);
+    $job_titles_stmt = $db_2->query($job_titles_query);
     $job_titles = $job_titles_stmt->fetchAll(PDO::FETCH_COLUMN);
 
     $locations_query = "SELECT DISTINCT City FROM _candidates WHERE City IS NOT NULL AND City != '' ORDER BY City";
-    $locations_stmt = $db->query($locations_query);
+    $locations_stmt = $db_2->query($locations_query);
     $locations = $locations_stmt->fetchAll(PDO::FETCH_COLUMN);
-
-    return [$job_titles, $locations];
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates'])) {
-    $selected_candidates = $_POST['selected_candidates'];
-    $subject = $_POST['subject'];
-    $template = $_POST['template'];
-    
-    $success_message = "Mailshot with subject '" . htmlspecialchars($subject) . "' sent to " . count($selected_candidates) . " candidates successfully!";
+$kpi_data = [];
+if ($mode === 'kpi') {
+    $kpi_data = calculateKPIs($db_2, $kpi_period, $kpi_start_date, $kpi_end_date);
 }
+
+
 ?>
 
-
-
-
-
+<!DOCTYPE html>
+<html lang="en">
 <?php include "../../includes/head.php"; ?>
+<style>
+.filter-section {
+    background-color: #f8f9fa;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.filter-row {
+    margin-bottom: 15px;
+}
+
+.filter-label {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #495057;
+    font-size: 14px;
+}
+
+.filter-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.filter-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.filter-button:hover {
+    background-color: #0056b3;
+}
+
+.clear-button {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.clear-button:hover {
+    background-color: #545b62;
+}
+
+.mode-switch {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #e9ecef;
+    border-radius: 8px;
+}
+
+.mode-button {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.mode-button.active {
+    background-color: #007bff;
+}
+
+.mode-button:hover {
+    text-decoration: none;
+    color: white;
+    background-color: #0056b3;
+}
+
+.distance-filter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.distance-input {
+    width: 80px;
+}
+
+.distance-badge {
+    background-color: #e9ecef;
+    color: #495057;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    margin-left: 5px;
+}
+
+.results-info {
+    margin-bottom: 15px;
+    color: #6c757d;
+    font-size: 14px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.mailshot-actions {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #e9ecef;
+    border-radius: 5px;
+}
+
+.select-all-container {
+    margin-bottom: 15px;
+}
+
+.candidate-checkbox {
+    width: 18px;
+    height: 18px;
+}
+
+.success-message {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    border: 1px solid #c3e6cb;
+}
+
+.error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    border: 1px solid #f5c6cb;
+}
+
+.mailshot-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    border: 1px solid #bee5eb;
+}
+
+.enhanced-search-icon {
+    color: #007bff;
+    margin-right: 5px;
+}
+
+.filter-active {
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+}
+
+.kpi-info {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    border: 1px solid #ffeaa7;
+}
+
+.kpi-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.kpi-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-left: 4px solid #007bff;
+}
+
+.kpi-card.success {
+    border-left-color: #28a745;
+}
+
+.kpi-card.warning {
+    border-left-color: #ffc107;
+}
+
+.kpi-card.danger {
+    border-left-color: #dc3545;
+}
+
+.kpi-card.info {
+    border-left-color: #17a2b8;
+}
+
+.kpi-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.kpi-card p {
+    margin: 0;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.kpi-card .growth {
+    font-size: 0.9rem;
+    margin-top: 5px;
+}
+
+.growth.positive {
+    color: #28a745;
+}
+
+.growth.negative {
+    color: #dc3545;
+}
+
+.growth.neutral {
+    color: #6c757d;
+}
+
+.kpi-charts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.chart-container {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.chart-container h4 {
+    margin-bottom: 20px;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.kpi-tables {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.kpi-table-container {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.kpi-table-container h4 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.kpi-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.kpi-table th,
+.kpi-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.kpi-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Custom Template Styles */
+.custom-template-section {
+    background-color: #f8f9fa;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.template-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 10px;
+    background-color: white;
+}
+
+.template-item {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: between;
+    align-items: center;
+}
+
+.template-item:last-child {
+    border-bottom: none;
+}
+
+.template-name {
+    font-weight: 600;
+    color: #495057;
+}
+
+.template-subject {
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 2px;
+}
+
+.template-actions {
+    margin-left: auto;
+}
+
+.btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+@media (max-width: 768px) {
+    .kpi-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .kpi-charts {
+        grid-template-columns: 1fr;
+    }
+    
+    .kpi-tables {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
 <body data-pc-preset="preset-1" data-pc-sidebar-caption="true" data-pc-layout="vertical" data-pc-direction="ltr" data-pc-theme_contrast="" data-pc-theme="<?php echo $theme; ?>">
     <?php include "../../includes/sidebar.php"; ?>
     <?php include "../../includes/header.php"; ?>
@@ -186,30 +909,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates']
     <div class="pc-container" style="margin-left: 280px;">
         <div class="pc-content">
             <?php include "../../includes/breadcrumb.php"; ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $mode === 'kpi' ? 'KPI Reporting - Weekly Analytics' : ($mode === 'mailshot' ? 'Mailshot - Candidate Filtering' : 'Candidates - Email Filtering System'); ?></title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.6/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="permission-indicator">
-                    <i class="fa fa-shield"></i>
-                    <strong>Access Granted:</strong> You have VIEW_CLIENTS permission and can access this candidates page.
-                    <?php if ($mode === 'kpi'): ?>
-                        You also have VIEW_KPIs permission for analytics.
-                    <?php endif; ?>
-                </div>
 
-                <div class="mode-switch">
+         <div class="mode-switch">
                     <h4 style="margin-bottom: 15px;">Mode Selection</h4>
                     <a href="?mode=candidates" class="mode-button <?php echo $mode === 'candidates' ? 'active' : ''; ?>">
                         <i class="fa fa-users"></i> View Candidates
@@ -218,11 +919,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates']
                         <i class="fa fa-paper-plane"></i> Create Mailshot
                     </a>
                     <?php 
-                    try {
-                        $stmt = $db_2->prepare("SELECT COUNT(*) as has_permission FROM userpermissions WHERE user_id = ? AND permission_name = 'VIEW_KPIs'");
-                        $stmt->execute([$_SESSION['user_id']]);
-                        $has_kpi_permission = $stmt->fetch(PDO::FETCH_ASSOC)['has_permission'] > 0;
-                        
+                  try {
+    $stmt = $db_2->prepare("SELECT COUNT(*) as has_permission FROM userpermissions WHERE UserID = ? AND permission = 'VIEW_KPIs'");
+    $stmt->execute([$_SESSION['UserID']]);
+    $has_kpi_permission = $stmt->fetch(PDO::FETCH_ASSOC)['has_permission'] > 0;
                         if ($has_kpi_permission): ?>
                             <a href="?mode=kpi" class="mode-button <?php echo $mode === 'kpi' ? 'active' : ''; ?>">
                                 <i class="fa fa-bar-chart"></i> Weekly KPI Search
@@ -264,7 +964,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates']
                     </div>
                 <?php endif; ?>
                 
-                <?php require_once 'kpi_reporting.php'; ?>
+           
 
                 <?php if ($mode !== 'kpi'): ?>
                 <div class="filter-section">
@@ -403,7 +1103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates']
                     
                     $candidates_old = [];
                     try {
-                        $q = $db_1->query("SELECT * FROM `candidates` ORDER BY id DESC");
+                        $q = $db_1->query("SELECT * FROM `_candidates` ORDER BY id DESC");
                         $candidates_old = $q->fetchAll(PDO::FETCH_OBJ);
                     } catch (Exception $e) {}
                     
@@ -522,7 +1222,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates']
                                     $city = $row->City ?? $row->city ?? '';
                                     $postcode = $row->Postcode ?? $row->postcode ?? '';
                                     $job_title = $row->JobTitle ?? $row->job_title ?? '';
-                                    $CandidateID = generateUUIDFromID($row->id);
+                                   $CandidateID = $row->CandidateID ?? '';
                                     $profileImage = $row->ProfileImage ?? (isset($row->profile) ? "https://broad-mead.com/" . $row->profile : '');
                                     
                                     $CreatedBy = "Unknown";
@@ -549,7 +1249,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates']
                                         <td><?php echo str_pad($n++, 2, '0', STR_PAD_LEFT); ?></td>
                                         <?php if ($mode === 'candidates'): ?>
                                         <td>
-                                            <span class="candidate-id"><?php echo substr($CandidateID, 0, 5); ?></span>
+                                              <span class="candidate-id"><?php echo substr($CandidateID ?? '', 0, 5); ?></span>
                                         </td>
                                         <td>
                                             <span class="status-badge <?php echo $status_class; ?>">
@@ -718,398 +1418,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_candidates']
         
         document.addEventListener('DOMContentLoaded', highlightSearchTerms);
     </script>
-</body>
+
 </html>
-<body data-pc-preset="preset-1" data-pc-sidebar-caption="true" data-pc-layout="vertical" data-pc-direction="ltr" data-pc-theme_contrast="" data-pc-theme="<?php echo $theme; ?>">
-    <?php include "../../includes/sidebar.php"; ?>
-    <?php include "../../includes/header.php"; ?>
-    <?php include "../../includes/toast.php"; ?>
-
-    <div class="pc-container" style="margin-left: 280px;">
-        <div class="pc-content">
-            <?php include "../../includes/breadcrumb.php"; ?>
-
-     
-
-            <!-- <div class="pc-body">
-                <div class="container-fluid">
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="filter-section">
-                                <form method="GET" action="">
-                                    <div class="row filter-row">
-                                        <div class="col-md-3">
-                                            <label class="filter-label" for="keyword">Keyword</label>
-                                            <input type="text" id="keyword" name="keyword" class="filter-input filter-input-sm filter-input-lg filter-input-md filter-input-xs filter-input-xl filter-input-xxl filter-input-xxxl" value="<?php echo htmlspecialchars($keyword_filter); ?>" placeholder="Search by name, email, etc.">
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label class="filter-label" for="location">Location</label>
-                                            <input type="text" id="location" name="location" class="filter-input filter-input-sm filter-input-lg filter-input-md filter-input-xs filter-input-xl filter-input-xxl filter-input-xxxl" value="<?php echo htmlspecialchars($location_filter); ?>" placeholder="City or postcode">
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label class="filter-label" for="position">Position</label>
-                                            <select id="position" name="position" class="filter-input filter-input-sm filter-input-lg filter-input-md filter-input-xs filter-input-xl filter-input-xxl filter-input-xxxl">
-                                                <option value="">All Positions</option>
-                                                <?php foreach ($job_titles as $title): ?>
-                                                    <option value="<?php echo htmlspecialchars($title); ?>" <?php echo ($title === $position_filter) ? 'selected' : ''; ?>><?php echo htmlspecialchars($title); ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-3 distance-filter">
-                                            <label class="filter-label" for="center_postcode">Center Postcode</label>
-                                            <input type="text" id="center_postcode" name="center_postcode" class="filter-input distance-input" value="<?php echo htmlspecialchars($center_postcode); ?>" placeholder="Postcode">
-                                            <input type="number" id="distance_miles" name="distance_miles" class="filter-input distance-input" value="<?php echo $distance_miles; ?>" placeholder="Miles">
-                                            <?php if ($distance_miles > 0): ?>
-                                                <span class="distance-badge"><?php echo $distance_miles; ?> miles</span>
-                                            <?php endif; ?>
-                                        </div> -->
-
-<?php include "../../includes/js.php"; ?>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-$(document).ready(function() {
-    // Enhanced filtering auto-submit on Enter key
-    $('.filter-input').on('keypress', function(e) {
-        if (e.which === 13) {
-            e.preventDefault();
-            $(this).closest('form').submit();
-        }
-    });
-
-    // Mailshot select all functionality
-    $('#select-all').on('change', function() {
-        $('.candidate-checkbox').prop('checked', this.checked);
-    });
-    
-    $('.candidate-checkbox').on('change', function() {
-        const allCheckboxes = $('.candidate-checkbox').length;
-        const checkedCheckboxes = $('.candidate-checkbox:checked').length;
-        $('#select-all').prop('checked', allCheckboxes === checkedCheckboxes);
-    });
-
-    // Legacy delete functionality
-    $('.delete').on('click', function() {
-        var row = $(this).closest('tr');
-        var checkbox = row.find('.checkbox-item');
-        checkbox.prop('checked', true);
-    });
-
-    // Mailshot form validation and loading state
-    $('#send-mailshot-btn').on('click', function(e) {
-        const selectedCandidates = document.querySelectorAll('input[name="selected_candidates[]"]:checked');
-        const subject = document.getElementById('mailshot-subject').value.trim();
-        const template = document.getElementById('mailshot-template').value;
-        
-        if (selectedCandidates.length === 0) {
-            e.preventDefault();
-            alert('Please select at least one candidate.');
-            return;
-        }
-        
-        if (!subject) {
-            e.preventDefault();
-            alert('Please enter an email subject.');
-            return;
-        }
-        
-        if (!template) {
-            e.preventDefault();
-            alert('Please select an email template.');
-            return;
-        }
-        
-        // Show loading state
-        this.innerHTML = '<i class="ti ti-loader"></i> Sending...';
-        this.disabled = true;
-        
-        // Confirm before sending
-        if (!confirm(`Are you sure you want to send this mailshot to ${selectedCandidates.length} candidates?`)) {
-            e.preventDefault();
-            this.innerHTML = '<i class="ti ti-mail"></i> Send Mailshot';
-            this.disabled = false;
-        }
-    });
-});
-
-// Template preview function
-function previewTemplate(templateName) {
-    // Get custom template data via AJAX
-    $.ajax({
-        url: window.location.href,
-        type: 'POST',
-        data: {
-            action: 'preview_template',
-            template_name: templateName
-        },
-        success: function(response) {
-            // For now, show a simple preview
-            const previewContent = `
-                <h6>Template: ${templateName}</h6>
-                <div class="alert alert-info">
-                    <strong>Note:</strong> This is a preview of your custom template. 
-                    The actual email will include the company signature and proper formatting.
-                </div>
-                <div style="border: 1px solid #ddd; padding: 15px; background-color: #f9f9f9;">
-                    <p><em>Template preview functionality coming soon...</em></p>
-                    <p>Template Name: <strong>${templateName}</strong></p>
-                </div>
-            `;
-            
-            document.getElementById('template-preview-content').innerHTML = previewContent;
-            const modal = new bootstrap.Modal(document.getElementById('TemplatePreviewModal'));
-            modal.show();
-        },
-        error: function() {
-            alert('Error loading template preview.');
-        }
-    });
-}
-
-// KPI Charts (only load if in KPI mode)
-<?php if ($mode === 'kpi' && !empty($kpi_data) && !isset($kpi_data['error'])): ?>
-// Daily Trend Chart
-const dailyTrendCtx = document.getElementById('dailyTrendChart').getContext('2d');
-const dailyTrendChart = new Chart(dailyTrendCtx, {
-    type: 'line',
-    data: {
-        labels: [<?php echo "'" . implode("','", array_column($kpi_data['daily_trend'], 'date')) . "'"; ?>],
-        datasets: [{
-            label: 'Daily Registrations',
-            data: [<?php echo implode(',', array_column($kpi_data['daily_trend'], 'count')); ?>],
-            borderColor: '#007bff',
-            backgroundColor: 'rgba(0, 123, 255, 0.1)',
-            tension: 0.4,
-            fill: true
-        }]
-    },
-    options: {
-        responsive: true,
-        scales: {
-            y: {
-                beginAtZero: true
-            }
-        }
-    }
-});
-
-// Status Distribution Chart
-const statusCtx = document.getElementById('statusChart').getContext('2d');
-const statusChart = new Chart(statusCtx, {
-    type: 'doughnut',
-    data: {
-        labels: ['Active', 'Inactive', 'Archived', 'Pending'],
-        datasets: [{
-            data: [
-                <?php echo $kpi_data['active_candidates']; ?>,
-                <?php echo $kpi_data['inactive_candidates']; ?>,
-                <?php echo $kpi_data['archived_candidates']; ?>,
-                <?php echo $kpi_data['pending_candidates']; ?>
-            ],
-            backgroundColor: [
-                '#28a745',
-                '#dc3545',
-                '#ffc107',
-                '#17a2b8'
-            ]
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: {
-                position: 'bottom'
-            }
-        }
-    }
-});
-
-// Export function
-function exportKPIReport() {
-    let csvContent = "KPI Report - <?php echo $kpi_data['date_range']['start']; ?> to <?php echo $kpi_data['date_range']['end']; ?>\n\n";
-    csvContent += "Metric,Value\n";
-    csvContent += "Total Candidates,<?php echo $kpi_data['total_candidates']; ?>\n";
-    csvContent += "New Candidates,<?php echo $kpi_data['new_candidates']; ?>\n";
-    csvContent += "Active Candidates,<?php echo $kpi_data['active_candidates']; ?>\n";
-    csvContent += "Inactive Candidates,<?php echo $kpi_data['inactive_candidates']; ?>\n";
-    csvContent += "Archived Candidates,<?php echo $kpi_data['archived_candidates']; ?>\n";
-    csvContent += "Pending Candidates,<?php echo $kpi_data['pending_candidates']; ?>\n";
-    csvContent += "Growth Rate,<?php echo $kpi_data['growth_rate']; ?>%\n";
-    
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'kpi-report-<?php echo date('Y-m-d'); ?>.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
-}
-<?php endif; ?>
-
-document.getElementById('confirmDelete').addEventListener('click', function() {
-    let checkboxes = document.querySelectorAll('.checkbox-item:checked');
-    let ids = [];
-    let successCount = 0;
-    var reason = $("#reason").val();
-
-    if (reason.length > 0) {
-        checkboxes.forEach(function(checkbox) {
-            ids.push({
-                id: checkbox.value,
-                name: checkbox.getAttribute('data-name')
-            });
-        });
-
-        if (ids.length > 0) {
-            $("#confirmDelete").text("Deleting...");
-
-            ids.forEach(function(item) {
-                $.ajax({
-                    url: window.location.href,
-                    type: 'POST',
-                    data: {
-                        ID: item.id,
-                        name: item.name,
-                        reason: reason,
-                        DeletCandidate: true
-                    },
-                    success: function(response) {
-                        successCount++;
-                        if (successCount === ids.length) {
-                            setTimeout(() => {
-                                window.location.reload();
-                            }, 1000);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.log("Error: " + error);
-                    }
-                });
-            });
-        } else {
-            ShowToast('Error 102: Something went wrong.');
-        }
-    } else {
-        ShowToast('Error 101: Reason field is required.');
-        return;
-    }
-});
-
-// Template management functions
-function useTemplate(templateValue, templateSubject) {
-    document.getElementById('mailshot-template').value = templateValue;
-    document.getElementById('mailshot-subject').value = templateSubject;
-    
-    // Visual feedback
-    const templateSelect = document.getElementById('mailshot-template');
-    templateSelect.style.borderColor = '#28a745';
-    setTimeout(() => {
-        templateSelect.style.borderColor = '';
-    }, 2000);
-}
-
-function loadQuickTemplate(type) {
-    const templateBody = document.querySelector('textarea[name="custom_template_body"]');
-    const templateSubject = document.querySelector('input[name="custom_template_subject"]');
-    
-    const templates = {
-        basic: {
-            subject: 'Important Update from Nocturnal Recruitment',
-            body: `<html>
-<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;'>
-    <h2 style='color: #2c3e50;'>Hello [CANDIDATE_NAME],</h2>
-    
-    <p>We hope this email finds you well.</p>
-    
-    <div style='background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;'>
-        [CUSTOM_CONTENT]
-    </div>
-    
-    <p>If you have any questions, please don't hesitate to contact us.</p>
-    
-    <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
-</body>
-</html>`
-        },
-        newsletter: {
-            subject: 'Nocturnal Recruitment Newsletter - [MONTH] Edition',
-            body: `<html>
-<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;'>
-    <div style='background-color: #007bff; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0;'>
-        <h1 style='margin: 0;'>Newsletter</h1>
-        <p style='margin: 5px 0 0 0;'>Latest Updates & Opportunities</p>
-    </div>
-    
-    <div style='background-color: #f8f9fa; padding: 20px; border-radius: 0 0 5px 5px;'>
-        <h2 style='color: #2c3e50;'>Hello [CANDIDATE_NAME],</h2>
-        
-        <p>Welcome to our latest newsletter with exciting updates and opportunities!</p>
-        
-        <div style='background-color: white; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #007bff;'>
-            [CUSTOM_CONTENT]
-        </div>
-        
-        <p>Stay connected with us for more opportunities!</p>
-        
-        <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
-    </div>
-</body>
-</html>`
-        },
-        job_alert: {
-            subject: 'New Job Opportunities - Perfect Match for You!',
-            body: `<html>
-<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;'>
-    <div style='background-color: #28a745; color: white; padding: 15px; text-align: center; border-radius: 5px;'>
-        <h1 style='margin: 0;'>🎯 New Job Alert!</h1>
-    </div>
-    
-    <h2 style='color: #2c3e50; margin-top: 20px;'>Hello [CANDIDATE_NAME],</h2>
-    
-    <p>We've found some exciting new opportunities that match your profile!</p>
-    
-    <div style='background-color: #d4edda; padding: 20px; border-radius: 5px; margin: 20px 0; border: 1px solid #c3e6cb;'>
-        <h3 style='color: #155724; margin-top: 0;'>Featured Opportunities:</h3>
-        [CUSTOM_CONTENT]
-    </div>
-    
-    <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; text-align: center;'>
-        <p style='margin: 0;'><strong>Ready to take the next step?</strong></p>
-        <p style='margin: 5px 0 0 0;'>Contact us today to discuss these opportunities!</p>
-    </div>
-    
-    <p>Best regards,<br><strong>Nocturnal Recruitment Team</strong></p>
-</body>
-</html>`
-        }
-    };
-    
-    if (templates[type]) {
-        templateSubject.value = templates[type].subject;
-        templateBody.value = templates[type].body;
-        updatePreview();
-    }
-}
-
-function updatePreview() {
-    const templateBody = document.querySelector('textarea[name="custom_template_body"]').value;
-    const preview = document.getElementById('template-preview');
-    
-    if (templateBody.trim()) {
-        // Simple preview - replace placeholders with sample data
-        let previewContent = templateBody
-            .replace(/\[CANDIDATE_NAME\]/g, 'John Doe')
-            .replace(/\[CUSTOM_CONTENT\]/g, 'This is where your custom content will appear...');
-        
-        preview.innerHTML = previewContent;
-    } else {
-        preview.innerHTML = '<em>Template preview will appear here...</em>';
-    }
-}
-
-// Add event listener for template body changes
-$(document).ready(function() {
-    $('textarea[name="custom_template_body"]').on('input', updatePreview);
-});
-</script>
-</html>
-   

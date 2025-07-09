@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
                 $candidate = $stmt->fetch(PDO::FETCH_OBJ);
 
                 if (!$candidate) {
-                    $stmt = $db_1->prepare("SELECT CONCAT(first_name, ' ', last_name) as Name, email as Email FROM candidates WHERE id = ?");
+                    $stmt = $db_1->prepare("SELECT CONCAT(first_name, ' ', last_name) as Name, email as Email FROM _candidates WHERE id = ?");
                     $stmt->execute([$candidate_id]);
                     $candidate = $stmt->fetch(PDO::FETCH_OBJ);
                 }
