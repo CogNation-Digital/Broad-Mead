@@ -987,6 +987,90 @@ $createdByMapping = [
                         <button type="submit" class="btn btn-primary"><i class="fa fa-bar-chart"></i> Generate Report</button>
                         <a href="?mode=kpi" class="btn btn-secondary"><i class="fa fa-times"></i> Clear</a>
                     </div>
+
+                     <div class="col-md-3">
+                <label for="job_title_filter">Job Title</label>
+                <select name="job_title_filter" id="job_title_filter" class="form-control">
+                    <option value="">All Job Titles</option>
+                    <?php
+                    // Fetch distinct job titles from database
+                    $job_titles_query = "SELECT DISTINCT JobTitle FROM _candidates WHERE JobTitle IS NOT NULL AND JobTitle != '' ORDER BY JobTitle";
+                    $job_titles_stmt = $db_2->query($job_titles_query);
+                    $job_titles = $job_titles_stmt->fetchAll(PDO::FETCH_COLUMN);
+                    
+                    foreach ($job_titles as $title) {
+                        $selected = isset($_GET['job_title_filter']) && $_GET['job_title_filter'] === $title ? 'selected' : '';
+                        echo "<option value=\"" . htmlspecialchars($title) . "\" $selected>" . htmlspecialchars($title) . "</option>";
+                    }
+                    ?>
+                </select>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- Location Filter -->
+            <div class="col-md-3">
+                <label for="location_filter">Location</label>
+                <select name="location_filter" id="location_filter" class="form-control">
+                    <option value="">All Locations</option>
+                    <?php
+                    // Fetch distinct locations from database
+                    $locations_query = "SELECT DISTINCT City FROM _candidates WHERE City IS NOT NULL AND City != '' ORDER BY City";
+                    $locations_stmt = $db_2->query($locations_query);
+                    $locations = $locations_stmt->fetchAll(PDO::FETCH_COLUMN);
+                    
+                    foreach ($locations as $location) {
+                        $selected = isset($_GET['location_filter']) && $_GET['location_filter'] === $location ? 'selected' : '';
+                        echo "<option value=\"" . htmlspecialchars($location) . "\" $selected>" . htmlspecialchars($location) . "</option>";
+                    }
+                    ?>
+                </select>
+            </div>
+            
+            <!-- Status Filter -->
+            <div class="col-md-3">
+                <label for="status_filter">Status</label>
+                <select name="status_filter" id="status_filter" class="form-control">
+                    <option value="">All Statuses</option>
+                    <option value="active" <?php echo isset($_GET['status_filter']) && $_GET['status_filter'] === 'active' ? 'selected' : ''; ?>>Active</option>
+                    <option value="inactive" <?php echo isset($_GET['status_filter']) && $_GET['status_filter'] === 'inactive' ? 'selected' : ''; ?>>Inactive</option>
+                    <option value="archived" <?php echo isset($_GET['status_filter']) && $_GET['status_filter'] === 'archived' ? 'selected' : ''; ?>>Archived</option>
+                    <option value="pending" <?php echo isset($_GET['status_filter']) && $_GET['status_filter'] === 'pending' ? 'selected' : ''; ?>>Pending</option>
+                </select>
+            </div>
+            
+            <!-- Recruiter Filter -->
+            <div class="col-md-3">
+                <label for="recruiter_filter">Recruiter</label>
+                <select name="recruiter_filter" id="recruiter_filter" class="form-control">
+                    <option value="">All Recruiters</option>
+                    <?php
+                    // Fetch distinct recruiters from database
+                    $recruiters_query = "SELECT DISTINCT CreatedBy FROM _candidates WHERE CreatedBy IS NOT NULL AND CreatedBy != ''";
+                    $recruiters_stmt = $db_2->query($recruiters_query);
+                    $recruiters = $recruiters_stmt->fetchAll(PDO::FETCH_COLUMN);
+                    
+                    foreach ($recruiters as $recruiter_id) {
+                        $recruiter_name = $createdByMapping[$recruiter_id] ?? 'Unknown User';
+                        $selected = isset($_GET['recruiter_filter']) && $_GET['recruiter_filter'] === $recruiter_id ? 'selected' : '';
+                        echo "<option value=\"" . htmlspecialchars($recruiter_id) . "\" $selected>" . htmlspecialchars($recruiter_name) . "</option>";
+                    }
+                    ?>
+                </select>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="col-md-3" style="margin-top: 24px;">
+                <button type="submit" class="btn btn-primary"><i class="fa fa-bar-chart"></i> Generate Report</button>
+                <a href="?mode=kpi" class="btn btn-secondary"><i class="fa fa-times"></i> Clear Filters</a>
+                <?php if (!empty($kpi_data)): ?>
+                    <button type="button" class="btn btn-success" onclick="exportKpiData()" style="margin-top: 5px;">
+                        <i class="fa fa-file-excel"></i> Export
+                    </button>
+                <?php endif; ?>
+            </div>
+        </div>
+    </form>
                 </div>
             </form>
         </div>
