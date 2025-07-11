@@ -1277,35 +1277,83 @@ $createdByMapping = [
                 </div>
             </div>
 
-            <!-- Created By KPI Table -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5>Candidates Created By User</h5>
-                </div>
-                <div class="card-body">
-                    <?php if (!empty($kpi_data['created_by_stats'])): ?>
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped">
-                                <thead class="thead-light">
-                                    <tr>
-                                        <th>Created By</th>
-                                        <th>Count</th>
-                                        <th>% of Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($kpi_data['created_by_stats'] as $item):
-                                        $createdByUserName = $createdByMapping[$item['CreatedBy']] ?? 'Unknown';
-                                    ?>
-                                        <tr>
-                                            <td><?php echo htmlspecialchars($createdByUserName); ?></td>
-                                            <td><?php echo $item['count']; ?></td>
-                                            <td><?php echo ($total_candidates_in_period > 0) ? round(($item['count'] / $total_candidates_in_period) * 100, 2) : 0; ?>%</td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
+          <div class="card mb-4">
+    <div class="card-header">
+        <h5>Candidates Created By User</h5>
+    </div>
+    <div class="card-body">
+        <?php 
+        // First calculate total candidates in period for percentage calculation
+        $total_candidates_in_period = $kpi_data['total_candidates'] ?? 0;
+        
+        // Get recruiter stats with proper names by joining with users table
+        $recruiter_stats_query = "
+            SELECT 
+                u.id as UserID,
+                u.name as Name,
+                COUNT(c.id) as candidate_count
+            FROM 
+                _candidates c
+            LEFT JOIN 
+                users u ON c.CreatedBy = u.id
+            WHERE 
+                c.Date BETWEEN :start_date AND :end_date
+                " . (!empty($_GET['status_filter']) ? " AND c.Status = :status" : "") . "
+                " . (!empty($_GET['job_title_filter']) ? " AND c.JobTitle = :job_title" : "") . "
+                " . (!empty($_GET['location_filter']) ? " AND c.City = :location" : "") . "
+            GROUP BY 
+                u.id, u.name
+            ORDER BY 
+                candidate_count DESC
+        ";
+        
+        $recruiter_stmt = $db_2->prepare($recruiter_stats_query);
+        
+        // Bind parameters
+        $recruiter_stmt->bindValue(':start_date', $kpi_data['date_range']['start'] . ' 00:00:00');
+        $recruiter_stmt->bindValue(':end_date', $kpi_data['date_range']['end'] . ' 23:59:59');
+        
+        if (!empty($_GET['status_filter'])) {
+            $recruiter_stmt->bindValue(':status', $_GET['status_filter']);
+        }
+        if (!empty($_GET['job_title_filter'])) {
+            $recruiter_stmt->bindValue(':job_title', $_GET['job_title_filter']);
+        }
+        if (!empty($_GET['location_filter'])) {
+            $recruiter_stmt->bindValue(':location', $_GET['location_filter']);
+        }
+        
+        $recruiter_stmt->execute();
+        $recruiter_stats = $recruiter_stmt->fetchAll(PDO::FETCH_ASSOC);
+        ?>
+        
+        <?php if (!empty($recruiter_stats)): ?>
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Created By</th>
+                            <th>Count</th>
+                            <th>% of Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($recruiter_stats as $item): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($item['user_name'] ?? 'Unknown'); ?></td>
+                                <td><?php echo $item['candidate_count']; ?></td>
+                                <td><?php echo ($total_candidates_in_period > 0) ? round(($item['candidate_count'] / $total_candidates_in_period) * 100, 2) : 0; ?>%</td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php else: ?>
+            <div class="alert alert-info">No recruiter data available for the selected filters.</div>
+        <?php endif; ?>
+    </div>
+</div>
+</div>
                     <?php else: ?>
                         <div class="alert alert-info text-center">No 'created by' data for this period.</div>
                     <?php endif; ?>
@@ -1551,6 +1599,6 @@ $createdByMapping = [
                 document.body.removeChild(downloadLink);
             }
         </script>
-    <?php endif; ?>
+   
 </body>
 </html>
