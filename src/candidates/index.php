@@ -983,10 +983,10 @@ $createdByMapping = [
                         <label for="kpi_end_date">End Date</label>
                         <input type="date" name="kpi_end_date" id="kpi_end_date" class="form-control" value="<?php echo htmlspecialchars($kpi_end_date); ?>" <?php echo $kpi_period !== 'custom' ? 'disabled' : ''; ?>>
                     </div>
-                    <div class="col-md-3" style="margin-top: 24px;">
+                    <!-- <div class="col-md-3" style="margin-top: 24px;">
                         <button type="submit" class="btn btn-primary"><i class="fa fa-bar-chart"></i> Generate Report</button>
                         <a href="?mode=kpi" class="btn btn-secondary"><i class="fa fa-times"></i> Clear</a>
-                    </div>
+                    </div> -->
 
                      <div class="col-md-3">
                 <label for="job_title_filter">Job Title</label>
