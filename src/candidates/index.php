@@ -1,18 +1,17 @@
 <?php
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-include "includes/config.php"; // Ensure this path is correct and config.php defines necessary globals like $LINK, $USERID, $NAME, Notify(), IsCheckPermission(), FormatDate(), DeniedAccess(), $theme
+include "includes/config.php";
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-use PHPMailer\PHPMailer\SMTP; // Added SMTP class for debug output
 
 // Database configuration
 $host = 'localhost';
 $user = 'root';
 $password = '';
-$dbname1 = 'broadmead'; // Assuming this is for old candidate data or other related data
-$dbname2 = 'broadmead_v3'; // Assuming this is the primary database for current candidates
+$dbname1 = 'broadmead';
+$dbname2 = 'broadmead_v3';
 $dsn1 = 'mysql:host=' . $host . ';dbname=' . $dbname1;
 $dsn2 = 'mysql:host=' . $host . ';dbname=' . $dbname2;
 
@@ -30,18 +29,12 @@ try {
     exit;
 }
 
-// Get the current mode from GET parameter, default to 'candidates'
 $mode = isset($_GET['mode']) ? $_GET['mode'] : 'candidates';
 
-// Initialize messages and logs
-$success_message = '';
-$error_message = '';
-$console_logs = [];
-
-// Process mailshot if mode is 'mailshot' and form is submitted
+// Process mailshot
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
-    error_log("POST data received for mailshot: " . print_r($_POST, true));
-
+    error_log("POST data received: " . print_r($_POST, true));
+    
     // Validation
     if (empty($_POST['selected_candidates'])) {
         $error_message = "Please select at least one candidate.";
@@ -50,182 +43,177 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
     } elseif (empty($_POST['template'])) {
         $error_message = "Please select an email template.";
     } else {
-        // Decode the JSON string of candidate IDs
-        $candidate_ids_json = $_POST['selected_candidates'];
-        $candidate_ids = json_decode($candidate_ids_json, true);
+        $candidate_ids = $_POST['selected_candidates'];
+        $subject = $_POST['subject'];
+        $template = $_POST['template'];
+        
+        error_log("Processing mailshot for " . count($candidate_ids) . " candidates");
+        
+        // Email templates
+        $templates = [
+            'job_alert' => [
+                'subject' => 'New Job Opportunities Matching Your Profile',
+                'body' => "Hello [Name],\n\nWe have new job opportunities that match your profile. Log in to your account to view them:\n\n[LoginLink]\n\nBest regards,\nThe Recruitment Team"
+            ],
+            'newsletter' => [
+                'subject' => 'Our Latest Industry Insights',
+                'body' => "Hello [Name],\n\nCheck out our latest newsletter with industry insights and job tips:\n\n[NewsletterLink]\n\nBest regards,\nThe Recruitment Team"
+            ],
+            'event_invitation' => [
+                'subject' => 'Invitation to Recruitment Event',
+                'body' => "Hello [Name],\n\nYou are invited to our upcoming recruitment event. Please RSVP here:\n\n[EventLink]\n\nBest regards,\nThe Recruitment Team"
+            ],
+            'follow_up' => [
+                'subject' => 'Following Up on Your Application',
+                'body' => "Hello [Name],\n\nFollowing up on your recent application. Any updates?\n\nBest regards,\nThe Recruitment Team"
+            ],
+            'welcome' => [
+                'subject' => 'Welcome to Our Candidate Network',
+                'body' => "Hello [Name],\n\nWelcome to our candidate database! We will contact you when we find a match.\n\nBest regards,\nThe Recruitment Team"
+            ]
+        ];
 
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            $error_message = "Invalid candidate selection data.";
-            error_log("JSON Decode Error: " . json_last_error_msg());
-        } else {
-            $subject = $_POST['subject'];
-            $template = $_POST['template'];
+        $template_details = $templates[$template] ?? [
+            'subject' => $subject,
+            'body' => "Hello [Name],\n\nThank you for being part of our network.\n\nBest regards,\nThe Recruitment Team"
+        ];
 
-            error_log("Processing mailshot for " . count($candidate_ids) . " candidates");
+        $final_subject = empty($subject) ? $template_details['subject'] : $subject;
+        $base_body = $template_details['body'];
+        $from_email = "learn@natec.icu";
+        $from_name = "Recruitment Team";
 
-            // Email templates (ensure these are well-defined)
-            $templates = [
-                'job_alert' => [
-                    'subject' => 'New Job Opportunities Matching Your Profile',
-                    'body' => "Hello [Name],\n\nWe have new job opportunities that match your profile. Log in to your account to view them:\n\n[LoginLink]\n\nBest regards,\nThe Recruitment Team"
-                ],
-                'newsletter' => [
-                    'subject' => 'Our Latest Industry Insights',
-                    'body' => "Hello [Name],\n\nCheck out our latest newsletter with industry insights and job tips:\n\n[NewsletterLink]\n\nBest regards,\nThe Recruitment Team"
-                ],
-                'event_invitation' => [
-                    'subject' => 'Invitation to Recruitment Event',
-                    'body' => "Hello [Name],\n\nYou are invited to our upcoming recruitment event. Please RSVP here:\n\n[EventLink]\n\nBest regards,\nThe Recruitment Team"
-                ],
-                'follow_up' => [
-                    'subject' => 'Following Up on Your Application',
-                    'body' => "Hello [Name],\n\nFollowing up on your recent application. Any updates?\n\nBest regards,\nThe Recruitment Team"
-                ],
-                'welcome' => [
-                    'subject' => 'Welcome to Our Candidate Network',
-                    'body' => "Hello [Name],\n\nWelcome to our candidate database! We will contact you when we find a match.\n\nBest regards,\nThe Recruitment Team"
-                ]
-            ];
+        $mail = new PHPMailer(true);
+        $smtp_host = 'smtp.titan.email';
+        $smtp_username = 'learn@natec.icu';
+        $smtp_password = '@WhiteDiamond0100';
+        $smtp_port = 587;
+        $success_count = 0;
+        $error_count = 0;
+        $error_details = [];
+        $console_logs = [];
 
-            // Get template details, fallback to default if template not found
-            $template_details = $templates[$template] ?? [
-                'subject' => $subject, // Use provided subject if template not found
-                'body' => "Hello [Name],\n\nThank you for being part of our network.\n\nBest regards,\nThe Recruitment Team"
-            ];
-
-            $final_subject = empty($subject) ? $template_details['subject'] : $subject;
-            $base_body = $template_details['body'];
-            $from_email = "learn@natec.icu";
-            $from_name = "Recruitment Team";
-
-            $smtp_host = 'smtp.titan.email';
-            $smtp_username = 'learn@natec.icu';
-            $smtp_password = '@WhiteDiamond0100';
-            $smtp_port = 587;
-            $success_count = 0;
-            $error_count = 0;
-            $error_details = [];
-
-            // Test email configuration (PHPMailer instance for testing connection)
-            try {
-                $test_mail = new PHPMailer(true);
-                $test_mail->isSMTP();
-                $test_mail->Host = $smtp_host;
-                $test_mail->SMTPAuth = true;
-                $test_mail->Username = $smtp_username;
-                $test_mail->Password = $smtp_password;
-                $test_mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                $test_mail->Port = $smtp_port;
-                $test_mail->SMTPDebug = 0; // Turn off debug for connection test, but log output to console_logs if needed
-                $test_mail->Debugoutput = function($str, $level) use (&$console_logs) {
-                    $console_logs[] = "SMTP DEBUG (Test): " . trim($str);
-                };
-
-                if (!$test_mail->smtpConnect()) {
-                    throw new Exception("SMTP connection failed: " . $test_mail->ErrorInfo);
-                }
-                $test_mail->smtpClose();
-                $console_logs[] = "SMTP connection test successful.";
-
-            } catch (Exception $e) {
-                $error_message = "SMTP Configuration Error: " . $e->getMessage();
-                $console_logs[] = "ERROR: SMTP Configuration failed - " . $e->getMessage();
-                error_log("SMTP Error: " . $e->getMessage());
+        // Test email configuration
+        try {
+            $test_mail = new PHPMailer(true);
+            $test_mail->isSMTP();
+            $test_mail->Host = $smtp_host;
+            $test_mail->SMTPAuth = true;
+            $test_mail->Username = $smtp_username;
+            $test_mail->Password = $smtp_password;
+            $test_mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $test_mail->Port = $smtp_port;
+            
+            $test_mail->SMTPDebug = 0;
+            $test_mail->Debugoutput = function($str, $level) use (&$console_logs) {
+                $console_logs[] = "SMTP DEBUG: " . trim($str);
+            };
+            
+            if (!$test_mail->smtpConnect()) {
+                throw new Exception("SMTP connection failed");
             }
+            $test_mail->smtpClose();
+            
+            $console_logs[] = "SMTP connection test successful";
+            
+        } catch (Exception $e) {
+            $error_message = "SMTP Configuration Error: " . $e->getMessage();
+            $console_logs[] = "ERROR: SMTP Configuration failed - " . $e->getMessage();
+            error_log("SMTP Error: " . $e->getMessage());
+        }
 
-            // Proceed if SMTP test passed and no prior error message
-            if (!isset($error_message) || $error_message === '') {
-                foreach ($candidate_ids as $candidate_id) {
-                    try {
-                        error_log("Attempting to send email to candidate ID: " . $candidate_id);
+        // Proceed if SMTP test passed
+        if (!isset($error_message)) {
+            foreach ($candidate_ids as $candidate_id) {
+                try {
+                    error_log("Processing candidate ID: " . $candidate_id);
+                    
+                    $stmt = $db_2->prepare("SELECT Name, Email FROM _candidates WHERE id = ?");
+                    $stmt->execute([$candidate_id]);
+                    $candidate = $stmt->fetch(PDO::FETCH_OBJ);
 
-                        // Fetch candidate details from either database
-                        $stmt = $db_2->prepare("SELECT Name, Email FROM _candidates WHERE id = ?");
+                    if (!$candidate) {
+                        $stmt = $db_1->prepare("SELECT CONCAT(first_name, ' ', last_name) as Name, email as Email FROM candidates WHERE id = ?");
                         $stmt->execute([$candidate_id]);
                         $candidate = $stmt->fetch(PDO::FETCH_OBJ);
-
-                        if (!$candidate) {
-                            $stmt = $db_1->prepare("SELECT CONCAT(first_name, ' ', last_name) as Name, email as Email FROM candidates WHERE id = ?");
-                            $stmt->execute([$candidate_id]);
-                            $candidate = $stmt->fetch(PDO::FETCH_OBJ);
-                        }
-
-                        if ($candidate && filter_var($candidate->Email, FILTER_VALIDATE_EMAIL)) {
-                            $to_email = $candidate->Email;
-                            $to_name = $candidate->Name ?: 'Candidate';
-
-                            error_log("Preparing email for: " . $to_email . " (" . $to_name . ")");
-
-                            $personalized_body = str_replace(
-                                ['[Name]', '[LoginLink]', '[NewsletterLink]', '[EventLink]'],
-                                [htmlspecialchars($to_name), 'https://broad-mead.com/login', 'https://broad-mead.com/newsletter', 'https://broad-mead.com/events'],
-                                $base_body
-                            );
-
-                            // Create a new PHPMailer instance for each email to avoid issues with previous recipients
-                            $mail = new PHPMailer(true);
-                            $mail->isSMTP();
-                            $mail->Host = $smtp_host;
-                            $mail->SMTPAuth = true;
-                            $mail->Username = $smtp_username;
-                            $mail->Password = $smtp_password;
-                            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                            $mail->Port = $smtp_port;
-                            $mail->Timeout = 30; // Timeout in seconds
-                            // Disable SSL verification for self-signed or invalid certs (use with caution in production)
-                            $mail->SMTPOptions = array(
-                                'ssl' => array(
-                                    'verify_peer' => false,
-                                    'verify_peer_name' => false,
-                                    'allow_self_signed' => true
-                                )
-                            );
-                            $mail->setFrom($from_email, $from_name);
-                            $mail->addAddress($to_email, $to_name);
-                            $mail->addReplyTo($from_email, $from_name);
-                            $mail->isHTML(true);
-                            $mail->Subject = $final_subject;
-                            $mail->Body = nl2br(htmlspecialchars($personalized_body)); // Convert newlines to <br> and HTML escape
-                            $mail->AltBody = $personalized_body; // Plain text version
-
-                            if ($mail->send()) {
-                                $success_count++;
-                                $console_logs[] = "SUCCESS: Email sent to {$to_email} (Candidate ID: {$candidate_id})";
-                                error_log("SUCCESS: Email sent to {$to_email}");
-                            } else {
-                                $error_count++;
-                                $error_details[] = "Failed to send to: $to_email - " . $mail->ErrorInfo;
-                                $console_logs[] = "ERROR: Failed to send to {$to_email} (Candidate ID: {$candidate_id}) - " . $mail->ErrorInfo;
-                                error_log("ERROR: Failed to send to {$to_email} - " . $mail->ErrorInfo);
-                            }
-
-                            // Small delay to avoid hitting SMTP rate limits
-                            usleep(100000); // 100 milliseconds
-                        } else {
-                            $candidate_email = $candidate->Email ?? 'N/A';
-                            $error_count++;
-                            $error_details[] = "Invalid or missing email for candidate ID: $candidate_id (Email: $candidate_email)";
-                            $console_logs[] = "ERROR: Invalid or missing email for candidate ID {$candidate_id} (Email: {$candidate_email})";
-                            error_log("ERROR: Invalid or missing email for candidate ID {$candidate_id}");
-                        }
-                    } catch (Exception $e) {
-                        $candidate_email = isset($candidate) && isset($candidate->Email) ? $candidate->Email : 'N/A';
-                        $error_count++;
-                        $error_details[] = "Error processing candidate ID: $candidate_id - " . $e->getMessage();
-                        $console_logs[] = "ERROR: Exception for candidate ID {$candidate_id} - " . $e->getMessage();
-                        error_log("ERROR: Exception for candidate ID {$candidate_id} - " . $e->getMessage());
                     }
-                }
 
-                if ($error_count === 0) {
-                    $success_message = "Mailshot processing completed. Successfully sent to $success_count candidates.";
-                } else {
-                    $error_message = "Mailshot processing completed with issues: $success_count succeeded, $error_count failed.";
-                    if (!empty($error_details)) {
-                        $error_message .= "\n\nFirst 5 errors:\n" . implode("\n", array_slice($error_details, 0, 5));
-                        if (count($error_details) > 5) {
-                            $error_message .= "\n... plus " . (count($error_details) - 5) . " more errors.";
+                    if ($candidate && filter_var($candidate->Email, FILTER_VALIDATE_EMAIL)) {
+                        $to = $candidate->Email;
+                        $name = $candidate->Name ?: 'Candidate';
+
+                        error_log("Sending email to: " . $to . " (" . $name . ")");
+
+                        $personalized_body = str_replace(
+                            ['[Name]', '[LoginLink]', '[NewsletterLink]', '[EventLink]'],
+                            [$name, 'https://broad-mead.com/login', 'https://broad-mead.com/newsletter', 'https://broad-mead.com/events'],
+                            $base_body
+                        );
+
+                        $mail = new PHPMailer(true);
+                        $mail->isSMTP();
+                        $mail->Host = $smtp_host;
+                        $mail->SMTPAuth = true;
+                        $mail->Username = $smtp_username;
+                        $mail->Password = $smtp_password;
+                        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                        $mail->Port = $smtp_port;
+                        $mail->Timeout = 30;
+                        $mail->SMTPOptions = array(
+                            'ssl' => array(
+                                'verify_peer' => false,
+                                'verify_peer_name' => false,
+                                'allow_self_signed' => true
+                            )
+                        );
+
+                        $mail->setFrom($from_email, $from_name);
+                        $mail->addAddress($to, $name);
+                        $mail->addReplyTo($from_email, $from_name);
+                        $mail->isHTML(true);
+                        $mail->Subject = $final_subject;
+                        $mail->Body = nl2br(htmlspecialchars($personalized_body));
+                        $mail->AltBody = $personalized_body;
+
+                        if ($mail->send()) {
+                            $success_count++;
+                            $console_logs[] = "SUCCESS: Email sent to {$to} (Candidate ID: {$candidate_id})";
+                            error_log("SUCCESS: Email sent to {$to}");
+                        } else {
+                            $error_count++;
+                            $error_details[] = "Failed to send to: $to - " . $mail->ErrorInfo;
+                            $console_logs[] = "ERROR: Failed to send to {$to} (Candidate ID: {$candidate_id}) - " . $mail->ErrorInfo;
+                            error_log("ERROR: Failed to send to {$to} - " . $mail->ErrorInfo);
                         }
+                        
+                        $mail->clearAddresses();
+                        $mail->clearAttachments();
+                        usleep(100000);
+                        
+                    } else {
+                        $candidate_email = $candidate->Email ?? 'N/A';
+                        $error_count++;
+                        $error_details[] = "Invalid email for candidate ID: $candidate_id (Email: $candidate_email)";
+                        $console_logs[] = "ERROR: Invalid email for candidate ID {$candidate_id} (Email: {$candidate_email})";
+                        error_log("ERROR: Invalid email for candidate ID {$candidate_id}");
+                    }
+                } catch (Exception $e) {
+                    $candidate_email = isset($candidate) && isset($candidate->Email) ? $candidate->Email : 'N/A';
+                    $error_count++;
+                    $error_details[] = "Error processing candidate ID: $candidate_id - " . $e->getMessage();
+                    $console_logs[] = "ERROR: Exception for candidate ID {$candidate_id} - " . $e->getMessage();
+                    error_log("ERROR: Exception for candidate ID {$candidate_id} - " . $e->getMessage());
+                }
+            }
+
+            if ($error_count === 0) {
+                $success_message = "Mailshot processing completed. Successfully sent to $success_count candidates.";
+            } else {
+                $error_message = "Mailshot processing completed with issues: $success_count succeeded, $error_count failed.";
+                if (!empty($error_details)) {
+                    $error_message .= "\n\nFirst 5 errors:\n" . implode("\n", array_slice($error_details, 0, 5));
+                    if (count($error_details) > 5) {
+                        $error_message .= "\n... plus " . (count($error_details) - 5) . " more errors.";
                     }
                 }
             }
@@ -242,22 +230,18 @@ if (!empty($console_logs)) {
     echo "</script>";
 }
 
-// Initialize filter variables for candidates/mailshot modes
 $keyword_filter = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
 $location_filter = isset($_GET['location']) ? trim($_GET['location']) : '';
 $position_filter = isset($_GET['position']) ? trim($_GET['position']) : '';
 $status_filter = isset($_GET['status']) ? $_GET['status'] : ($mode === 'mailshot' ? 'active' : 'all');
 $center_postcode = isset($_GET['center_postcode']) ? trim($_GET['center_postcode']) : '';
 $distance_miles = isset($_GET['distance_miles']) ? (int)$_GET['distance_miles'] : 0;
-
-// Initialize KPI specific variables
 $kpi_period = isset($_GET['kpi_period']) ? $_GET['kpi_period'] : 'current_week';
-$kpi_start_date_param = isset($_GET['kpi_start_date']) ? $_GET['kpi_start_date'] : '';
-$kpi_end_date_param = isset($_GET['kpi_end_date']) ? $_GET['kpi_end_date'] : '';
+$kpi_start_date = isset($_GET['kpi_start_date']) ? $_GET['kpi_start_date'] : '';
+$kpi_end_date = isset($_GET['kpi_end_date']) ? $_GET['kpi_end_date'] : '';
 
-// Build WHERE conditions for candidate/mailshot filtering
 $where_conditions = [];
-$params = []; // Parameters for prepared statement
+$params = [];
 
 if (!empty($keyword_filter)) {
     $where_conditions[] = "(Name LIKE :keyword OR Email LIKE :keyword OR JobTitle LIKE :keyword)";
@@ -284,63 +268,47 @@ if (!empty($where_conditions)) {
     $where_clause = 'WHERE ' . implode(' AND ', $where_conditions);
 }
 
-// Dummy function for postcode coordinates (replace with real API call)
 function getPostcodeCoordinates($postcode) {
     static $postcodeCache = [];
-
+    
     if (isset($postcodeCache[$postcode])) {
         return $postcodeCache[$postcode];
     }
-
-    // Simulate API call delay and return random coordinates for demonstration
-    // In a real application, you would use a postcode API (e.g., Postcodes.io, Google Geocoding API)
+    
     $coordinates = [
-        'latitude' => 51.5 + (rand(-100, 100) / 1000), // Random latitude around London
-        'longitude' => -0.1 + (rand(-100, 100) / 1000) // Random longitude around London
+        'latitude' => 51.5 + (rand(-100, 100) / 1000),
+        'longitude' => -0.1 + (rand(-100, 100) / 1000)
     ];
-
+    
     $postcodeCache[$postcode] = $coordinates;
     return $coordinates;
 }
 
-// Haversine formula to calculate distance between two lat/lon points
 function calculateDistanceBetweenPostcodes($postcode1, $postcode2) {
     $coords1 = getPostcodeCoordinates($postcode1);
     $coords2 = getPostcodeCoordinates($postcode2);
-
-    $earthRadius = 3959; // Earth's radius in miles
-
+    
+    $earthRadius = 3959;
+    
     $lat1 = deg2rad($coords1['latitude']);
     $lon1 = deg2rad($coords1['longitude']);
     $lat2 = deg2rad($coords2['latitude']);
     $lon2 = deg2rad($coords2['longitude']);
-
+    
     $latDelta = $lat2 - $lat1;
     $lonDelta = $lon2 - $lon1;
-
+    
     $a = sin($latDelta/2) * sin($latDelta/2) +
          cos($lat1) * cos($lat2) * sin($lonDelta/2) * sin($lonDelta/2);
     $c = 2 * atan2(sqrt($a), sqrt(1-$a));
-
+    
     $distance = $earthRadius * $c;
     return $distance;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-// Function to get date range for predefined periods
 function getDateRangeForPeriod($period) {
     $today = new DateTime();
-
+    
     switch ($period) {
         case 'current_week':
             $start = clone $today;
@@ -354,49 +322,51 @@ function getDateRangeForPeriod($period) {
             $end->modify('+6 days');
             break;
         case 'current_month':
-            // $start = new DateTime('first day of this month');
-            // $end = new DateTime('last day of this month');
-            // break;
+            $start = new DateTime('first day of this month');
+            $end = new DateTime('last day of this month');
+            break;
         case 'last_month':
-            // $start = new DateTime('first day of last month');
-            // $end = new DateTime('last day of last month');
-            // break;
+            $start = new DateTime('first day of last month');
+            $end = new DateTime('last day of last month');
+            break;
         case 'current_quarter':
-            // $quarter = ceil($today->format('n') / 3);
-            // $start = new DateTime($today->format('Y') . '-' . (($quarter - 1) * 3 + 1) . '-01');
-            // $end = clone $start;
-            // $end->modify('+2 months')->modify('last day of this month');
-            // break;
+            $quarter = ceil($today->format('n') / 3);
+            $start = new DateTime($today->format('Y') . '-' . (($quarter - 1) * 3 + 1) . '-01');
+            $end = clone $start;
+            $end->modify('+2 months')->modify('last day of this month');
+            break;
         case 'current_year':
-            // $start = new DateTime($today->format('Y') . '-01-01');
-            // $end = new DateTime($today->format('Y') . '-12-31');
-            // break;
-        default: // Default to current week if period is invalid or not set
+            $start = new DateTime($today->format('Y') . '-01-01');
+            $end = new DateTime($today->format('Y') . '-12-31');
+            break;
+        default:
             $start = clone $today;
             $start->modify('monday this week');
             $end = clone $start;
             $end->modify('+6 days');
     }
-
+    
     return [
         'start' => $start->format('Y-m-d'),
         'end' => $end->format('Y-m-d')
     ];
 }
 
-// Function to calculate KPIs based on selected period or custom dates
 function calculateKPIs($db, $period, $start_date = null, $end_date = null) {
     $kpis = [];
-
+    
     try {
-        // Determine the date range
+        // Validate and use custom dates if provided and period is 'custom'
         if ($period === 'custom' && $start_date && $end_date) {
             $start = new DateTime($start_date);
             $end = new DateTime($end_date);
-
+            
             // Validate date range
             if ($start > $end) {
                 throw new Exception("Start date cannot be after end date.");
+            }
+            if ($start > new DateTime()) {
+                throw new Exception("Start date cannot be in the future.");
             }
             
             $dateRange = [
@@ -406,186 +376,92 @@ function calculateKPIs($db, $period, $start_date = null, $end_date = null) {
         } else {
             $dateRange = getDateRangeForPeriod($period);
         }
-
-        // Fetch all candidates for the detailed table
-        $stmt_all_candidates = $db->prepare("
-            SELECT id, Name, Email, JobTitle, Status, CreatedBy, Date 
-            FROM _candidates 
-            WHERE Date BETWEEN ? AND ? 
-            ORDER BY Date DESC
-        ");
-        $stmt_all_candidates->execute([
-            $dateRange['start'] . ' 00:00:00', 
-            $dateRange['end'] . ' 23:59:59'
-        ]);
+        
+        // Fetch all candidates for the detailed table within the period
+        $stmt_all_candidates = $db->prepare("SELECT id, Name, Email, JobTitle, Status, CreatedBy, Date FROM _candidates WHERE Date BETWEEN ? AND ? ORDER BY Date DESC");
+        $stmt_all_candidates->execute([$dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
         $kpis['detailed_candidates'] = $stmt_all_candidates->fetchAll(PDO::FETCH_ASSOC);
 
-        // Consolidated KPI calculation
-        $stmt = $db->prepare("
-            SELECT 
-                COUNT(*) as total,
-                SUM(CASE WHEN Status = 'active' THEN 1 ELSE 0 END) as active_candidates,
-                SUM(CASE WHEN Status = 'inactive' THEN 1 ELSE 0 END) as inactive_candidates,
-                SUM(CASE WHEN Status = 'archived' THEN 1 ELSE 0 END) as archived_candidates,
-                SUM(CASE WHEN Status = 'pending' THEN 1 ELSE 0 END) as pending_candidates
-            FROM _candidates 
-            WHERE Date BETWEEN ? AND ?
-        ");
-        $stmt->execute([
-            $dateRange['start'] . ' 00:00:00', 
-            $dateRange['end'] . ' 23:59:59'
-        ]);
-        $counts = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt = $db->prepare("SELECT COUNT(*) as total FROM _candidates WHERE Date BETWEEN ? AND ?");
+        $stmt->execute([$dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
+        $kpis['total_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
         
-        $kpis['total_candidates'] = $counts['total'];
-        $kpis['active_candidates'] = $counts['active_candidates'];
-        $kpis['inactive_candidates'] = $counts['inactive_candidates'];
-        $kpis['archived_candidates'] = $counts['archived_candidates'];
-        $kpis['pending_candidates'] = $counts['pending_candidates'];
-        $kpis['new_candidates'] = $counts['total']; // Backward compatibility
-
+        $stmt = $db->prepare("SELECT COUNT(*) as new_candidates FROM _candidates WHERE Date BETWEEN ? AND ?");
+        $stmt->execute([$dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
+        $kpis['new_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['new_candidates'];
+        
+        $stmt = $db->prepare("SELECT COUNT(*) as active FROM _candidates WHERE Status = 'active' AND Date BETWEEN ? AND ?");
+        $stmt->execute([$dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
+        $kpis['active_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['active'];
+        
+        $stmt = $db->prepare("SELECT COUNT(*) as inactive FROM _candidates WHERE Status = 'inactive' AND Date BETWEEN ? AND ?");
+        $stmt->execute([$dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
+        $kpis['inactive_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['inactive'];
+        
+        $stmt = $db->prepare("SELECT COUNT(*) as archived FROM _candidates WHERE Status = 'archived' AND Date BETWEEN ? AND ?");
+        $stmt->execute([$dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
+        $kpis['archived_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['archived'];
+        
+        $stmt = $db->prepare("SELECT COUNT(*) as pending FROM _candidates WHERE Status = 'pending' AND Date BETWEEN ? AND ?");
+        $stmt->execute([$dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
+        $kpis['pending_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['pending'];
+        
         // Job Title Stats
-        $stmt = $db->prepare("
-            SELECT JobTitle, COUNT(*) as count 
-            FROM _candidates 
-            WHERE Date BETWEEN ? AND ? 
-            AND JobTitle IS NOT NULL 
-            AND JobTitle != '' 
-            GROUP BY JobTitle 
-            ORDER BY count DESC
-        ");
-        $stmt->execute([
-            $dateRange['start'] . ' 00:00:00', 
-            $dateRange['end'] . ' 23:59:59'
-        ]);
+        $stmt = $db->prepare("SELECT JobTitle, COUNT(*) as count FROM _candidates WHERE Date BETWEEN ? AND ? AND JobTitle IS NOT NULL AND JobTitle != '' GROUP BY JobTitle ORDER BY count DESC");
+        $stmt->execute([$dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
         $kpis['job_title_stats'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+        
         // City Stats
-        $stmt = $db->prepare("
-            SELECT City, COUNT(*) as count 
-            FROM _candidates 
-            WHERE Date BETWEEN ? AND ? 
-            AND City IS NOT NULL 
-            AND City != '' 
-            GROUP BY City 
-            ORDER BY count DESC
-        ");
-        $stmt->execute([
-            $dateRange['start'] . ' 00:00:00', 
-            $dateRange['end'] . ' 23:59:59'
-        ]);
+        $stmt = $db->prepare("SELECT City, COUNT(*) as count FROM _candidates WHERE Date BETWEEN ? AND ? AND City IS NOT NULL AND City != '' GROUP BY City ORDER BY count DESC");
+        $stmt->execute([$dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
         $kpis['city_stats'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+        
         // CreatedBy Stats
-        $stmt = $db->prepare("
-            SELECT CreatedBy, COUNT(*) as count 
-            FROM _candidates 
-            WHERE Date BETWEEN ? AND ? 
-            GROUP BY CreatedBy 
-            ORDER BY count DESC
-        ");
-        $stmt->execute([
-            $dateRange['start'] . ' 00:00:00', 
-            $dateRange['end'] . ' 23:59:59'
-        ]);
+        $stmt = $db->prepare("SELECT CreatedBy, COUNT(*) as count FROM _candidates WHERE Date BETWEEN ? AND ? GROUP BY CreatedBy ORDER BY count DESC");
+        $stmt->execute([$dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
         $kpis['created_by_stats'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        // Daily Trend
-        $stmt = $db->prepare("
-            SELECT DATE(Date) as date, COUNT(*) as count 
-            FROM _candidates 
-            WHERE Date BETWEEN ? AND ? 
-            GROUP BY DATE(Date) 
-            ORDER BY date
-        ");
-        $stmt->execute([
-            $dateRange['start'] . ' 00:00:00', 
-            $dateRange['end'] . ' 23:59:59'
-        ]);
+        
+        $stmt = $db->prepare("SELECT DATE(Date) as date, COUNT(*) as count FROM _candidates WHERE Date BETWEEN ? AND ? GROUP BY DATE(Date) ORDER BY date");
+        $stmt->execute([$dateRange['start'] . ' 00:00:00', $dateRange['end'] . ' 23:59:59']);
         $kpis['daily_trend'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        // Calculate growth rate
+        
         $previousPeriod = getPreviousPeriodRange($period, $dateRange);
-        $stmt = $db->prepare("
-            SELECT COUNT(*) as previous_total 
-            FROM _candidates 
-            WHERE Date BETWEEN ? AND ?
-        ");
-        $stmt->execute([
-            $previousPeriod['start'] . ' 00:00:00', 
-            $previousPeriod['end'] . ' 23:59:59'
-        ]);
+        $stmt = $db->prepare("SELECT COUNT(*) as previous_total FROM _candidates WHERE Date BETWEEN ? AND ?");
+        $stmt->execute([$previousPeriod['start'] . ' 00:00:00', $previousPeriod['end'] . ' 23:59:59']);
         $previous_total = $stmt->fetch(PDO::FETCH_ASSOC)['previous_total'];
-
-        $kpis['growth_rate'] = ($previous_total > 0) 
-            ? round(($kpis['total_candidates'] - $previous_total) / $previous_total * 100, 2)
-            : 0;
-
+        
+        if ($previous_total > 0) {
+            $kpis['growth_rate'] = round((($kpis['new_candidates'] - $previous_total) / $previous_total) * 100, 2);
+        } else {
+            $kpis['growth_rate'] = 0;
+        }
+        
         $kpis['date_range'] = $dateRange;
-        $kpis['previous_date_range'] = $previousPeriod;
-
+        
     } catch (Exception $e) {
         $kpis['error'] = $e->getMessage();
-        error_log("KPI Calculation Error: " . $e->getMessage());
     }
-
+    
     return $kpis;
 }
-// Function to get the date range for the period immediately preceding the current range
+
 function getPreviousPeriodRange($period, $currentRange) {
-    try {
-        $start = new DateTime($currentRange['start']);
-        $end = new DateTime($currentRange['end']);
-
-        switch($period) {
-            case 'current_week':
-            case 'last_week':
-                $prevStart = (clone $start)->modify('-1 week');
-                $prevEnd = (clone $end)->modify('-1 week');
-                break;
-
-            case 'current_month':
-            case 'last_month':
-                $prevStart = (clone $start)->modify('first day of last month');
-                $prevEnd = (clone $prevStart)->modify('last day of this month');
-                break;
-
-            case 'current_quarter':
-                $prevStart = (clone $start)->modify('-3 months');
-                $prevEnd = (clone $prevStart)->modify('+2 months')->modify('last day of this month');
-                break;
-
-            case 'current_year':
-                $prevStart = (clone $start)->modify('-1 year');
-                $prevEnd = (clone $end)->modify('-1 year');
-                break;
-
-            case 'custom':
-                $interval = $start->diff($end);
-                $prevStart = (clone $start)->sub($interval)->modify('-1 day');
-                $prevEnd = (clone $end)->sub($interval)->modify('-1 day');
-                break;
-
-            default:
-                $prevStart = (clone $start)->modify('-1 week');
-                $prevEnd = (clone $end)->modify('-1 week');
-        }
-
-        return [
-            'start' => $prevStart->format('Y-m-d'),
-            'end' => $prevEnd->format('Y-m-d')
-        ];
-
-    } catch (Exception $e) {
-        error_log("Date Range Error: " . $e->getMessage());
-        return [
-            'start' => date('Y-m-d', strtotime('-1 month')),
-            'end' => date('Y-m-d')
-        ];
-    }
+    $start = new DateTime($currentRange['start']);
+    $end = new DateTime($currentRange['end']);
+    $diff = $start->diff($end)->days + 1;
+    
+    $prevStart = clone $start;
+    $prevStart->modify("-{$diff} days");
+    $prevEnd = clone $end;
+    $prevEnd->modify("-{$diff} days");
+    
+    return [
+        'start' => $prevStart->format('Y-m-d'),
+        'end' => $prevEnd->format('Y-m-d')
+    ];
 }
-// Fetch distinct job titles and locations for mailshot/candidate filters
-if ($mode === 'mailshot' || $mode === 'candidates') {
+
+if ($mode === 'mailshot') {
     $job_titles_query = "SELECT DISTINCT JobTitle FROM _candidates WHERE JobTitle IS NOT NULL AND JobTitle != '' ORDER BY JobTitle";
     $job_titles_stmt = $db_2->query($job_titles_query);
     $job_titles = $job_titles_stmt->fetchAll(PDO::FETCH_COLUMN);
@@ -595,38 +471,12 @@ if ($mode === 'mailshot' || $mode === 'candidates') {
     $locations = $locations_stmt->fetchAll(PDO::FETCH_COLUMN);
 }
 
-// Calculate KPIs only if mode is 'kpi'
 $kpi_data = [];
-$kpi_start_date_display = ''; // Initialize for display in input fields
-$kpi_end_date_display = '';   // Initialize for display in input fields
-
-// Prepare predefined date ranges for JavaScript
-$predefined_date_ranges = [];
-$periods_to_calculate = ['current_week', 'last_week', 'current_month', 'last_month', 'current_quarter', 'current_year'];
-foreach ($periods_to_calculate as $p) {
-    $range = getDateRangeForPeriod($p);
-    $predefined_date_ranges[$p] = $range;
-}
-
 if ($mode === 'kpi') {
-    // Determine the date range for KPI calculation and display
-    $calculatedDateRange = getDateRangeForPeriod($kpi_period);
-
-    if ($kpi_period === 'custom' && !empty($kpi_start_date_param) && !empty($kpi_end_date_param)) {
-        // If custom period is selected and dates are provided, use them
-        $kpi_start_date_display = $kpi_start_date_param;
-        $kpi_end_date_display = $kpi_end_date_param;
-    } else {
-        // Otherwise, use the calculated dates for the selected predefined period
-        $kpi_start_date_display = $calculatedDateRange['start'];
-        $kpi_end_date_display = $calculatedDateRange['end'];
-    }
-
-    // Now calculate the KPIs using the determined dates
-    $kpi_data = calculateKPIs($db_2, $kpi_period, $kpi_start_date_display, $kpi_end_date_display);
+    $kpi_data = calculateKPIs($db_2, $kpi_period, $kpi_start_date, $kpi_end_date);
 }
 
-// Mapping for CreatedBy IDs to Names (example, replace with actual user fetching)
+// Mapping for CreatedBy IDs to Names
 $createdByMapping = [
     "1" => "Chax Shamwana",
     "10" => "Millie Brown",
@@ -644,237 +494,6 @@ $createdByMapping = [
     <link rel="stylesheet" href="style.css">
     <?php include "../../includes/head.php"; ?>
     <style>
-        /* General styling for mode buttons */
-        .mode-switch {
-            margin-bottom: 30px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .mode-button {
-            padding: 10px 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            text-decoration: none;
-            color: #333;
-            background-color: #f8f9fa;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .mode-button:hover {
-            background-color: #e2e6ea;
-            color: #000;
-        }
-        .mode-button.active {
-            background-color: #007bff;
-            color: white;
-            border-color: #007bff;
-        }
-        .mode-button.active:hover {
-            background-color: #0056b3;
-            border-color: #0056b3;
-        }
-        .mode-button i {
-            margin-right: 5px;
-        }
-
-        /* Styles for filter sections */
-        .filter-section, .kpi-filter-section {
-            background-color: #ffffff;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            margin-bottom: 30px;
-        }
-        .filter-label {
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #555;
-        }
-        .filter-input, .form-select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ced4da;
-            border-radius: 5px;
-            font-size: 1rem;
-            margin-bottom: 15px; /* Spacing between inputs */
-        }
-        .filter-row {
-            margin-bottom: 15px;
-        }
-        .distance-filter {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .distance-filter .filter-input {
-            margin-bottom: 0;
-        }
-        .distance-filter .distance-input {
-            flex-grow: 1;
-        }
-        .distance-filter span {
-            white-space: nowrap;
-        }
-        .btn-primary, .btn-secondary {
-            padding: 10px 20px;
-            border-radius: 5px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        .btn-primary {
-            background-color: #007bff;
-            color: white;
-            border: 1px solid #007bff;
-        }
-        .btn-primary:hover {
-            background-color: #0056b3;
-            border-color: #0056b3;
-        }
-        .btn-secondary {
-            background-color: #6c757d;
-            color: white;
-            border: 1px solid #6c757d;
-        }
-        .btn-secondary:hover {
-            background-color: #5a6268;
-            border-color: #5a6268;
-        }
-
-        /* KPI specific styles */
-        .kpi-info {
-            background-color: #e9f7ef;
-            border: 1px solid #d4edda;
-            color: #155724;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-        }
-        .kpi-info h5 {
-            color: #155724;
-            margin-bottom: 15px;
-        }
-        .kpi-info ul {
-            list-style-type: disc;
-            margin-left: 20px;
-            padding-left: 0;
-        }
-        .kpi-info ul li {
-            margin-bottom: 5px;
-        }
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        .kpi-card {
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            padding: 20px;
-            text-align: center;
-        }
-        .kpi-card h6 {
-            color: #6c757d;
-            font-size: 0.9rem;
-            margin-bottom: 10px;
-        }
-        .kpi-card .kpi-value {
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: #007bff;
-        }
-        .kpi-card .kpi-change {
-            font-size: 0.85rem;
-            margin-top: 5px;
-        }
-        .kpi-card .kpi-change.positive {
-            color: #28a745;
-        }
-        .kpi-card .kpi-change.negative {
-            color: #dc3545;
-        }
-        .kpi-card .kpi-change.neutral {
-            color: #6c757d;
-        }
-        .kpi-section-title {
-            margin-top: 40px;
-            margin-bottom: 20px;
-            color: #343a40;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-        }
-        .kpi-table-container {
-            margin-top: 20px;
-            max-height: 500px; /* Limit height for scrollability */
-            overflow-y: auto;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-        }
-        .kpi-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .kpi-table th, .kpi-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #e9ecef;
-            text-align: left;
-        }
-        .kpi-table th {
-            background-color: #f8f9fa;
-            font-weight: 600;
-            color: #495057;
-            position: sticky;
-            top: 0;
-            z-index: 1;
-        }
-        .kpi-table tbody tr:hover {
-            background-color: #f2f2f2;
-        }
-        .kpi-table tbody tr:last-child td {
-            border-bottom: none;
-        }
-        .kpi-table .badge {
-            padding: 0.4em 0.6em;
-            border-radius: 0.25rem;
-            font-size: 0.75em;
-            font-weight: 700;
-            line-height: 1;
-            text-align: center;
-            white-space: nowrap;
-            vertical-align: baseline;
-            display: inline-block;
-        }
-        .kpi-table .badge.bg-success { background-color: #28a745; color: #fff; }
-        .kpi-table .badge.bg-warning { background-color: #ffc107; color: #212529; }
-        .kpi-table .badge.bg-danger { background-color: #dc3545; color: #fff; }
-        .kpi-table .badge.bg-info { background-color: #17a2b8; color: #fff; }
-
-        .error-message {
-            background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            white-space: pre-wrap; /* Preserve newlines */
-        }
-        .success-message {
-            background-color: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        .success-message i, .error-message i {
-            margin-right: 10px;
-        }
-        /* Styles for date inputs */
         .kpi-filter-section input[type="date"] {
             width: 100%;
             padding: 8px;
@@ -889,12 +508,6 @@ $createdByMapping = [
         }
         .kpi-filter-section input[type="date"]::-webkit-calendar-picker-indicator {
             cursor: pointer;
-        }
-        /* NEW CSS: Override browser validation styles for disabled date inputs */
-        .kpi-filter-section input[type="date"]:disabled:invalid {
-            border-color: #ced4da !important; /* Reset border color to default */
-            box-shadow: none !important;      /* Remove any red shadow */
-            background-image: none !important; /* Remove any error icons (e.g., red X) */
         }
     </style>
 </head>
@@ -915,12 +528,11 @@ $createdByMapping = [
                     <i class="fa fa-paper-plane"></i> Create Mailshot
                 </a>
                 <?php
-                // Assuming IsCheckPermission is defined in config.php and handles user permissions
-                $has_kpi_permission = true; // Placeholder: Replace with actual permission check like IsCheckPermission($USERID, "VIEW_KPI_REPORTS");
+                $has_kpi_permission = true;
                 if ($has_kpi_permission):
                 ?>
                     <a href="?mode=kpi" class="mode-button <?php echo strtolower($mode) === 'kpi' ? 'active' : ''; ?>">
-                        <i class="fa fa-bar-chart"></i> Kpi Report
+                        <i class="fa fa-bar-chart"></i> Weekly KPI Search
                     </a>
                 <?php endif; ?>
             </div>
@@ -949,250 +561,11 @@ $createdByMapping = [
                         <li>Generate custom reports for specific date ranges</li>
                     </ul>
                 </div>
+            <?php endif; ?>
 
-                <div class="kpi-filter-section">
-                    <h5 style="margin-bottom: 20px; color: #495057;">Select KPI Report Period</h5>
-                    <form method="GET" action="">
-                        <input type="hidden" name="mode" value="kpi">
-                        <div class="row filter-row">
-                            <div class="col-md-4">
-                                <div class="filter-label">Select Period</div>
-                                <select name="kpi_period" id="kpiPeriodSelect" class="form-select" onchange="updateKpiDateInputs()">
-                                    <option value="current_week" <?php echo $kpi_period === 'current_week' ? 'selected' : ''; ?>>Current Week</option>
-                                    <option value="last_week" <?php echo $kpi_period === 'last_week' ? 'selected' : ''; ?>>Last Week</option>
-                                    <option value="current_month" <?php echo $kpi_period === 'current_month' ? 'selected' : ''; ?>>Current Month</option>
-                                    <option value="last_month" <?php echo $kpi_period === 'last_month' ? 'selected' : ''; ?>>Last Month</option>
-                                    <option value="current_quarter" <?php echo $kpi_period === 'current_quarter' ? 'selected' : ''; ?>>Current Quarter</option>
-                                    <option value="current_year" <?php echo $kpi_period === 'current_year' ? 'selected' : ''; ?>>Current Year</option>
-                                    <option value="custom" <?php echo $kpi_period === 'custom' ? 'selected' : ''; ?>>Custom Range</option>
-                                </select>
-                            </div>
-                          <div class="col-md-4">
-    <div class="filter-label">Start Date</div>
-    <input type="date" name="kpi_start_date" id="kpiStartDate" class="filter-input"
-           value="<?php echo htmlspecialchars($kpi_start_date_display); ?>">
-</div>
-<div class="col-md-4">
-    <div class="filter-label">End Date</div>
-    <input type="date" name="kpi_end_date" id="kpiEndDate" class="filter-input"
-           value="<?php echo htmlspecialchars($kpi_end_date_display); ?>">
-</div>
-                        </div>
-                        <div class="row">
-                            <div class="col-12 mt-3">
-                                <button type="submit" class="btn btn-primary">Generate Report</button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- <?php if (isset($kpi_data['error'])): ?>
-                    <div class="error-message">
-                        <i class="fa fa-exclamation-triangle"></i> KPI Report Error: <?php echo htmlspecialchars($kpi_data['error']); ?>
-                    </div>
-                <!-- <?php elseif (!empty($kpi_data)): ?>
-                    <h4 class="kpi-section-title">KPI Summary
-                        (<?php echo htmlspecialchars($kpi_data['date_range']['start']); ?> to
-                        <?php echo htmlspecialchars($kpi_data['date_range']['end']); ?>)
-                    </h4> --> -->
-                    <div class="kpi-grid">
-                        <div class="kpi-card">
-                            <h6>Total Candidates (Period)</h6>
-                            <div class="kpi-value"><?php echo $kpi_data['total_candidates']; ?></div>
-                            <div class="kpi-change <?php echo $kpi_data['growth_rate'] >= 0 ? 'positive' : 'negative'; ?>">
-                                <?php echo $kpi_data['growth_rate']; ?>% vs Previous Period
-                            </div>
-                            <small class="text-muted">(<?php echo htmlspecialchars($kpi_data['previous_date_range']['start']); ?> to <?php echo htmlspecialchars($kpi_data['previous_date_range']['end']); ?>)</small>
-                        </div>
-                        <div class="kpi-card">
-                            <h6>Active Candidates</h6>
-                            <div class="kpi-value"><?php echo $kpi_data['active_candidates']; ?></div>
-                        </div>
-                        <div class="kpi-card">
-                            <h6>Inactive Candidates</h6>
-                            <div class="kpi-value"><?php echo $kpi_data['inactive_candidates']; ?></div>
-                        </div>
-                        <div class="kpi-card">
-                            <h6>Archived Candidates</h6>
-                            <div class="kpi-value"><?php echo $kpi_data['archived_candidates']; ?></div>
-                        </div>
-                        <div class="kpi-card">
-                            <h6>Pending Candidates</h6>
-                            <div class="kpi-value"><?php echo $kpi_data['pending_candidates']; ?></div>
-                        </div>
-                    </div>
-
-                    <h4 class="kpi-section-title">Candidate Status Distribution</h4>
-                    <div class="kpi-grid">
-                        <?php
-                        $total_status_candidates = $kpi_data['active_candidates'] + $kpi_data['inactive_candidates'] + $kpi_data['archived_candidates'] + $kpi_data['pending_candidates'];
-                        $status_types = [
-                            'Active' => $kpi_data['active_candidates'],
-                            'Inactive' => $kpi_data['inactive_candidates'],
-                            'Archived' => $kpi_data['archived_candidates'],
-                            'Pending' => $kpi_data['pending_candidates']
-                        ];
-                        foreach ($status_types as $status_name => $count):
-                            $percentage = $total_status_candidates > 0 ? round(($count / $total_status_candidates) * 100, 2) : 0;
-                        ?>
-                            <div class="kpi-card">
-                                <h6><?php echo htmlspecialchars($status_name); ?></h6>
-                                <div class="kpi-value"><?php echo $count; ?></div>
-                                <div class="text-muted"><?php echo $percentage; ?>%</div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-
-                    <h4 class="kpi-section-title">Top Job Titles</h4>
-                    <div class="kpi-table-container">
-                        <table class="kpi-table">
-                            <thead>
-                                <tr>
-                                    <th>Job Title</th>
-                                    <th>Count</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (!empty($kpi_data['job_title_stats'])): ?>
-                                    <?php foreach ($kpi_data['job_title_stats'] as $stat): ?>
-                                        <tr>
-                                            <td><?php echo htmlspecialchars($stat['JobTitle']); ?></td>
-                                            <td><?php echo $stat['count']; ?></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <tr><td colspan="2" class="text-center text-muted">No job title data for this period.</td></tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h4 class="kpi-section-title">Top Locations</h4>
-                    <div class="kpi-table-container">
-                        <table class="kpi-table">
-                            <thead>
-                                <tr>
-                                    <th>City</th>
-                                    <th>Count</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (!empty($kpi_data['city_stats'])): ?>
-                                    <?php foreach ($kpi_data['city_stats'] as $stat): ?>
-                                        <tr>
-                                            <td><?php echo htmlspecialchars($stat['City']); ?></td>
-                                            <td><?php echo $stat['count']; ?></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <tr><td colspan="2" class="text-center text-muted">No location data for this period.</td></tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h4 class="kpi-section-title">Candidates Created By</h4>
-                    <div class="kpi-table-container">
-                        <table class="kpi-table">
-                            <thead>
-                                <tr>
-                                    <th>Recruiter</th>
-                                    <th>Count</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (!empty($kpi_data['created_by_stats'])): ?>
-                                    <?php foreach ($kpi_data['created_by_stats'] as $stat): ?>
-                                        <tr>
-                                            <td><?php echo htmlspecialchars($createdByMapping[$stat['CreatedBy']] ?? 'Unknown User'); ?></td>
-                                            <td><?php echo $stat['count']; ?></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <tr><td colspan="2" class="text-center text-muted">No 'Created By' data for this period.</td></tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h4 class="kpi-section-title">Daily Trend of New Candidates</h4>
-                    <div class="kpi-table-container">
-                        <table class="kpi-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>New Candidates</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (!empty($kpi_data['daily_trend'])): ?>
-                                    <?php foreach ($kpi_data['daily_trend'] as $trend): ?>
-                                        <tr>
-                                            <td><?php echo htmlspecialchars($trend['date']); ?></td>
-                                            <td><?php echo $trend['count']; ?></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <tr><td colspan="2" class="text-center text-muted">No daily trend data for this period.</td></tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h4 class="kpi-section-title">Detailed Candidate List (<?php echo htmlspecialchars($kpi_data['date_range']['start']); ?> to <?php echo htmlspecialchars($kpi_data['date_range']['end']); ?>)</h4>
-                    <div class="kpi-table-container">
-                        <table class="kpi-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Job Title</th>
-                                    <th>Status</th>
-                                    <th>Created By</th>
-                                    <th>Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (!empty($kpi_data['detailed_candidates'])): ?>
-                                    <?php foreach ($kpi_data['detailed_candidates'] as $candidate): ?>
-                                        <tr>
-                                            <td><?php echo htmlspecialchars($candidate['id']); ?></td>
-                                            <td><?php htmlspecialchars($candidate['Name']); ?></td>
-                                            <td><?php htmlspecialchars($candidate['Email']); ?></td>
-                                            <td><?php htmlspecialchars($candidate['JobTitle']); ?></td>
-                                            <td>
-                                                <?php
-                                                $status_class = '';
-                                                switch (strtolower($candidate['Status'])) {
-                                                    case 'active': $status_class = 'bg-success'; break;
-                                                    case 'archived': $status_class = 'bg-warning'; break;
-                                                    case 'inactive': $status_class = 'bg-danger'; break;
-                                                    case 'pending': $status_class = 'bg-info'; break;
-                                                    default: $status_class = 'bg-secondary'; break;
-                                                }
-                                                ?>
-                                                <span class="badge <?php echo $status_class; ?>"><?php echo htmlspecialchars($candidate['Status']); ?></span>
-                                            </td>
-                                            <td><?php echo htmlspecialchars($createdByMapping[$candidate['CreatedBy']] ?? 'Unknown User'); ?></td>
-                                            <td><?php echo FormatDate($candidate['Date']); ?></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <tr><td colspan="7" class="text-center text-muted">No detailed candidate data for this period.</td></tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php endif; ?>
-
-            <?php elseif (isset($success_message)): ?>
+            <?php if (isset($success_message)): ?>
                 <div class="success-message">
                     <i class="fa fa-check-circle"></i> <?php echo $success_message; ?>
-                </div>
-            <?php elseif (isset($error_message)): ?>
-                <div class="error-message">
-                    <i class="fa fa-exclamation-triangle"></i> <?php echo nl2br(htmlspecialchars($error_message)); ?>
                 </div>
             <?php endif; ?>
 
@@ -1203,7 +576,7 @@ $createdByMapping = [
                     </h5>
                     <form method="GET" action="">
                         <input type="hidden" name="mode" value="<?php echo htmlspecialchars($mode); ?>">
-
+                        
                         <?php if ($mode === 'candidates'): ?>
                             <div class="row filter-row">
                                 <div class="col-md-3">
@@ -1237,7 +610,7 @@ $createdByMapping = [
                                     </div>
                                 </div>
                             </div>
-                        <?php else: /* mode === 'mailshot' */ ?>
+                        <?php else: ?>
                             <div class="row filter-row">
                                 <div class="col-md-6">
                                     <div class="filter-label">Keywords (Name, Email, Job Title)</div>
@@ -1276,408 +649,819 @@ $createdByMapping = [
                                     </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="filter-label">Status</div>
-                                    <select name="status" class="filter-input">
-                                        <option value="all" <?php echo $status_filter === 'all' ? 'selected' : ''; ?>>All Statuses</option>
-                                        <option value="active" <?php echo $status_filter === 'active' ? 'selected' : ''; ?>>Active</option>
-                                        <option value="inactive" <?php echo $status_filter === 'inactive' ? 'selected' : ''; ?>>Inactive</option>
-                                        <option value="archived" <?php echo $status_filter === 'archived' ? 'selected' : ''; ?>>Archived</option>
-                                        <option value="pending" <?php echo $status_filter === 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                    </select>
+                                    <div class="filter-label">Distance Filter</div>
+                                    <div class="distance-filter">
+                                        <input type="text" name="center_postcode" class="filter-input"
+                                            placeholder="Postcode"
+                                            value="<?php echo htmlspecialchars($center_postcode); ?>">
+                                        <input type="number" name="distance_miles" class="filter-input distance-input"
+                                            placeholder="Miles" min="1" max="100"
+                                            value="<?php echo $distance_miles > 0 ? htmlspecialchars($distance_miles) : ''; ?>">
+                                        <span>miles</span>
+                                    </div>
                                 </div>
                             </div>
                         <?php endif; ?>
+                        
                         <div class="row">
-                            <div class="col-12">
-                                <button type="submit" class="btn btn-primary"><i class="fa fa-filter"></i> Apply Filters</button>
-                                <a href="?mode=<?php echo htmlspecialchars($mode); ?>" class="btn btn-secondary"><i class="ti ti-refresh"></i> Clear Filters</a>
+                            <div class="col-md-12">
+                                <button type="submit" class="filter-button">
+                                    <i class="fa fa-search"></i> Apply Filters
+                                </button>
+                                <a href="?mode=<?php echo htmlspecialchars($mode); ?>" class="clear-button">
+                                    <i class="fa fa-times"></i> Clear Filters
+                                </a>
                             </div>
                         </div>
+                        <input type="hidden" name="status" value="<?php echo htmlspecialchars($status_filter); ?>">
                     </form>
                 </div>
 
-                <div class="table-responsive dt-responsive">
-                    <?php if (IsCheckPermission($USERID, "VIEW_CANDIDATES")): // Assuming a permission check function ?>
-                        <form method="POST" id="mailshotFormCandidates">
-                            <input type="hidden" name="mode" value="mailshot">
-                            <table class="table table-bordered" id="candidatesTable">
-                                <thead>
+                <?php if ($mode === 'candidates'): ?>
+                    <div class="status-tabs">
+                        <a href="?mode=candidates&status=all&keyword=<?php echo urlencode($keyword_filter); ?>&location=<?php echo urlencode($location_filter); ?>&position=<?php echo urlencode($position_filter); ?>¢er_postcode=<?php echo urlencode($center_postcode); ?>&distance_miles=<?php echo urlencode($distance_miles); ?>"
+                           class="status-tab <?php echo $status_filter === 'all' ? 'active' : ''; ?>">All Candidates</a>
+                        <a href="?mode=candidates&status=active&keyword=<?php echo urlencode($keyword_filter); ?>&location=<?php echo urlencode($location_filter); ?>&position=<?php echo urlencode($position_filter); ?>¢er_postcode=<?php echo urlencode($center_postcode); ?>&distance_miles=<?php echo urlencode($distance_miles); ?>"
+                           class="status-tab <?php echo $status_filter === 'active' ? 'active' : ''; ?>">Active</a>
+                        <a href="?mode=candidates&status=archived&keyword=<?php echo urlencode($keyword_filter); ?>&location=<?php echo urlencode($location_filter); ?>&position=<?php echo urlencode($position_filter); ?>¢er_postcode=<?php echo urlencode($center_postcode); ?>&distance_miles=<?php echo urlencode($distance_miles); ?>"
+                           class="status-tab <?php echo $status_filter === 'archived' ? 'active' : ''; ?>">Archived</a>
+                        <a href="?mode=candidates&status=inactive&keyword=<?php echo urlencode($keyword_filter); ?>&location=<?php echo urlencode($location_filter); ?>&position=<?php echo urlencode($position_filter); ?>¢er_postcode=<?php echo urlencode($center_postcode); ?>&distance_miles=<?php echo urlencode($distance_miles); ?>"
+                           class="status-tab <?php echo $status_filter === 'inactive' ? 'active' : ''; ?>">Inactive</a>
+                        <a href="?mode=candidates&status=pending&keyword=<?php echo urlencode($keyword_filter); ?>&location=<?php echo urlencode($location_filter); ?>&position=<?php echo urlencode($position_filter); ?>¢er_postcode=<?php echo urlencode($center_postcode); ?>&distance_miles=<?php echo urlencode($distance_miles); ?>"
+                           class="status-tab <?php echo $status_filter === 'pending' ? 'active' : ''; ?>">Pending Compliance</a>
+                    </div>
+                <?php endif; ?>
+
+                <?php
+                if ($mode !== 'kpi') {
+                    try {
+                        $query = "SELECT * FROM `_candidates` $where_clause ORDER BY id DESC";
+                        $stmt = $db_2->prepare($query);
+                        
+                        foreach ($params as $key => $value) {
+                            $stmt->bindValue($key, $value);
+                        }
+                        
+                        $stmt->execute();
+                        $candidates_new = $stmt->fetchAll(PDO::FETCH_OBJ);
+                        
+                        $candidates_old = [];
+                        try {
+                            $q = $db_1->query("SELECT * FROM `_candidates` ORDER BY id DESC");
+                            $candidates_old = $q->fetchAll(PDO::FETCH_OBJ);
+                        } catch (Exception $e) {}
+                        
+                        $candidates = !empty($candidates_new) ? $candidates_new : $candidates_old;
+                        
+                    } catch (Exception $e) {
+                        $candidates = [];
+                        echo "<div class='alert alert-warning'>Database query error: " . $e->getMessage() . "</div>";
+                    }
+                    
+                    $distance_filtered_candidates = [];
+                    if (!empty($center_postcode) && $distance_miles > 0) {
+                        foreach ($candidates as $candidate) {
+                            $postcode_field = isset($candidate->Postcode) ? $candidate->Postcode : (isset($candidate->postcode) ? $candidate->postcode : '');
+                            if (!empty($postcode_field)) {
+                                try {
+                                    $distance = calculateDistanceBetweenPostcodes($center_postcode, $postcode_field);
+                                    if ($distance <= $distance_miles) {
+                                        $candidate->distance = round($distance, 1);
+                                        $distance_filtered_candidates[] = $candidate;
+                                    }
+                                } catch (Exception $e) {
+                                    continue;
+                                }
+                            }
+                        }
+                        $candidates = $distance_filtered_candidates;
+                    }
+                    $total_results = count($candidates);
+                }
+                ?>
+
+                <?php if ($mode !== 'kpi'): ?>
+                    <div class="results-info">
+                        <strong><?php echo $total_results; ?></strong> candidates found
+                        <?php if ($mode === 'mailshot'): ?>
+                            for mailshot
+                        <?php endif; ?>
+                        <?php if (!empty($keyword_filter) || !empty($location_filter) || !empty($position_filter)): ?>
+                            with applied filters
+                        <?php endif; ?>
+                        <?php if (!empty($center_postcode) && $distance_miles > 0): ?>
+                            within <?php echo htmlspecialchars($distance_miles); ?> miles of <?php echo htmlspecialchars($center_postcode); ?>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($mode !== 'kpi' && $total_results > 0): ?>
+                    <?php if ($mode === 'mailshot'): ?>
+                        <form method="POST" action="">
+                            <div class="select-all-container">
+                                <label>
+                                    <input type="checkbox" id="select-all" class="candidate-checkbox">
+                                    Select All Candidates
+                                </label>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped" id="editableTable">
+                                <thead class="thead-light">
                                     <tr>
+                                        <?php if ($mode === 'mailshot'): ?>
+                                            <th width="40px">Select</th>
+                                        <?php endif; ?>
                                         <th>#</th>
-                                        <th>
-                                            <input type="checkbox" id="selectAllCandidates" class="form-check-input">
-                                            <label for="selectAllCandidates" class="form-check-label ms-1">Select All</label>
-                                        </th>
+                                        <?php if ($mode === 'candidates'): ?>
+                                            <th>Candidate ID</th>
+                                            <th>Status</th>
+                                        <?php endif; ?>
                                         <th>Name</th>
-                                        <th>Email</th>
+                                        <th>Email Address</th>
+                                        <?php if ($mode === 'candidates'): ?>
+                                            <th>Phone Number</th>
+                                        <?php endif; ?>
                                         <th>Job Title</th>
-                                        <th>Status</th>
+                                        <?php if ($mode === 'candidates'): ?>
+                                            <th>Address</th>
+                                            <th>City</th>
+                                            <th>Postcode</th>
+                                        <?php else: ?>
+                                            <th>Location</th>
+                                        <?php endif; ?>
+                                        <?php if (!empty($center_postcode) && $distance_miles > 0): ?>
+                                            <th>Distance</th>
+                                        <?php endif; ?>
                                         <th>Created By</th>
                                         <th>Date</th>
-                                        <th>Actions</th>
+                                        <?php if ($mode === 'candidates'): ?>
+                                            <th>Actions</th>
+                                        <?php endif; ?>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php
-                                    // Prepare the base query for candidates
-                                    $candidates_query = "SELECT id, Name, Email, JobTitle, Status, CreatedBy, Date, Postcode FROM _candidates " . $where_clause . " ORDER BY Date DESC";
-                                    $stmt = $db_2->prepare($candidates_query);
-
-                                    // Bind parameters for candidate filters
-                                    foreach ($params as $key => $value) {
-                                        $stmt->bindValue($key, $value);
-                                    }
-                                    $stmt->execute();
                                     $n = 1;
-                                    $filtered_candidates_count = 0;
-                                    while ($row = $stmt->fetch(PDO::FETCH_OBJ)) {
-                                        $display_row = true;
-
-                                        // Apply distance filter in PHP if postcode is available
-                                        if (!empty($center_postcode) && $distance_miles > 0 && !empty($row->Postcode)) {
-                                            try {
-                                                $distance = calculateDistanceBetweenPostcodes($center_postcode, $row->Postcode);
-                                                if ($distance > $distance_miles) {
-                                                    $display_row = false;
-                                                }
-                                            } catch (Exception $e) {
-                                                // Log error but don't stop display
-                                                error_log("Postcode distance calculation error: " . $e->getMessage());
-                                            }
+                                    foreach ($candidates as $row) {
+                                        $name = '';
+                                        if (isset($row->Name)) {
+                                            $name = $row->Name;
+                                        } elseif (isset($row->first_name) && isset($row->last_name)) {
+                                            $name = $row->first_name . ' ' . $row->last_name;
                                         }
-
-                                        if ($display_row) {
-                                            $filtered_candidates_count++;
-                                            $CreatedBy = $createdByMapping[$row->CreatedBy] ?? 'Unknown User';
-                                            $status_text = htmlspecialchars($row->Status);
-                                            $status_class = '';
-                                            switch (strtolower($row->Status)) {
-                                                case 'active': $status_class = 'bg-success'; break;
-                                                case 'archived': $status_class = 'bg-warning'; break;
-                                                case 'inactive': $status_class = 'bg-danger'; break;
-                                                case 'pending': $status_class = 'bg-info'; break;
-                                                default: $status_class = 'bg-secondary'; break;
-                                            }
+                                        $status = $row->Status ?? $row->status ?? 'active';
+                                        $email = strtolower($row->Email ?? $row->email ?? '');
+                                        $phonenumber = $row->Number ?? $row->mobilenumber ?? '';
+                                        $Address = $row->Address ?? $row->address ?? '';
+                                        $city = $row->City ?? $row->city ?? '';
+                                        $postcode = $row->Postcode ?? $row->postcode ?? '';
+                                        $job_title = $row->JobTitle ?? $row->job_title ?? '';
+                                        $CandidateID = $row->CandidateID ?? '';
+                                        $profileImage = $row->ProfileImage ?? (isset($row->profile) ? "https://broad-mead.com/" . $row->profile : '');
+                                        $CreatedBy = "Unknown";
+                                        $createdByField = $row->CreatedBy ?? $row->createdBy ?? '';
+                                        if (array_key_exists($createdByField, $createdByMapping)) {
+                                            $CreatedBy = $createdByMapping[$createdByField];
+                                        }
+                                        $status_class = 'status-' . strtolower($status);
+                                        $date = 'N/A';
+                                        if (isset($row->Date)) {
+                                            $date = date('M d, Y', strtotime($row->Date));
+                                        } elseif (isset($row->created_at)) {
+                                            $date = date('M d, Y', strtotime($row->created_at));
+                                        }
                                     ?>
-                                            <tr class="candidate-row">
-                                                <td><?php echo $n++; ?></td>
-                                                <td>
-                                                    <input class="form-check-input candidate-checkbox"
-                                                        type="checkbox"
-                                                        name="selected_candidates[]"
-                                                        value="<?php echo htmlspecialchars($row->id); ?>"
-                                                        data-name="<?php echo htmlspecialchars($row->Name); ?>"
-                                                        data-email="<?php echo htmlspecialchars($row->Email); ?>"
-                                                        onchange="updateMailshotButton()">
+                                        <tr data-id="<?php echo $row->id; ?>">
+                                            <?php if ($mode === 'mailshot'): ?>
+                                                <td class="text-center">
+                                                    <input type="checkbox" name="selected_candidates[]" value="<?php echo $row->id; ?>" class="candidate-checkbox">
                                                 </td>
-                                                <td><?php echo htmlspecialchars($row->Name); ?></td>
-                                                <td><?php htmlspecialchars($row->Email); ?></td>
-                                                <td><?php htmlspecialchars($row->JobTitle); ?></td>
-                                                <td><span class="badge <?php echo $status_class; ?>"><?php echo $status_text; ?></span></td>
-                                                <td><?php htmlspecialchars($CreatedBy); ?></td>
-                                                <td><?php echo FormatDate($row->Date); ?></td>
+                                            <?php endif; ?>
+                                            <td><?php echo str_pad($n++, 2, '0', STR_PAD_LEFT); ?></td>
+                                            <?php if ($mode === 'candidates'): ?>
                                                 <td>
-                                                    <div class="dropdown">
-                                                        <a class="avtar avtar-s btn-link-secondary dropdown-toggle arrow-none" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="ti ti-dots-vertical f-18"></i></a>
-                                                        <div class="dropdown-menu dropdown-menu-end">
-                                                            <a class="dropdown-item" href="edit_candidate.php?id=<?php echo htmlspecialchars($row->id); ?>">
-                                                                <span class="text-info">
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-                                                                        <path fill="currentColor" d="M4 20v-2.52L17.18 4.288q.155-.137.34-.212T17.907 4t.39.064q.19.063.35.228l1.067 1.074q.165.159.226.35q.06.19.06.38q0 .204-.068.39q-.069.185-.218.339L6.519 20zM17.504 7.589L19 6.111L17.889 5l-1.477 1.496z" />
-                                                                    </svg>
-                                                                </span>
-                                                                Edit
-                                                            </a>
-                                                            <?php if (IsCheckPermission($USERID, "DELETE_CANDIDATE")): // Assuming permission check for delete ?>
-                                                                <a class="dropdown-item delete-candidate-btn" href="#"
-                                                                    data-id="<?php echo htmlspecialchars($row->id); ?>"
-                                                                    data-name="<?php echo htmlspecialchars($row->Name); ?>"
-                                                                    data-bs-toggle="modal" data-bs-target="#deleteCandidateModal">
-                                                                    <span class="text-danger">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 20 20">
-                                                                            <path fill="currentColor" d="M8.5 4h3a1.5 1.5 0 0 0-3 0m-1 0a2.5 2.5 0 0 1 5 0h5a.5.5 0 0 1 0 1h-1.054l-1.194 10.344A3 3 0 0 1 12.272 18H7.728a3 3 0 0 1-2.98-2.656L3.554 5H2.5a.5.5 0 0 1 0-1zM9 8a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0zm2.5-.5a.5.5 0 0 0-.5.5v6a.5.5 0 0 0 1 0V8a.5.5 0 0 0-.5-.5" />
-                                                                        </svg>
-                                                                    </span>
-                                                                    Delete
-                                                                </a>
-                                                            <?php endif; ?>
+                                                    <span class="candidate-id"><?php echo substr($CandidateID ?? '', 0, 5); ?></span>
+                                                </td>
+                                                <td>
+                                                    <span class="status-badge <?php echo $status_class; ?>">
+                                                        <?php echo ucfirst($status); ?>
+                                                    </span>
+                                                </td>
+                                            <?php endif; ?>
+                                            <td>
+                                                <div class="candidate-name-cell">
+                                                    <?php if (!empty($profileImage)): ?>
+                                                        <img src="<?php echo htmlspecialchars($profileImage); ?>" alt="Profile" class="candidate-avatar">
+                                                    <?php else: ?>
+                                                        <div class="candidate-avatar-placeholder">
+                                                            <?php echo strtoupper(substr($name, 0, 1)); ?>
                                                         </div>
+                                                    <?php endif; ?>
+                                                    <div class="candidate-name"><?php echo htmlspecialchars($name); ?></div>
+                                                </div>
+                                            </td>
+                                            <td><?php echo htmlspecialchars($email); ?></td>
+                                            <?php if ($mode === 'candidates'): ?>
+                                                <td><?php echo htmlspecialchars($phonenumber); ?></td>
+                                            <?php endif; ?>
+                                            <td><?php echo htmlspecialchars($job_title); ?></td>
+                                            <?php if ($mode === 'candidates'): ?>
+                                                <td><?php echo htmlspecialchars($Address); ?></td>
+                                                <td><?php echo htmlspecialchars($city); ?></td>
+                                                <td><?php echo htmlspecialchars($postcode); ?></td>
+                                            <?php else: ?>
+                                                <td><?php echo htmlspecialchars($city); ?></td>
+                                            <?php endif; ?>
+                                            <?php if (!empty($center_postcode) && $distance_miles > 0): ?>
+                                                <td>
+                                                    <?php if (isset($row->distance)): ?>
+                                                        <span class="distance-badge">
+                                                            <?php echo $row->distance; ?> miles
+                                                        </span>
+                                                    <?php else: ?>
+                                                        <span class="distance-badge">N/A</span>
+                                                    <?php endif; ?>
+                                                </td>
+                                            <?php endif; ?>
+                                            <td><?php echo htmlspecialchars($CreatedBy); ?></td>
+                                            <td><?php echo htmlspecialchars($date); ?></td>
+                                            <?php if ($mode === 'candidates'): ?>
+                                                <td>
+                                                    <div class="action-buttons">
+                                                        <button class="btn btn-sm btn-outline-primary" title="View Candidate">
+                                                            <i class="fa fa-eye"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-secondary" title="Edit Candidate">
+                                                            <i class="fa fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-danger" title="Delete Candidate">
+                                                            <i class="fa fa-trash"></i>
+                                                        </button>
                                                     </div>
                                                 </td>
-                                            </tr>
-                                    <?php
-                                        }
-                                    }
-                                    if ($filtered_candidates_count === 0):
-                                    ?>
-                                        <tr><td colspan="9" class="text-center text-muted">No candidates found matching your criteria.</td></tr>
-                                    <?php endif; ?>
+                                            <?php endif; ?>
+                                        </tr>
+                                    <?php } ?>
                                 </tbody>
                             </table>
-                            <?php if ($mode === 'mailshot'): ?>
-                                <div class="mailshot-actions mt-3">
-                                    <button type="button" class="btn btn-primary" id="openMailshotModalBtn" style="display: none;" data-bs-toggle="modal" data-bs-target="#mailshotModal">
-                                        Send Mailshot (<span id="selectedCandidatesCount">0</span> selected)
-                                    </button>
+                        </div>
+
+                        <?php if ($mode === 'mailshot'): ?>
+                            <div class="mailshot-actions">
+                                <h5>Mailshot Actions</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="mailshot-subject">Email Subject</label>
+                                            <input type="text" name="subject" id="mailshot-subject" class="form-control" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="mailshot-template">Email Template</label>
+                                            <select name="template" id="mailshot-template" class="form-control" required>
+                                                <option value="">Select a template</option>
+                                                <option value="job_alert">Job Alert</option>
+                                                <option value="newsletter">Newsletter</option>
+                                                <option value="event_invitation">Event Invitation</option>
+                                                <option value="follow_up">Follow Up</option>
+                                                <option value="welcome">Welcome Email</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
-                            <?php endif; ?>
+                                <div class="form-group">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fa fa-paper-plane"></i> Send Mail
+                                    </button>
+                                    <span class="text-muted ml-3">
+                                        <i class="fa fa-info-circle"></i>
+                                        This will send emails to all selected candidates
+                                    </span>
+                                </div>
+                            </div>
                         </form>
+                    <?php endif; ?>
+
+                <?php elseif ($mode !== 'kpi'): ?>
+                    <div class="alert alert-info text-center">
+                        <h5>No candidates found</h5>
+                        <p>Try adjusting your search filters or <a href="?mode=<?php echo htmlspecialchars($mode); ?>">clear all filters</a> to see <?php echo $mode === 'mailshot' ? 'candidates for your mailshot' : 'all candidates'; ?>.</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </html>
+    <?php endif; ?>
+
+    <?php if ($mode === 'kpi'): ?>
+        <!-- KPI Filter Form -->
+        <div class="kpi-filter-section">
+            <h5 style="margin-bottom: 20px; color: #495057;">Select KPI Period</h5>
+            <form method="GET" action="">
+                <input type="hidden" name="mode" value="kpi">
+                <div class="row" style="margin-bottom: 20px;">
+                    <div class="col-md-3">
+                        <label for="kpi_period">KPI Period</label>
+                        <select name="kpi_period" id="kpi_period" class="form-control">
+                            <option value="current_week" <?php echo $kpi_period === 'current_week' ? 'selected' : ''; ?>>Current Week</option>
+                            <option value="last_week" <?php echo $kpi_period === 'last_week' ? 'selected' : ''; ?>>Last Week</option>
+                            <option value="current_month" <?php echo $kpi_period === 'current_month' ? 'selected' : ''; ?>>Current Month</option>
+                            <option value="last_month" <?php echo $kpi_period === 'last_month' ? 'selected' : ''; ?>>Last Month</option>
+                            <option value="current_quarter" <?php echo $kpi_period === 'current_quarter' ? 'selected' : ''; ?>>Current Quarter</option>
+                            <option value="current_year" <?php echo $kpi_period === 'current_year' ? 'selected' : ''; ?>>Current Year</option>
+                            <option value="custom" <?php echo $kpi_period === 'custom' ? 'selected' : ''; ?>>Custom Range</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="kpi_start_date">Start Date</label>
+                        <input type="date" name="kpi_start_date" id="kpi_start_date" class="form-control" value="<?php echo htmlspecialchars($kpi_start_date); ?>" <?php echo $kpi_period !== 'custom' ? 'disabled' : ''; ?>>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="kpi_end_date">End Date</label>
+                        <input type="date" name="kpi_end_date" id="kpi_end_date" class="form-control" value="<?php echo htmlspecialchars($kpi_end_date); ?>" <?php echo $kpi_period !== 'custom' ? 'disabled' : ''; ?>>
+                    </div>
+                    <div class="col-md-3" style="margin-top: 24px;">
+                        <button type="submit" class="btn btn-primary"><i class="fa fa-bar-chart"></i> Generate Report</button>
+                        <a href="?mode=kpi" class="btn btn-secondary"><i class="fa fa-times"></i> Clear</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <?php if (!empty($kpi_data) && !isset($kpi_data['error'])): ?>
+            <!-- KPI Summary Table -->
+            <div class="kpi-summary card mb-4">
+                <div class="card-header">
+                    <h5>KPI Summary (<?php echo $kpi_data['date_range']['start']; ?> to <?php echo $kpi_data['date_range']['end']; ?>)</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered table-hover">
+                        <tbody>
+                            <tr><th>Total Candidates Registered</th><td><?php echo $kpi_data['total_candidates']; ?></td></tr>
+                            <tr><th>New Candidates (in period)</th><td><?php echo $kpi_data['new_candidates']; ?></td></tr>
+                            <tr><th>Active Candidates</th><td><?php echo $kpi_data['active_candidates']; ?></td></tr>
+                            <tr><th>Inactive Candidates</th><td><?php echo $kpi_data['inactive_candidates']; ?></td></tr>
+                            <tr><th>Archived Candidates</th><td><?php echo $kpi_data['archived_candidates']; ?></td></tr>
+                            <tr><th>Pending Candidates</th><td><?php echo $kpi_data['pending_candidates']; ?></td></tr>
+                            <tr><th>Growth Rate (vs. previous period)</th><td><span class="badge <?php echo $kpi_data['growth_rate'] >= 0 ? 'bg-success' : 'bg-danger'; ?>"><?php echo $kpi_data['growth_rate']; ?>%</span></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- KPI Charts -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Candidate Status Distribution</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="statusPieChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Daily Candidate Registration Trend</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="trendLineChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Candidate KPI Table -->
+            <div class="detailed-kpi-table card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>Detailed Candidate Report (<?php echo $kpi_data['date_range']['start']; ?> to <?php echo $kpi_data['date_range']['end']; ?>)</h5>
+                    <button class="btn btn-success" onclick="exportTableToCSV('kpi_detailed_report_<?php echo date('Ymd'); ?>.csv')">
+                        <i class="fa fa-file-excel-o"></i> Export to CSV
+                    </button>
+                </div>
+                <div class="card-body">
+                    <?php if (!empty($kpi_data['detailed_candidates'])): ?>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped" id="detailedKpiTable">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Candidate Name</th>
+                                        <th>Job Title</th>
+                                        <th>Status</th>
+                                        <th>Created By</th>
+                                        <th>Created Date</th>
+                                        <th>% of Total (in period)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    $n_detailed = 1;
+                                    $total_candidates_in_period = $kpi_data['total_candidates'];
+                                    $status_counts = [
+                                        'active' => 0,
+                                        'inactive' => 0,
+                                        'archived' => 0,
+                                        'pending' => 0
+                                    ];
+
+                                    foreach ($kpi_data['detailed_candidates'] as $candidate) {
+                                        $name = $candidate['Name'] ?? 'N/A';
+                                        $job_title = $candidate['JobTitle'] ?? 'N/A';
+                                        $status = $candidate['Status'] ?? 'N/A';
+                                        $createdBy = $createdByMapping[$candidate['CreatedBy']] ?? 'Unknown';
+                                        $createdDate = date('M d, Y', strtotime($candidate['Date']));
+                                        $percentage = ($total_candidates_in_period > 0) ? round((1 / $total_candidates_in_period) * 100, 2) : 0;
+                                        
+                                        if (isset($status_counts[strtolower($status)])) {
+                                            $status_counts[strtolower($status)]++;
+                                        }
+                                    ?>
+                                        <tr>
+                                            <td><?php echo $n_detailed++; ?></td>
+                                            <td><?php echo htmlspecialchars($name); ?></td>
+                                            <td><?php echo htmlspecialchars($job_title); ?></td>
+                                            <td><span class="status-badge status-<?php echo strtolower($status); ?>"><?php echo ucfirst($status); ?></span></td>
+                                            <td><?php echo htmlspecialchars($createdBy); ?></td>
+                                            <td><?php echo htmlspecialchars($createdDate); ?></td>
+                                            <td><?php echo $percentage; ?>%</td>
+                                        </tr>
+                                    <?php } ?>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-info">
+                                        <td colspan="3" class="text-end"><strong>Total Candidates:</strong></td>
+                                        <td><strong><?php echo $total_candidates_in_period; ?></strong></td>
+                                        <td colspan="2" class="text-end"><strong>Status Percentages:</strong></td>
+                                        <td>
+                                            <?php
+                                            foreach ($status_counts as $status_key => $count) {
+                                                $percent = ($total_candidates_in_period > 0) ? round(($count / $total_candidates_in_period) * 100, 2) : 0;
+                                                echo ucfirst($status_key) . ': ' . $percent . '%<br>';
+                                            }
+                                            ?>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
                     <?php else: ?>
-                        <?php DeniedAccess(); // Assuming DeniedAccess() function exists ?>
+                        <div class="alert alert-info text-center">
+                            No detailed candidate data found for the selected period.
+                        </div>
                     <?php endif; ?>
                 </div>
-            <?php endif; ?>
-        </div>
-    </div>
-
-    <!-- Delete Candidate Modal (for candidates table) -->
-    <div class="modal fade" id="deleteCandidateModal" tabindex="-1" aria-labelledby="deleteCandidateModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteCandidateModalLabel">Confirm Deletion</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form method="POST" action="">
-                    <input type="hidden" name="mode" value="candidates">
-                    <input type="hidden" name="delete_candidate_id" id="deleteCandidateId">
-                    <div class="modal-body">
-                        <p>Are you sure you want to delete candidate <strong id="candidateNameToDelete"></strong>? This action cannot be undone.</p>
-                        <div class="mb-3">
-                            <label for="deleteReason" class="form-label">Reason for deletion:</label>
-                            <input type="text" class="form-control" id="deleteReason" name="reason" required placeholder="e.g., Duplicate entry, requested removal">
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" name="delete_candidate" class="btn btn-danger">Delete</button>
-                    </div>
-                </form>
             </div>
-        </div>
-    </div>
 
-    <!-- Mailshot Modal -->
-    <div class="modal fade" id="mailshotModal" tabindex="-1" aria-labelledby="mailshotModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="mailshotModalLabel">Send Mailshot to Selected Candidates</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <!-- Job Titles and Locations KPI Table -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Candidates by Job Title</h5>
+                        </div>
+                        <div class="card-body">
+                            <?php if (!empty($kpi_data['job_title_stats'])): ?>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>Job Title</th>
+                                                <th>Count</th>
+                                                <th>% of Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($kpi_data['job_title_stats'] as $item): ?>
+                                                <tr>
+                                                    <td><?php echo htmlspecialchars($item['JobTitle']); ?></td>
+                                                    <td><?php echo $item['count']; ?></td>
+                                                    <td><?php echo ($total_candidates_in_period > 0) ? round(($item['count'] / $total_candidates_in_period) * 100, 2) : 0; ?>%</td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php else: ?>
+                                <div class="alert alert-info text-center">No job title data for this period.</div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
                 </div>
-                <form method="POST" action="?mode=mailshot">
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">Selected Candidates (<span id="modalSelectedCandidatesCount">0</span>):</label>
-                            <div id="selectedCandidatesList" class="border rounded p-2 bg-light" style="max-height: 150px; overflow-y: auto;">
-                                <!-- List of selected candidates will be populated here by JS -->
-                            </div>
-                            <input type="hidden" name="selected_candidates" id="mailshotSelectedCandidateIds">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Candidates by Location (City)</h5>
                         </div>
-                        <div class="mb-3">
-                            <label for="mailshotSubject" class="form-label">Subject:</label>
-                            <input type="text" class="form-control" id="mailshotSubject" name="subject" required placeholder="Enter email subject">
-                        </div>
-                        <div class="mb-3">
-                            <label for="mailshotTemplate" class="form-label">Select Template:</label>
-                            <select class="form-select" id="mailshotTemplate" name="template" onchange="loadMailshotTemplate()">
-                                <option value="">Custom Message</option>
-                                <option value="job_alert">Job Alert</option>
-                                <option value="newsletter">Newsletter</option>
-                                <option value="event_invitation">Event Invitation</option>
-                                <option value="follow_up">Follow Up</option>
-                                <option value="welcome">Welcome</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="mailshotMessage" class="form-label">Message:</label>
-                            <textarea class="form-control" id="mailshotMessage" name="message" rows="8" required placeholder="Enter your message here. Use [Name] to personalize the message."></textarea>
-                            <small class="text-muted">Tip: Use [Name] in your message to automatically insert the candidate's name.</small>
+                        <div class="card-body">
+                            <?php if (!empty($kpi_data['city_stats'])): ?>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>City</th>
+                                                <th>Count</th>
+                                                <th>% of Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($kpi_data['city_stats'] as $item): ?>
+                                                <tr>
+                                                    <td><?php echo htmlspecialchars($item['City']); ?></td>
+                                                    <td><?php echo $item['count']; ?></td>
+                                                    <td><?php echo ($total_candidates_in_period > 0) ? round(($item['count'] / $total_candidates_in_period) * 100, 2) : 0; ?>%</td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php else: ?>
+                                <div class="alert alert-info text-center">No location data for this period.</div>
+                            <?php endif; ?>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" name="send_mailshot" class="btn btn-primary"><i class="fa fa-paper-plane"></i> Send Mailshot</button>
-                    </div>
-                </form>
+                </div>
             </div>
-        </div>
-    </div>
 
-</body>
+            <!-- Created By KPI Table -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Candidates Created By User</h5>
+                </div>
+                <div class="card-body">
+                    <?php if (!empty($kpi_data['created_by_stats'])): ?>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Created By</th>
+                                        <th>Count</th>
+                                        <th>% of Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($kpi_data['created_by_stats'] as $item):
+                                        $createdByUserName = $createdByMapping[$item['CreatedBy']] ?? 'Unknown';
+                                    ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($createdByUserName); ?></td>
+                                            <td><?php echo $item['count']; ?></td>
+                                            <td><?php echo ($total_candidates_in_period > 0) ? round(($item['count'] / $total_candidates_in_period) * 100, 2) : 0; ?>%</td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <div class="alert alert-info text-center">No 'created by' data for this period.</div>
+                    <?php endif; ?>
+                </div>
+            </div>
 
-<?php include "../../includes/js.php"; ?>
-<script>
-    // PHP-generated predefined date ranges for JavaScript
-    const predefinedDateRanges = <?php echo json_encode($predefined_date_ranges); ?>;
+        <?php elseif (isset($kpi_data['error'])): ?>
+            <div class="alert alert-danger text-center">
+                <h5>Error fetching KPI data:</h5>
+                <p><?php echo $kpi_data['error']; ?></p>
+                <p>Please check your database connection and table schema.</p>
+            </div>
+        <?php else: ?>
+            <div class="alert alert-info text-center">
+                <h5>No KPI data to display</h5>
+                <p>Select a period and click 'Generate Report' to view Key Performance Indicators.</p>
+            </div>
+        <?php endif; ?>
 
-    // JavaScript for KPI date inputs
-    function updateKpiDateInputs() {
-        const periodSelect = document.getElementById('kpiPeriodSelect');
-        const startDateInput = document.getElementById('kpiStartDate');
-        const endDateInput = document.getElementById('kpiEndDate');
-        const selectedPeriod = periodSelect.value;
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            // Enable/disable and validate date inputs based on KPI period selection
+            document.addEventListener('DOMContentLoaded', function() {
+                const kpiPeriodSelect = document.getElementById('kpi_period');
+                const startDateInput = document.getElementById('kpi_start_date');
+                const endDateInput = document.getElementById('kpi_end_date');
+                const form = document.querySelector('form[action="?mode=kpi"]');
 
-        if (selectedPeriod === 'custom') {
-            startDateInput.removeAttribute('disabled');
-            endDateInput.removeAttribute('disabled');
-            // When switching to custom, keep current values or let user input.
-            // No explicit clearing here, as user might have pre-filled.
-        } else {
-            startDateInput.setAttribute('disabled', 'disabled');
-            endDateInput.setAttribute('disabled', 'disabled');
+                function toggleDateInputs() {
+                    const isCustom = kpiPeriodSelect.value === 'custom';
+                    console.log('KPI Period changed to:', kpiPeriodSelect.value, 'Is Custom:', isCustom);
+                    
+                    // Enable/disable date inputs
+                    startDateInput.disabled = !isCustom;
+                    endDateInput.disabled = !isCustom;
+                    startDateInput.readOnly = !isCustom;
+                    endDateInput.readOnly = !isCustom;
+                    
+                    // Remove any CSS that might interfere
+                    startDateInput.style.pointerEvents = isCustom ? 'auto' : 'none';
+                    endDateInput.style.pointerEvents = isCustom ? 'auto' : 'none';
+                    
+                    // Ensure inputs are interactive when enabled
+                    startDateInput.style.cursor = isCustom ? 'pointer' : 'not-allowed';
+                    endDateInput.style.cursor = isCustom ? 'pointer' : 'not-allowed';
 
-            // Populate dates for predefined periods from the PHP-generated object
-            if (predefinedDateRanges[selectedPeriod]) {
-                startDateInput.value = predefinedDateRanges[selectedPeriod].start;
-                endDateInput.value = predefinedDateRanges[selectedPeriod].end;
-            } else {
-                // Fallback: This should ideally not be hit if PHP correctly generates all predefined ranges
-                startDateInput.value = '';
-                endDateInput.value = '';
-            }
-        }
-    }
+                    // Clear values if not custom to avoid confusion
+                    if (!isCustom) {
+                        startDateInput.value = '';
+                        endDateInput.value = '';
+                    }
 
-    // Call on page load to set initial state and populate dates
-    document.addEventListener('DOMContentLoaded', function() {
-        updateKpiDateInputs();
-    });
-
-
-    // JavaScript for Mailshot functionality
-    let selectedCandidateData = []; // Stores {id, name, email} for selected candidates
-
-    function updateMailshotButton() {
-        const checkboxes = document.querySelectorAll('.candidate-checkbox:checked');
-        selectedCandidateData = []; // Clear previous selections
-
-        checkboxes.forEach(checkbox => {
-            selectedCandidateData.push({
-                id: checkbox.value,
-                name: checkbox.dataset.name,
-                email: checkbox.dataset.email
-            });
-        });
-
-        const selectedCountSpan = document.getElementById('selectedCandidatesCount');
-        const openMailshotModalBtn = document.getElementById('openMailshotModalBtn');
-        const selectAllCheckbox = document.getElementById('selectAllCandidates');
-        const allVisibleCheckboxes = document.querySelectorAll('.candidate-row .candidate-checkbox'); // Get all checkboxes, visible or not
-
-        selectedCountSpan.textContent = selectedCandidateData.length;
-
-        if (selectedCandidateData.length > 0) {
-            openMailshotModalBtn.style.display = 'inline-block';
-        } else {
-            openMailshotModalBtn.style.display = 'none';
-        }
-
-        // Update "Select All" checkbox state
-        let allChecked = true;
-        if (allVisibleCheckboxes.length > 0) {
-            allVisibleCheckboxes.forEach(checkbox => {
-                if (!checkbox.checked) {
-                    allChecked = false;
+                    console.log('Start Date Input Disabled:', startDateInput.disabled);
+                    console.log('End Date Input Disabled:', endDateInput.disabled);
                 }
+
+                function validateDates() {
+                    if (kpiPeriodSelect.value === 'custom') {
+                        const startDate = startDateInput.value ? new Date(startDateInput.value) : null;
+                        const endDate = endDateInput.value ? new Date(endDateInput.value) : null;
+                        const today = new Date();
+
+                        if (!startDate || !endDate) {
+                            alert('Please select both start and end dates.');
+                            return false;
+                        }
+
+                        if (startDate > endDate) {
+                            alert('Start date cannot be after end date.');
+                            return false;
+                        }
+                        if (startDate > today) {
+                            alert('Start date cannot be in the future.');
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+
+                // Initialize date inputs
+                if (kpiPeriodSelect) {
+                    kpiPeriodSelect.addEventListener('change', toggleDateInputs);
+                    toggleDateInputs();
+                } else {
+                    console.error("kpi_period select element not found.");
+                }
+
+                // Form submission validation
+                if (form) {
+                    form.addEventListener('submit', function(e) {
+                        if (!validateDates()) {
+                            e.preventDefault();
+                            console.log('Form submission prevented due to invalid dates.');
+                        } else {
+                            console.log('Form submitted with Start Date:', startDateInput.value, 'End Date:', endDateInput.value);
+                        }
+                    });
+                }
+
+                // Debug input interaction
+                startDateInput.addEventListener('click', function() {
+                    console.log('Start Date Input Clicked');
+                });
+                endDateInput.addEventListener('click', function() {
+                    console.log('End Date Input Clicked');
+                });
+                startDateInput.addEventListener('change', function() {
+                    console.log('Start Date Changed to:', startDateInput.value);
+                });
+                endDateInput.addEventListener('change', function() {
+                    console.log('End Date Changed to:', endDateInput.value);
+                });
             });
-        } else {
-            allChecked = false; // No checkboxes to select
-        }
-        selectAllCheckbox.checked = allChecked;
-    }
 
-    // Toggle all checkboxes based on "Select All"
-    document.getElementById('selectAllCandidates').addEventListener('change', function() {
-        const isChecked = this.checked;
-        const allCheckboxes = document.querySelectorAll('.candidate-checkbox');
-        allCheckboxes.forEach(checkbox => {
-            checkbox.checked = isChecked;
-        });
-        updateMailshotButton();
-    });
+            <?php if (!empty($kpi_data) && !isset($kpi_data['error'])): ?>
+                const statusData = {
+                    labels: ['Active', 'Inactive', 'Archived', 'Pending'],
+                    datasets: [{
+                        data: [
+                            <?php echo $kpi_data['active_candidates']; ?>,
+                            <?php echo $kpi_data['inactive_candidates']; ?>,
+                            <?php echo $kpi_data['archived_candidates']; ?>,
+                            <?php echo $kpi_data['pending_candidates']; ?>
+                        ],
+                        backgroundColor: ['#28a745', '#ffc107', '#dc3545', '#6c757d'],
+                        hoverOffset: 4
+                    }]
+                };
+                new Chart(document.getElementById('statusPieChart'), {
+                    type: 'pie',
+                    data: statusData,
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed !== null) {
+                                            label += context.parsed + ' (' + (context.parsed / <?php echo $kpi_data['total_candidates']; ?> * 100).toFixed(2) + '%)';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
 
-    // Event listener for opening the mailshot modal
-    document.getElementById('openMailshotModalBtn').addEventListener('click', function() {
-        const modalSelectedCountSpan = document.getElementById('modalSelectedCandidatesCount');
-        const selectedCandidatesListDiv = document.getElementById('selectedCandidatesList');
-        const mailshotSelectedCandidateIdsInput = document.getElementById('mailshotSelectedCandidateIds');
+                const trendLabels = <?php echo json_encode(array_column($kpi_data['daily_trend'], 'date')); ?>;
+                const trendCounts = <?php echo json_encode(array_column($kpi_data['daily_trend'], 'count')); ?>;
+                new Chart(document.getElementById('trendLineChart'), {
+                    type: 'line',
+                    data: {
+                        labels: trendLabels,
+                        datasets: [{
+                            label: 'Candidates Registered',
+                            data: trendCounts,
+                            borderColor: '#007bff',
+                            backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                            fill: true,
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of Candidates'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Date'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            <?php endif; ?>
 
-        modalSelectedCountSpan.textContent = selectedCandidateData.length;
-        selectedCandidatesListDiv.innerHTML = ''; // Clear previous list
+            function exportTableToCSV(filename) {
+                const table = document.getElementById('detailedKpiTable');
+                if (!table) {
+                    console.error("Table with ID 'detailedKpiTable' not found.");
+                    return;
+                }
 
-        if (selectedCandidateData.length > 0) {
-            const ul = document.createElement('ul');
-            ul.classList.add('list-unstyled', 'mb-0');
-            selectedCandidateData.forEach(candidate => {
-                const li = document.createElement('li');
-                li.textContent = `${candidate.name} (${candidate.email})`;
-                ul.appendChild(li);
-            });
-            selectedCandidatesListDiv.appendChild(ul);
-        } else {
-            selectedCandidatesListDiv.innerHTML = '<p class="text-muted">No candidates selected.</p>';
-        }
+                let csv = [];
+                let headers = [];
+                table.querySelectorAll('thead th').forEach(th => {
+                    headers.push(th.innerText.trim());
+                });
+                csv.push(headers.join(','));
 
-        // Populate the hidden input with selected candidate IDs as a JSON string
-        mailshotSelectedCandidateIdsInput.value = JSON.stringify(selectedCandidateData.map(c => c.id));
-    });
+                table.querySelectorAll('tbody tr').forEach(row => {
+                    let rowData = [];
+                    row.querySelectorAll('td').forEach(cell => {
+                        let cellText = cell.innerText.trim().replace(/"/g, '""');
+                        if (cellText.includes(',') || cellText.includes('\n')) {
+                            cellText = `"${cellText}"`;
+                        }
+                        rowData.push(cellText);
+                    });
+                    csv.push(rowData.join(','));
+                });
 
-    // Function to load mailshot template content
-    function loadMailshotTemplate() {
-        const templateSelect = document.getElementById('mailshotTemplate');
-        const messageTextarea = document.getElementById('mailshotMessage');
-        const subjectInput = document.getElementById('mailshotSubject');
+                const footerRow = table.querySelector('tfoot tr');
+                if (footerRow) {
+                    let footerData = [];
+                    footerRow.querySelectorAll('td').forEach(cell => {
+                        let cellText = cell.innerText.trim().replace(/"/g, '""');
+                        if (cellText.includes(',') || cellText.includes('\n')) {
+                            cellText = `"${cellText}"`;
+                        }
+                        footerData.push(cellText);
+                    });
+                    csv.push(footerData.join(','));
+                }
 
-        const templates = {
-            'job_alert': {
-                subject: 'New Job Opportunities Matching Your Profile',
-                body: "Hello [Name],\n\nWe have new job opportunities that match your profile. Log in to your account to view them:\n\nhttps://broad-mead.com/login\n\nBest regards,\nThe Recruitment Team"
-            },
-            'newsletter': {
-                subject: 'Our Latest Industry Insights',
-                body: "Hello [Name],\n\nCheck out our latest newsletter with industry insights and job tips:\n\nhttps://broad-mead.com/newsletter\n\nBest regards,\nThe Recruitment Team"
-            },
-            'event_invitation': {
-                subject: 'Invitation to Recruitment Event',
-                body: "Hello [Name],\n\nYou are invited to our upcoming recruitment event. Please RSVP here:\n\nhttps://broad-mead.com/events\n\nBest regards,\nThe Recruitment Team"
-            },
-            'follow_up': {
-                subject: 'Following Up on Your Application',
-                body: "Hello [Name],\n\nFollowing up on your recent application. Any updates?\n\nBest regards,\nThe Recruitment Team"
-            },
-            'welcome': {
-                subject: 'Welcome to Our Candidate Network',
-                body: "Hello [Name],\n\nWelcome to our candidate database! We will contact you when we find a match.\n\nBest regards,\nThe Recruitment Team"
+                const csvFile = new Blob([csv.join('\n')], { type: 'text/csv' });
+                const downloadLink = document.createElement('a');
+                downloadLink.download = filename;
+                downloadLink.href = window.URL.createObjectURL(csvFile);
+                downloadLink.style.display = 'none';
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
             }
-        };
-
-        const selectedTemplate = templateSelect.value;
-        if (selectedTemplate && templates[selectedTemplate]) {
-            subjectInput.value = templates[selectedTemplate].subject;
-            messageTextarea.value = templates[selectedTemplate].body;
-        } else {
-            // If "Custom Message" or no template selected, clear fields
-            subjectInput.value = '';
-            messageTextarea.value = '';
-        }
-    }
-
-    // Initial update of mailshot button state on page load
-    document.addEventListener('DOMContentLoaded', updateMailshotButton);
-
-    // Handle delete candidate button click to populate modal
-    document.querySelectorAll('.delete-candidate-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const candidateId = this.dataset.id;
-            const candidateName = this.dataset.name;
-
-            document.getElementById('deleteCandidateId').value = candidateId;
-            document.getElementById('candidateNameToDelete').textContent = candidateName;
-        });
-    });
-
-    // PHP's error_log messages are echoed as console.log in the PHP script block at the top.
-    // This ensures they appear in the browser's console for debugging.
-</script>
+        </script>
+    <?php endif; ?>
+</body>
 </html>
