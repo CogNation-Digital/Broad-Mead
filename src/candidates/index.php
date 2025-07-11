@@ -1041,23 +1041,28 @@ $createdByMapping = [
             
             <!-- Recruiter Filter -->
             <div class="col-md-3">
-                <label for="recruiter_filter">Recruiter</label>
-                <select name="recruiter_filter" id="recruiter_filter" class="form-control">
-                    <option value="">All Recruiters</option>
-                    <?php
-                    // Fetch distinct recruiters from database
-                    $recruiters_query = "SELECT DISTINCT CreatedBy FROM _candidates WHERE CreatedBy IS NOT NULL AND CreatedBy != ''";
-                    $recruiters_stmt = $db_2->query($recruiters_query);
-                    $recruiters = $recruiters_stmt->fetchAll(PDO::FETCH_COLUMN);
-                    
-                    foreach ($recruiters as $recruiter_id) {
-                        $recruiter_name = $createdByMapping[$recruiter_id] ?? 'Unknown User';
-                        $selected = isset($_GET['recruiter_filter']) && $_GET['recruiter_filter'] === $recruiter_id ? 'selected' : '';
-                        echo "<option value=\"" . htmlspecialchars($recruiter_id) . "\" $selected>" . htmlspecialchars($recruiter_name) . "</option>";
-                    }
-                    ?>
-                </select>
-            </div>
+    <label for="recruiter_filter">Recruiter</label>
+    <select name="recruiter_filter" id="recruiter_filter" class="form-control">
+        <option value="">All Recruiters</option>
+        <?php
+        // Fetch recruiters with their names from the users table
+        $recruiters_query = "SELECT u.id, u.name 
+                            FROM _candidates c
+                            JOIN users u ON c.CreatedBy = u.id
+                            WHERE c.CreatedBy IS NOT NULL 
+                            GROUP BY u.id, u.name
+                            ORDER BY u.name";
+        $recruiters_stmt = $db_2->query($recruiters_query);
+        $recruiters = $recruiters_stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        foreach ($recruiters as $recruiter) {
+            $selected = isset($_GET['recruiter_filter']) && $_GET['recruiter_filter'] == $recruiter['id'] ? 'selected' : '';
+            echo "<option value=\"" . htmlspecialchars($recruiter['id']) . "\" $selected>" . 
+                 htmlspecialchars($recruiter['name']) . "</option>";
+        }
+        ?>
+    </select>
+</div>
             
             <!-- Action Buttons -->
             <div class="col-md-3" style="margin-top: 24px;">
