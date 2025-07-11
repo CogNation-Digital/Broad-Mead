@@ -975,14 +975,18 @@ $createdByMapping = [
                             <option value="custom" <?php echo $kpi_period === 'custom' ? 'selected' : ''; ?>>Custom Range</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
-                        <label for="kpi_start_date">Start Date</label>
-                        <input type="date" name="kpi_start_date" id="kpi_start_date" class="form-control" value="<?php echo htmlspecialchars($kpi_start_date); ?>" <?php echo $kpi_period !== 'custom' ? 'disabled' : ''; ?>>
-                    </div>
-                    <div class="col-md-3">
-                        <label for="kpi_end_date">End Date</label>
-                        <input type="date" name="kpi_end_date" id="kpi_end_date" class="form-control" value="<?php echo htmlspecialchars($kpi_end_date); ?>" <?php echo $kpi_period !== 'custom' ? 'disabled' : ''; ?>>
-                    </div>
+                   <div class="col-md-3">
+    <label for="kpi_start_date">Start Date</label>
+    <input type="date" name="kpi_start_date" id="kpi_start_date" class="form-control" 
+           value="<?php echo $kpi_period === 'custom' ? htmlspecialchars($kpi_start_date) : ''; ?>" 
+           <?php echo $kpi_period !== 'custom' ? 'disabled' : ''; ?>>
+</div>
+<div class="col-md-3">
+    <label for="kpi_end_date">End Date</label>
+    <input type="date" name="kpi_end_date" id="kpi_end_date" class="form-control" 
+           value="<?php echo $kpi_period === 'custom' ? htmlspecialchars($kpi_end_date) : ''; ?>" 
+           <?php echo $kpi_period !== 'custom' ? 'disabled' : ''; ?>>
+</div>
                     <div class="col-md-3" style="margin-top: 24px;">
                         <button type="submit" class="btn btn-primary"><i class="fa fa-bar-chart"></i> Generate Report</button>
                         <a href="?mode=kpi" class="btn btn-secondary"><i class="fa fa-times"></i> Clear</a>
@@ -1239,97 +1243,80 @@ $createdByMapping = [
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
             // Enable/disable and validate date inputs based on KPI period selection
-            document.addEventListener('DOMContentLoaded', function() {
-                const kpiPeriodSelect = document.getElementById('kpi_period');
-                const startDateInput = document.getElementById('kpi_start_date');
-                const endDateInput = document.getElementById('kpi_end_date');
-                const form = document.querySelector('form[action="?mode=kpi"]');
+         document.addEventListener('DOMContentLoaded', function() {
+    const kpiPeriodSelect = document.getElementById('kpi_period');
+    const startDateInput = document.getElementById('kpi_start_date');
+    const endDateInput = document.getElementById('kpi_end_date');
+    const form = document.querySelector('form[action="?mode=kpi"]');
 
-                function toggleDateInputs() {
-                    const isCustom = kpiPeriodSelect.value === 'custom';
-                    console.log('KPI Period changed to:', kpiPeriodSelect.value, 'Is Custom:', isCustom);
-                    
-                    // Enable/disable date inputs
-                    startDateInput.disabled = !isCustom;
-                    endDateInput.disabled = !isCustom;
-                    startDateInput.readOnly = !isCustom;
-                    endDateInput.readOnly = !isCustom;
-                    
-                    // Remove any CSS that might interfere
-                    startDateInput.style.pointerEvents = isCustom ? 'auto' : 'none';
-                    endDateInput.style.pointerEvents = isCustom ? 'auto' : 'none';
-                    
-                    // Ensure inputs are interactive when enabled
-                    startDateInput.style.cursor = isCustom ? 'pointer' : 'not-allowed';
-                    endDateInput.style.cursor = isCustom ? 'pointer' : 'not-allowed';
+    function toggleDateInputs() {
+        const isCustom = kpiPeriodSelect.value === 'custom';
+        
+        // Simply enable/disable the inputs - no need for readOnly or style changes
+        startDateInput.disabled = !isCustom;
+        endDateInput.disabled = !isCustom;
 
-                    // Clear values if not custom to avoid confusion
-                    if (!isCustom) {
-                        startDateInput.value = '';
-                        endDateInput.value = '';
-                    }
+        // Clear values if not custom to avoid confusion
+        if (!isCustom) {
+            startDateInput.value = '';
+            endDateInput.value = '';
+        }
+    }
 
-                    console.log('Start Date Input Disabled:', startDateInput.disabled);
-                    console.log('End Date Input Disabled:', endDateInput.disabled);
-                }
+    function validateDates() {
+        if (kpiPeriodSelect.value === 'custom') {
+            const startDate = startDateInput.value ? new Date(startDateInput.value) : null;
+            const endDate = endDateInput.value ? new Date(endDateInput.value) : null;
+            const today = new Date();
 
-                function validateDates() {
-                    if (kpiPeriodSelect.value === 'custom') {
-                        const startDate = startDateInput.value ? new Date(startDateInput.value) : null;
-                        const endDate = endDateInput.value ? new Date(endDateInput.value) : null;
-                        const today = new Date();
+            if (!startDate || !endDate) {
+                alert('Please select both start and end dates.');
+                return false;
+            }
 
-                        if (!startDate || !endDate) {
-                            alert('Please select both start and end dates.');
-                            return false;
-                        }
+            if (startDate > endDate) {
+                alert('Start date cannot be after end date.');
+                return false;
+            }
+            if (startDate > today) {
+                alert('Start date cannot be in the future.');
+                return false;
+            }
+        }
+        return true;
+    }
 
-                        if (startDate > endDate) {
-                            alert('Start date cannot be after end date.');
-                            return false;
-                        }
-                        if (startDate > today) {
-                            alert('Start date cannot be in the future.');
-                            return false;
-                        }
-                    }
-                    return true;
-                }
+    // Initialize date inputs
+    if (kpiPeriodSelect) {
+        // Set initial state
+        toggleDateInputs();
+        
+        // Add event listener for changes
+        kpiPeriodSelect.addEventListener('change', toggleDateInputs);
+    }
 
-                // Initialize date inputs
-                if (kpiPeriodSelect) {
-                    kpiPeriodSelect.addEventListener('change', toggleDateInputs);
-                    toggleDateInputs();
-                } else {
-                    console.error("kpi_period select element not found.");
-                }
+    // Form submission validation
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            if (!validateDates()) {
+                e.preventDefault();
+            }
+        });
+    }
 
-                // Form submission validation
-                if (form) {
-                    form.addEventListener('submit', function(e) {
-                        if (!validateDates()) {
-                            e.preventDefault();
-                            console.log('Form submission prevented due to invalid dates.');
-                        } else {
-                            console.log('Form submitted with Start Date:', startDateInput.value, 'End Date:', endDateInput.value);
-                        }
-                    });
-                }
-
-                // Debug input interaction
-                startDateInput.addEventListener('click', function() {
-                    console.log('Start Date Input Clicked');
-                });
-                endDateInput.addEventListener('click', function() {
-                    console.log('End Date Input Clicked');
-                });
-                startDateInput.addEventListener('change', function() {
-                    console.log('Start Date Changed to:', startDateInput.value);
-                });
-                endDateInput.addEventListener('change', function() {
-                    console.log('End Date Changed to:', endDateInput.value);
-                });
-            });
+    // Make sure date inputs work properly when enabled
+    startDateInput.addEventListener('focus', function() {
+        if (!this.disabled) {
+            this.showPicker();
+        }
+    });
+    
+    endDateInput.addEventListener('focus', function() {
+        if (!this.disabled) {
+            this.showPicker();
+        }
+    });
+});
 
             <?php if (!empty($kpi_data) && !isset($kpi_data['error'])): ?>
                 const statusData = {
