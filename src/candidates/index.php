@@ -827,11 +827,18 @@ $createdByMapping = [
                                         }
                                         $status_class = 'status-' . strtolower($status);
                                         $date = 'N/A';
-                                        if (isset($row->Date)) {
-                                            $date = date('M d, Y', strtotime($row->Date));
-                                        } elseif (isset($row->created_at)) {
-                                            $date = date('M d, Y', strtotime($row->created_at));
-                                        }
+                                     // In getPreviousPeriodRange - keep as Y-m-d (matches HTML date inputs)
+return [
+    'start' => $prevStart->format('Y-m-d'),
+    'end' => $prevEnd->format('Y-m-d')
+];
+
+// For display - use consistent formatting
+if (isset($row->Date)) {
+    $date = (new DateTime($row->Date))->format('M d, Y');
+} elseif (isset($row->created_at)) {
+    $date = (new DateTime($row->created_at))->format('M d, Y');
+}
                                     ?>
                                         <tr data-id="<?php echo $row->id; ?>">
                                             <?php if ($mode === 'mailshot'): ?>
