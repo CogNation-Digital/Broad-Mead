@@ -446,21 +446,51 @@ function calculateKPIs($db, $period, $start_date = null, $end_date = null) {
 }
 
 function getPreviousPeriodRange($period, $currentRange) {
-    $start = new DateTime($currentRange['start']);
-    $end = new DateTime($currentRange['end']);
-    $diff = $start->diff($end)->days + 1;
-    
-    $prevStart = clone $start;
-    $prevStart->modify("-{$diff} days");
-    $prevEnd = clone $end;
-    $prevEnd->modify("-{$diff} days");
-    
-    return [
-        'start' => $prevStart->format('Y-m-d'),
-        'end' => $prevEnd->format('Y-m-d')
-    ];
+    try {
+        $start = new DateTime($currentRange['start']);
+        $end = new DateTime($currentRange['end']);
+        
+        // Calculate difference in days
+        $diff = $start->diff($end)->days + 1;
+        
+        // Handle different period types more precisely
+        switch($period) {
+            case 'current_week':
+            case 'last_week':
+                // For weeks, just subtract 7 days
+                $diff = 7;
+                break;
+            case 'current_month':
+            case 'last_month':
+                // For months, use "first day of last month" etc.
+                $prevStart = clone $start;
+                $prevStart->modify('first day of last month');
+                $prevEnd = clone $prevStart;
+                $prevEnd->modify('last day of this month');
+                return [
+                    'start' => $prevStart->format('Y-m-d'),
+                    'end' => $prevEnd->format('Y-m-d')
+                ];
+            // Add other cases as needed
+        }
+        
+        $prevStart = clone $start;
+        $prevStart->modify("-{$diff} days");
+        $prevEnd = clone $end;
+        $prevEnd->modify("-{$diff} days");
+        
+        return [
+            'start' => $prevStart->format('Y-m-d'),
+            'end' => $prevEnd->format('Y-m-d')
+        ];
+    } catch (Exception $e) {
+        // Fallback to reasonable defaults if date calculation fails
+        return [
+            'start' => date('Y-m-d', strtotime('-1 month')),
+            'end' => date('Y-m-d')
+        ];
+    }
 }
-
 if ($mode === 'mailshot') {
     $job_titles_query = "SELECT DISTINCT JobTitle FROM _candidates WHERE JobTitle IS NOT NULL AND JobTitle != '' ORDER BY JobTitle";
     $job_titles_stmt = $db_2->query($job_titles_query);
