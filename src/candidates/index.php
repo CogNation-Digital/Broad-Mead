@@ -88,12 +88,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
         $smtp_username = 'learn@natec.icu';
         $smtp_password = '@WhiteDiamond0100';
         $smtp_port = 587;
+
+
+
+
         $success_count = 0;
         $error_count = 0;
         $error_details = [];
         $console_logs = [];
 
-        
+
         // Test email configuration
         try {
             $test_mail = new PHPMailer(true);
@@ -984,10 +988,7 @@ $createdByMapping = [
                         <label for="kpi_end_date">End Date</label>
                         <input type="date" name="kpi_end_date" id="kpi_end_date" class="form-control" value="<?php echo htmlspecialchars($kpi_end_date); ?>" <?php echo $kpi_period !== 'custom' ? 'disabled' : ''; ?>>
                     </div>
-                    <!-- <div class="col-md-3" style="margin-top: 24px;">
-                        <button type="submit" class="btn btn-primary"><i class="fa fa-bar-chart"></i> Generate Report</button>
-                        <a href="?mode=kpi" class="btn btn-secondary"><i class="fa fa-times"></i> Clear</a>
-                    </div> -->
+            
 
                      <div class="col-md-3">
                 <label for="job_title_filter">Job Title</label>
