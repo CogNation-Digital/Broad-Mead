@@ -1041,6 +1041,12 @@ $createdByMapping = [
                 </select>
             </div>
             
+
+
+
+
+
+
             <!-- Recruiter Filter -->
             <div class="col-md-3">
     <label for="recruiter_filter">Recruiter</label>
@@ -1103,6 +1109,7 @@ $createdByMapping = [
                 </div>
             </div>
 
+            
             <!-- KPI Charts -->
             <div class="row mb-4">
                 <div class="col-md-6">
