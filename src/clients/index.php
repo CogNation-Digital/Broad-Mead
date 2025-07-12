@@ -1,8 +1,50 @@
-<?php include "../../includes/config.php";
+<?php 
+include "../../includes/config.php";
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\SMTP;
+
 if (!isset($_COOKIE['USERID'])) {
-    header("location: $LINK/login ");
+    header("location: $LINK/login");
+    exit();
 }
 
+// Email configuration - UPDATE THESE WITH YOUR ACTUAL CREDENTIALS
+$from_email = "your_email@yourdomain.com";
+$from_name = "Your Company Name";
+$smtp_host = 'smtp.yourdomain.com';
+$smtp_username = 'your_smtp_username';
+$smtp_password = 'your_smtp_password';
+$smtp_port = 587; // Typically 587 for TLS, 465 for SSL
+
+// Test SMTP connection
+try {
+    $test_mail = new PHPMailer(true);
+    $test_mail->isSMTP();
+    $test_mail->Host = $smtp_host;
+    $test_mail->SMTPAuth = true;
+    $test_mail->Username = $smtp_username;
+    $test_mail->Password = $smtp_password;
+    $test_mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+    $test_mail->Port = $smtp_port;
+    $test_mail->SMTPDebug = SMTP::DEBUG_SERVER; // Enable for troubleshooting
+    
+    if (!$test_mail->smtpConnect()) {
+        throw new Exception("SMTP connection failed");
+    }
+    $test_mail->smtpClose();
+} catch (Exception $e) {
+    error_log("SMTP Error: " . $e->getMessage());
+    $_SESSION['toast'] = [
+        'type' => 'error',
+        'message' => "SMTP Configuration Error: " . $e->getMessage()
+    ];
+}
+
+// Handle delete action
 if (isset($_POST['delete'])) {
     $ID = $_POST['ID'];
     $name = $_POST['name'];
@@ -14,78 +56,191 @@ if (isset($_POST['delete'])) {
     if ($stmt->execute()) {
         $NOTIFICATION = "$NAME has successfully deleted the client named '$name'. Reason for deletion: $reason.";
         Notify($USERID, $ClientKeyID, $NOTIFICATION);
+        $_SESSION['toast'] = [
+            'type' => 'success',
+            'message' => 'Client deleted successfully'
+        ];
     } else {
-        echo "Error deleting record";
+        $_SESSION['toast'] = [
+            'type' => 'error',
+            'message' => 'Error deleting client'
+        ];
     }
+    header("Location: ".$_SERVER['HTTP_REFERER']);
+    exit();
 }
 
+// Handle mailshot sending
 if (isset($_POST['send_mailshot'])) {
-    $selected_clients = $_POST['selected_clients'];
+    $selected_clients = json_decode($_POST['selected_clients']);
     $mailshot_subject = $_POST['mailshot_subject'];
     $mailshot_message = $_POST['mailshot_message'];
+    $is_html = isset($_POST['is_html']) ? true : false;
+    
+    $success_count = 0;
+    $error_count = 0;
+    $error_details = [];
     
     if (!empty($selected_clients) && !empty($mailshot_subject) && !empty($mailshot_message)) {
-        $success_count = 0;
-        foreach ($selected_clients as $client_id) {
-            // Get client details
-            $client_query = $conn->prepare("SELECT Name, Email FROM `_clients` WHERE ClientID = :client_id");
-            $client_query->bindParam(':client_id', $client_id);
-            $client_query->execute();
-            $client = $client_query->fetchObject();
+        $mail = new PHPMailer(true);
+        
+        try {
+            // Server settings
+            $mail->SMTPDebug = SMTP::DEBUG_OFF; // Set to DEBUG_SERVER for troubleshooting
+            $mail->isSMTP();
+            $mail->Host       = $smtp_host;
+            $mail->SMTPAuth   = true;
+            $mail->Username   = $smtp_username;
+            $mail->Password   = $smtp_password;
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = $smtp_port;
             
-            if ($client && !empty($client->Email)) {
-                // Send email (replace with your email sending function)
-                $to = $client->Email;
-                $subject = $mailshot_subject;
-                $message = str_replace('[CLIENT_NAME]', $client->Name, $mailshot_message);
+            // Sender info
+            $mail->setFrom($from_email, $from_name);
+            $mail->addReplyTo($from_email, $from_name);
+            
+            // Content
+            $mail->isHTML($is_html);
+            $mail->Subject = $mailshot_subject;
+            
+            foreach ($selected_clients as $client_id) {
+                // Get client details
+                $client_query = $conn->prepare("SELECT ClientID, Name, Email FROM `_clients` WHERE ClientID = :client_id");
+                $client_query->bindParam(':client_id', $client_id);
+                $client_query->execute();
+                $client = $client_query->fetch(PDO::FETCH_OBJ);
                 
-                // Log mailshot
-                $log_query = $conn->prepare("INSERT INTO `mailshot_log` (ClientID, Subject, Message, SentBy, SentDate) VALUES (:client_id, :subject, :message, :sent_by, NOW())");
-                $log_query->bindParam(':client_id', $client_id);
-                $log_query->bindParam(':subject', $subject);
-                $log_query->bindParam(':message', $message);
-                $log_query->bindParam(':sent_by', $USERID);
-                $log_query->execute();
-                
-                $success_count++;
+                if ($client && filter_var($client->Email, FILTER_VALIDATE_EMAIL)) {
+                    try {
+                        // Clear all recipients for new email
+                        $mail->clearAddresses();
+                        
+                        // Add recipient
+                        $mail->addAddress($client->Email, $client->Name);
+                        
+                        // Personalize message
+                        $personalized_message = str_replace(
+                            ['[CLIENT_NAME]', '[CLIENT_EMAIL]', '[CLIENT_ID]'], 
+                            [$client->Name, $client->Email, $client->ClientID], 
+                            $mailshot_message
+                        );
+                        
+                        $mail->Body = $personalized_message;
+                        
+                        // Send email
+                        if ($mail->send()) {
+                            $success_count++;
+                            
+                            // Log mailshot
+                            $log_query = $conn->prepare("INSERT INTO `mailshot_log` 
+                                (ClientID, Subject, Message, SentBy, SentDate, Status) 
+                                VALUES (:client_id, :subject, :message, :sent_by, NOW(), 'Sent')");
+                            $log_query->bindParam(':client_id', $client_id);
+                            $log_query->bindParam(':subject', $mailshot_subject);
+                            $log_query->bindParam(':message', $personalized_message);
+                            $log_query->bindParam(':sent_by', $USERID);
+                            $log_query->execute();
+                        }
+                    } catch (Exception $e) {
+                        $error_count++;
+                        $error_details[] = "Client ID {$client_id}: " . $e->getMessage();
+                        
+                        // Log failed attempt
+                        $log_query = $conn->prepare("INSERT INTO `mailshot_log` 
+                            (ClientID, Subject, Message, SentBy, SentDate, Status, Error) 
+                            VALUES (:client_id, :subject, :message, :sent_by, NOW(), 'Failed', :error)");
+                        $log_query->bindParam(':client_id', $client_id);
+                        $log_query->bindParam(':subject', $mailshot_subject);
+                        $log_query->bindParam(':message', $personalized_message);
+                        $log_query->bindParam(':sent_by', $USERID);
+                        $log_query->bindParam(':error', $e->getMessage());
+                        $log_query->execute();
+                    }
+                } else {
+                    $error_count++;
+                    $error_details[] = "Client ID {$client_id}: Invalid or missing email address";
+                }
+            }
+            
+            // Prepare notification
+            $notification_message = "$NAME sent a mailshot to $success_count clients.";
+            if ($error_count > 0) {
+                $notification_message .= " Failed to send to $error_count clients.";
+            }
+            
+            Notify($USERID, $ClientKeyID, $notification_message);
+            
+            // Prepare response
+            $response = [
+                'success' => true,
+                'sent' => $success_count,
+                'failed' => $error_count,
+                'errors' => $error_details,
+                'message' => "Mailshot completed. Success: $success_count, Failed: $error_count"
+            ];
+            
+            if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) != 'xmlhttprequest') {
+                $_SESSION['toast'] = [
+                    'type' => $error_count > 0 ? 'warning' : 'success',
+                    'message' => $response['message']
+                ];
+                header("Location: ".$_SERVER['HTTP_REFERER']);
+                exit();
+            }
+            
+        } catch (Exception $e) {
+            $response = [
+                'success' => false,
+                'message' => "Mailer Error: " . $e->getMessage()
+            ];
+            
+            if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) != 'xmlhttprequest') {
+                $_SESSION['toast'] = [
+                    'type' => 'error',
+                    'message' => $response['message']
+                ];
+                header("Location: ".$_SERVER['HTTP_REFERER']);
+                exit();
             }
         }
         
-        $NOTIFICATION = "$NAME has successfully sent mailshot to $success_count clients.";
-        Notify($USERID, $ClientKeyID, $NOTIFICATION);
-    }
-}
-
-if (isset($_POST['Search'])) {
-    $Name = $_POST['Name'];
-    $ClientType = $_POST['ClientType'];
-    $_client_id = $_POST['_client_id'];
-    $EmailAddress = $_POST['Email'];
-    $PhoneNumber = $_POST['Number'];
-    $Address = $_POST['Address'];
-    $Postcode = $_POST['Postcode'];
-    $City = $_POST['City'];
-    
-    if (!empty($SearchID)) {
-        $query = $conn->prepare("INSERT INTO `search_queries`(`SearchID`, `column`, `value`) 
-                  VALUES (:SearchID, :column, :value)");
-
-        foreach ($_POST as $key => $value) {
-            if (!empty($value)) {
-                $query->bindParam(':SearchID', $SearchID);
-                $query->bindParam(':column', $key);
-                $query->bindParam(':value', $value);
-                $query->execute();
-            }
-        }
-
-        header("location: $LINK/clients/?q=$SearchID");
+        // For AJAX requests
+        header('Content-Type: application/json');
+        echo json_encode($response);
         exit();
     }
 }
 
+// Handle search
+if (isset($_POST['Search'])) {
+    $SearchID = uniqid();
+    $fields = [
+        'Name', 'ClientType', '_client_id', 'Email', 'Number', 
+        'Address', 'City', 'Postcode', 'Status'
+    ];
+    
+    foreach ($fields as $field) {
+        if (!empty($_POST[$field])) {
+            $value = $_POST[$field];
+            $stmt = $conn->prepare("INSERT INTO `search_queries`(`SearchID`, `column`, `value`) 
+                                  VALUES (:SearchID, :column, :value)");
+            $stmt->bindParam(':SearchID', $SearchID);
+            $stmt->bindParam(':column', $field);
+            $stmt->bindParam(':value', $value);
+            $stmt->execute();
+        }
+    }
+
+    header("location: $LINK/clients/?q=$SearchID");
+    exit();
+}
+
 $SearchID = isset($_GET['q']) ? $_GET['q'] : "";
 $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
+
+// Get all client statuses for tabs
+$statuses = $conn->query("SELECT DISTINCT Status FROM `_clients` WHERE Status IS NOT NULL AND Status != ''")->fetchAll(PDO::FETCH_COLUMN);
+$client_types = $conn->query("SELECT DISTINCT ClientType FROM `_clients` WHERE ClientType IS NOT NULL AND ClientType != ''")->fetchAll(PDO::FETCH_COLUMN);
 ?>
 
 <!DOCTYPE html>
@@ -146,20 +301,20 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                                     <label class="form-label">Filter by Status:</label>
                                     <select class="form-select" id="statusFilter" onchange="applyFilters()">
                                         <option value="">All Statuses</option>
-                                        <option value="targeted">Targeted</option>
-                                        <option value="not updated">Not Updated</option>
-                                        <option value="active">Active</option>
-                                        <option value="inactive">Inactive</option>
-                                        <option value="archived">Archived</option>
+                                        <?php foreach ($statuses as $status): ?>
+                                            <option value="<?php echo strtolower($status); ?>" <?php echo ($isTab == strtolower($status)) ? 'selected' : ''; ?>>
+                                                <?php echo $status; ?>
+                                            </option>
+                                        <?php endforeach; ?>
                                     </select>
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label">Filter by Client Type:</label>
                                     <select class="form-select" id="clientTypeFilter" onchange="applyFilters()">
                                         <option value="">All Types</option>
-                                        <?php foreach ($clientype as $type) { ?>
+                                        <?php foreach ($client_types as $type): ?>
                                             <option value="<?php echo strtolower($type); ?>"><?php echo $type; ?></option>
-                                        <?php } ?>
+                                        <?php endforeach; ?>
                                     </select>
                                 </div>
                             </div>
@@ -184,17 +339,15 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                                     <button class="nav-link <?php echo ($isTab == "all") ? 'active' : ''; ?>">All Clients</button>
                                 </a>
                             </li>
-                            <ul class="nav">
-                                <?php foreach ($clients_status as $tab) : ?>
-                                    <li class="nav-item" role="presentation">
-                                        <a href="<?php echo $LINK; ?>/clients<?php echo !empty($SearchID) ? "/?q=$SearchID" : "/?i=0"  ?>&isTab=<?php echo $tab; ?>">
-                                            <button class="nav-link <?php echo ($isTab == $tab) ? 'active' : ''; ?>">
-                                                <?php echo $tab; ?>
-                                            </button>
-                                        </a>
-                                    </li>
-                                <?php endforeach; ?>
-                            </ul>
+                            <?php foreach ($statuses as $tab): ?>
+                                <li class="nav-item" role="presentation">
+                                    <a href="<?php echo $LINK; ?>/clients<?php echo !empty($SearchID) ? "/?q=$SearchID" : "" ?>&isTab=<?php echo urlencode(strtolower($tab)); ?>">
+                                        <button class="nav-link <?php echo ($isTab == strtolower($tab)) ? 'active' : ''; ?>">
+                                            <?php echo $tab; ?>
+                                        </button>
+                                    </a>
+                                </li>
+                            <?php endforeach; ?>
                         </ul>
 
                         <div class="card-body">
@@ -222,31 +375,41 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                                         </thead>
                                         <tbody>
                                             <?php
-                                            $query = "SELECT * FROM `_clients` WHERE ClientKeyID = '$ClientKeyID' AND isBranch IS NULL ";
+                                            $query = "SELECT c.*, u.Name as CreatedByName 
+                                                     FROM `_clients` c
+                                                     LEFT JOIN `users` u ON c.CreatedBy = u.UserID
+                                                     WHERE c.ClientKeyID = :clientKeyID AND c.isBranch IS NULL";
+                                            $params = [':clientKeyID' => $ClientKeyID];
 
                                             if (isset($_GET['q'])) {
                                                 $SearchID = $_GET['q'];
-                                                $qu = $conn->query("SELECT * FROM `search_queries` WHERE SearchID = '$SearchID'");
-                                                while ($r = $qu->fetchObject()) {
-                                                    $column = $r->column;
-                                                    $value = $r->value;
-                                                    $query .= " AND " . $column . " LIKE '%$value%'";
+                                                $qu = $conn->prepare("SELECT `column`, `value` FROM `search_queries` WHERE SearchID = :searchID");
+                                                $qu->bindParam(':searchID', $SearchID);
+                                                $qu->execute();
+                                                
+                                                while ($r = $qu->fetch(PDO::FETCH_OBJ)) {
+                                                    $query .= " AND c.{$r->column} LIKE :{$r->column}";
+                                                    $params[":{$r->column}"] = "%{$r->value}%";
                                                 }
                                             }
                                             
                                             if($isTab !== "all"){
-                                                 $query .= " AND Status = '$isTab'";
+                                                $query .= " AND LOWER(c.Status) = :status";
+                                                $params[':status'] = strtolower($isTab);
                                             }
                                             
-                                            $query .= " ORDER BY Name ASC";
+                                            $query .= " ORDER BY c.Name ASC";
+                                            
                                             $stmt = $conn->prepare($query);
+                                            foreach ($params as $key => $value) {
+                                                $stmt->bindValue($key, $value);
+                                            }
                                             $stmt->execute();
                                             $n = 1;
-                                            while ($row = $stmt->fetchObject()) { ?>
-                                                <?php
-                                                $CreatedBy = $conn->query("SELECT Name FROM `users` WHERE UserID = '{$row->CreatedBy}' ")->fetchColumn();
+                                            
+                                            while ($row = $stmt->fetch(PDO::FETCH_OBJ)): 
                                                 $status = !empty($row->Status) ? strtolower($row->Status) : "not updated";
-                                                ?>
+                                            ?>
                                                 <tr class="client-row" 
                                                     data-name="<?php echo strtolower($row->Name); ?>"
                                                     data-email="<?php echo strtolower($row->Email); ?>"
@@ -257,13 +420,13 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                                                         <input class="form-check-input checkbox-item" 
                                                                type="checkbox" 
                                                                value="<?php echo $row->ClientID; ?>" 
-                                                               data-name="<?php echo $row->Name; ?>"
-                                                               data-email="<?php echo $row->Email; ?>"
+                                                               data-name="<?php echo htmlspecialchars($row->Name); ?>"
+                                                               data-email="<?php echo htmlspecialchars($row->Email); ?>"
                                                                onchange="updateSelectedCount()">
                                                     </td>
-                                                    <td><?php echo $row->Name; ?></td>
-                                                    <td><?php echo $row->_client_id; ?></td>
-                                                    <td><?php echo $row->ClientType; ?></td>
+                                                    <td><?php echo htmlspecialchars($row->Name); ?></td>
+                                                    <td><?php echo htmlspecialchars($row->_client_id); ?></td>
+                                                    <td><?php echo htmlspecialchars($row->ClientType); ?></td>
                                                     <td>
                                                         <?php if ($row->Status == "Active") : ?>
                                                             <span class="badge bg-success">Active</span>
@@ -274,13 +437,13 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                                                         <?php elseif ($row->Status == "Targeted") : ?>
                                                             <span class="badge bg-info">Targeted</span>
                                                         <?php else : ?>
-                                                            <span class="badge bg-danger">Not Updated</span>
+                                                            <span class="badge bg-secondary">Not Updated</span>
                                                         <?php endif; ?>
                                                     </td>
-                                                    <td><?php echo $row->Email; ?></td>
-                                                    <td><?php echo $row->Number; ?></td>
-                                                    <td><?php echo $row->City . ', ' . $row->Address; ?></td>
-                                                    <td><?php echo $CreatedBy; ?></td>
+                                                    <td><?php echo htmlspecialchars($row->Email); ?></td>
+                                                    <td><?php echo htmlspecialchars($row->Number); ?></td>
+                                                    <td><?php echo htmlspecialchars($row->City . ', ' . $row->Address); ?></td>
+                                                    <td><?php echo htmlspecialchars($row->CreatedByName); ?></td>
                                                     <td><?php echo FormatDate($row->Date); ?></td>
                                                     <td>
                                                         <div class="dropdown">
@@ -317,12 +480,12 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                                                         </div>
                                                     </td>
                                                 </tr>
-                                            <?php } ?>
+                                            <?php endwhile; ?>
                                         </tbody>
                                     </table>
                                     <?php if ($stmt->rowCount() == 0) : ?>
                                         <div class="alert alert-danger">
-                                            No data found.
+                                            No clients found matching your criteria.
                                         </div>
                                     <?php endif; ?>
                                 <?php else : ?>
@@ -335,6 +498,72 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                                     </a>
                                     <span style="margin-left: 20px;"><?php echo $stmt->rowCount() . ' ' . ($stmt->rowCount() == 1 ? 'client' : 'clients'); ?> found</span>
                                 <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mailshot History -->
+            <div class="row mt-4">
+                <div class="col-sm-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Recent Mailshots</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Subject</th>
+                                            <th>Recipients</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        $mailshots = $conn->prepare("
+                                            SELECT DATE(m.SentDate) as sent_date, m.Subject, 
+                                                   COUNT(m.id) as recipients,
+                                                   SUM(CASE WHEN m.Status = 'Sent' THEN 1 ELSE 0 END) as success_count,
+                                                   u.Name as sent_by
+                                            FROM mailshot_log m
+                                            JOIN users u ON m.SentBy = u.UserID
+                                            WHERE m.SentBy = :userID
+                                            GROUP BY DATE(m.SentDate), m.Subject
+                                            ORDER BY m.SentDate DESC
+                                            LIMIT 5
+                                        ");
+                                        $mailshots->bindParam(':userID', $USERID);
+                                        $mailshots->execute();
+                                        
+                                        while ($mailshot = $mailshots->fetch(PDO::FETCH_OBJ)):
+                                        ?>
+                                        <tr>
+                                            <td><?php echo FormatDate($mailshot->sent_date); ?></td>
+                                            <td><?php echo htmlspecialchars($mailshot->Subject); ?></td>
+                                            <td>
+                                                <?php echo $mailshot->recipients; ?>
+                                                (<?php echo $mailshot->success_count; ?> sent)
+                                            </td>
+                                            <td>
+                                                <?php echo $mailshot->success_count == $mailshot->recipients ? 
+                                                    '<span class="badge bg-success">Success</span>' : 
+                                                    '<span class="badge bg-warning">Partial</span>'; ?>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary" 
+                                                        onclick="viewMailshotDetails('<?php echo $mailshot->sent_date; ?>', '<?php echo htmlspecialchars($mailshot->Subject, ENT_QUOTES); ?>')">
+                                                    Details
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <?php endwhile; ?>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -381,24 +610,69 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                                 <!-- Selected clients will be listed here -->
                             </div>
                         </div>
+                        
                         <div class="mb-3">
-                            <label class="form-label">Subject:</label>
+                            <label class="form-label">From:</label>
+                            <input type="text" class="form-control" value="<?php echo htmlspecialchars("$from_name <$from_email>"); ?>" readonly>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Subject: <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="mailshot_subject" required placeholder="Enter email subject">
                         </div>
+                        
                         <div class="mb-3">
-                            <label class="form-label">Message:</label>
-                            <textarea class="form-control" name="mailshot_message" rows="8" required placeholder="Enter your message here. Use [CLIENT_NAME] to personalize the message."></textarea>
-                            <small class="text-muted">Tip: Use [CLIENT_NAME] in your message to automatically insert the client's name.</small>
+                            <label class="form-label">Message: <span class="text-danger">*</span></label>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" name="is_html" id="isHtmlSwitch" checked>
+                                <label class="form-check-label" for="isHtmlSwitch">HTML Format</label>
+                            </div>
+                            <textarea class="form-control" id="mailshotMessage" name="mailshot_message" rows="10" required placeholder="Enter your message here"></textarea>
+                            <small class="text-muted">
+                                Placeholders: <code>[CLIENT_NAME]</code>, <code>[CLIENT_EMAIL]</code>, <code>[CLIENT_ID]</code> will be replaced with actual values.
+                            </small>
                         </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Preview:</label>
+                            <div id="messagePreview" class="border rounded p-3 bg-light" style="min-height: 100px;">
+                                Preview will appear here
+                            </div>
+                        </div>
+                        
                         <input type="hidden" name="selected_clients" id="selectedClientsInput">
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" name="send_mailshot" class="btn btn-primary">
+                        <button type="submit" name="send_mailshot" class="btn btn-primary" id="sendMailshotBtn">
                             <i class="ti ti-send"></i> Send Mailshot
                         </button>
+                        <div id="sendingProgress" class="d-none">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                <span class="visually-hidden">Sending...</span>
+                            </div>
+                            <span class="ms-2">Sending <span id="progressCount">0</span>/<span id="totalCount">0</span></span>
+                        </div>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mailshot Details Modal -->
+    <div class="modal fade" id="mailshotDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="mailshotDetailsTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="mailshotDetailsContent">
+                    Loading...
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
@@ -413,6 +687,7 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                 </div>
                 <div class="modal-body">
                     <form method="POST">
+                        <input type="hidden" name="SearchID" value="<?php echo uniqid(); ?>">
                         <div class="row">
                             <div class="col-lg-6">
                                 <div class="mb-3">
@@ -423,11 +698,11 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                             <div class="col-lg-6">
                                 <div class="mb-3">
                                     <label class="form-label">Client Type</label>
-                                    <select name="ClientType" class="select-input">
+                                    <select name="ClientType" class="form-select">
                                         <option value=""></option>
-                                        <?php foreach ($clientype as $type) { ?>
-                                            <option><?php echo $type; ?></option>
-                                        <?php } ?>
+                                        <?php foreach ($client_types as $type): ?>
+                                            <option><?php echo htmlspecialchars($type); ?></option>
+                                        <?php endforeach; ?>
                                     </select>
                                 </div>
                             </div>
@@ -460,13 +735,24 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                             <div class="col-lg-6">
                                 <div class="mb-3">
                                     <label class="form-label">Postcode</label>
-                                    <input type="text" class="form-control" name="PostCode">
+                                    <input type="text" class="form-control" name="Postcode">
                                 </div>
                             </div>
                             <div class="col-lg-6">
                                 <div class="mb-3">
                                     <label class="form-label">City</label>
                                     <input type="text" class="form-control" name="City">
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Status</label>
+                                    <select name="Status" class="form-select">
+                                        <option value=""></option>
+                                        <?php foreach ($statuses as $status): ?>
+                                            <option><?php echo htmlspecialchars($status); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -513,7 +799,7 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                 row.style.display = 'none';
                 // Uncheck hidden rows
                 const checkbox = row.querySelector('.checkbox-item');
-                if (checkbox.checked) {
+                if (checkbox && checkbox.checked) {
                     checkbox.checked = false;
                 }
             }
@@ -573,6 +859,98 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
         updateSelectedCount();
     });
 
+    // Mailshot preview functionality
+    document.getElementById('mailshotMessage').addEventListener('input', function() {
+        const preview = document.getElementById('messagePreview');
+        const isHtml = document.getElementById('isHtmlSwitch').checked;
+        let message = this.value;
+        
+        // Replace placeholders with sample data for preview
+        message = message.replace(/\[CLIENT_NAME\]/g, 'John Doe')
+                        .replace(/\[CLIENT_EMAIL\]/g, 'john@example.com')
+                        .replace(/\[CLIENT_ID\]/g, '12345');
+        
+        if (isHtml) {
+            preview.innerHTML = message;
+        } else {
+            preview.textContent = message;
+        }
+    });
+
+    // Handle mailshot form submission with AJAX
+    document.getElementById('mailshotForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const form = this;
+        const submitBtn = document.getElementById('sendMailshotBtn');
+        const progressDiv = document.getElementById('sendingProgress');
+        const progressCount = document.getElementById('progressCount');
+        const totalCount = document.getElementById('totalCount');
+        
+        // Get selected clients count
+        const selectedClients = JSON.parse(document.getElementById('selectedClientsInput').value);
+        totalCount.textContent = selectedClients.length;
+        
+        // Show progress, disable button
+        submitBtn.classList.add('d-none');
+        progressDiv.classList.remove('d-none');
+        
+        // Submit form via AJAX
+        fetch(window.location.href, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Update progress to show completion
+                progressCount.textContent = data.sent;
+                
+                // Show success message
+                ShowToast({
+                    type: data.failed > 0 ? 'warning' : 'success',
+                    message: data.message
+                });
+                
+                // Close modal after delay
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('MailshotModal')).hide();
+                    // Reload page to see updates
+                    window.location.reload();
+                }, 2000);
+                
+                // Show detailed errors if any
+                if (data.failed > 0) {
+                    console.error("Mailshot errors:", data.errors);
+                }
+            } else {
+                ShowToast({
+                    type: 'error',
+                    message: data.message
+                });
+                submitBtn.classList.remove('d-none');
+                progressDiv.classList.add('d-none');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            ShowToast({
+                type: 'error',
+                message: 'An error occurred while sending the mailshot: ' + error.message
+            });
+            submitBtn.classList.remove('d-none');
+            progressDiv.classList.add('d-none');
+        });
+    });
+
     // Open mailshot modal
     function openMailshotModal() {
         const selectedCheckboxes = document.querySelectorAll('.client-row:not([style*="display: none"]) .checkbox-item:checked');
@@ -586,28 +964,53 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
             const name = checkbox.getAttribute('data-name');
             const email = checkbox.getAttribute('data-email');
             clientIds.push(checkbox.value);
-            clientsHtml += `<div class="mb-1"><strong>${name}</strong> - ${email}</div>`;
+            clientsHtml += `<div class="mb-1"><strong>${name}</strong> &lt;${email}&gt;</div>`;
         });
         
         selectedClientsList.innerHTML = clientsHtml;
         selectedClientsInput.value = JSON.stringify(clientIds);
         
+        // Reset form state
+        document.getElementById('mailshotForm').reset();
+        document.getElementById('messagePreview').innerHTML = 'Preview will appear here';
+        document.getElementById('sendMailshotBtn').classList.remove('d-none');
+        document.getElementById('sendingProgress').classList.add('d-none');
+        
         const modal = new bootstrap.Modal(document.getElementById('MailshotModal'));
         modal.show();
     }
 
-    // Initialize
-    document.addEventListener('DOMContentLoaded', function() {
-        updateFilterResults();
-        updateSelectedCount();
-    });
+    // View mailshot details
+    function viewMailshotDetails(date, subject) {
+        const modal = new bootstrap.Modal(document.getElementById('mailshotDetailsModal'));
+        document.getElementById('mailshotDetailsTitle').textContent = subject + ' - ' + date;
+        
+        // Fetch details via AJAX
+        fetch(`ajax/get_mailshot_details.php?date=${encodeURIComponent(date)}&subject=${encodeURIComponent(subject)}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text();
+            })
+            .then(data => {
+                document.getElementById('mailshotDetailsContent').innerHTML = data;
+                modal.show();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('mailshotDetailsContent').innerHTML = 
+                    '<div class="alert alert-danger">Error loading details: ' + error.message + '</div>';
+                modal.show();
+            });
+    }
 
     // Delete functionality
     document.getElementById('confirmDelete').addEventListener('click', function() {
         let checkboxes = document.querySelectorAll('.checkbox-item:checked');
         let ids = [];
         let successCount = 0;
-        var reason = $("#reason").val();
+        var reason = document.getElementById('reason').value;
 
         if (reason.length > 0) {
             checkboxes.forEach(function(checkbox) {
@@ -618,36 +1021,66 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
             });
 
             if (ids.length > 0) {
-                $("#confirmDelete").text("Deleting...");
+                document.getElementById('confirmDelete').textContent = "Deleting...";
                 ids.forEach(function(item) {
-                    $.ajax({
-                        url: window.location.href,
-                        type: 'POST',
-                        data: {
+                    fetch(window.location.href, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams({
                             ID: item.id,
                             name: item.name,
                             reason: reason,
                             delete: true
-                        },
-                        success: function(response) {
-                            successCount++;
-                            if (successCount === ids.length) {
-                                setTimeout(() => {
-                                    window.location.reload();
-                                }, 1000);
-                            }
-                        },
-                        error: function(xhr, status, error) {
-                            console.log("Error: " + error);
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
                         }
+                        return response.text();
+                    })
+                    .then(() => {
+                        successCount++;
+                        if (successCount === ids.length) {
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error:", error);
+                        ShowToast({
+                            type: 'error',
+                            message: 'Error deleting client: ' + error.message
+                        });
                     });
                 });
             } else {
-                ShowToast('Error 102: Something went wrong.');
+                ShowToast({
+                    type: 'error',
+                    message: 'Error: No clients selected for deletion'
+                });
             }
         } else {
-            ShowToast('Error 101: Reason field is required.');
+            ShowToast({
+                type: 'error',
+                message: 'Error: Reason field is required'
+            });
             return;
+        }
+    });
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        updateFilterResults();
+        updateSelectedCount();
+        
+        // Initialize the message preview
+        const messageTextarea = document.getElementById('mailshotMessage');
+        if (messageTextarea) {
+            messageTextarea.dispatchEvent(new Event('input'));
         }
     });
 </script>

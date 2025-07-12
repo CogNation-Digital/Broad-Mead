@@ -913,6 +913,7 @@ $createdByMapping = [
                             </table>
                         </div>
 
+                        
                         <?php if ($mode === 'mailshot'): ?>
                             <div class="mailshot-actions">
                                 <h5>Mailshot Actions</h5>
@@ -1109,7 +1110,7 @@ $createdByMapping = [
                 </div>
             </div>
 
-            
+
             <!-- KPI Charts -->
             <div class="row mb-4">
                 <div class="col-md-6">
@@ -1216,6 +1217,10 @@ $createdByMapping = [
                 </div>
             </div>
 
+
+
+
+
             <!-- Job Titles and Locations KPI Table -->
             <div class="row mb-4">
                 <div class="col-md-6">
@@ -1285,6 +1290,10 @@ $createdByMapping = [
                     </div>
                 </div>
             </div>
+
+
+
+
 
           <div class="card mb-4">
     <div class="card-header">
@@ -1381,6 +1390,11 @@ $createdByMapping = [
                 <p>Select a period and click 'Generate Report' to view Key Performance Indicators.</p>
             </div> -->
         <?php endif; ?>
+
+
+
+
+
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
@@ -1558,6 +1572,7 @@ $createdByMapping = [
                     }
                 });
             <?php endif; ?>
+
 
             function exportTableToCSV(filename) {
                 const table = document.getElementById('detailedKpiTable');
