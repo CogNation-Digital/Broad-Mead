@@ -93,6 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
         $error_details = [];
         $console_logs = [];
 
+        
         // Test email configuration
         try {
             $test_mail = new PHPMailer(true);
@@ -1367,10 +1368,10 @@ $createdByMapping = [
                 <p>Please check your database connection and table schema.</p>
             </div>
         <?php else: ?>
-            <div class="alert alert-info text-center">
+            <!-- <div class="alert alert-info text-center">
                 <h5>No KPI data to display</h5>
                 <p>Select a period and click 'Generate Report' to view Key Performance Indicators.</p>
-            </div>
+            </div> -->
         <?php endif; ?>
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
