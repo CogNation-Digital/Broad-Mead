@@ -529,7 +529,6 @@ $createdByMapping = [
                  <i class="fa fa-users"></i> View Candidates
                 <a href="?mode=candidates" class="mode-button <?php echo $mode === 'candidates' ? 'active' : ''; ?>">
                     <a href="?mode=candidates" class="mode-button <?php echo $mode === 'candidates' ? 'inactive' : ''; ?>">
-
                     <a href="?mode=candidates" class="mode-button <?php echo $mode === 'candidates' ? 'pending compliance' : ''; ?>">
                     <a href="?mode=candidates" class="mode-button"<?php echo $mode === 'candidates' ? 'Archived' : ''; ?>">
                         <
