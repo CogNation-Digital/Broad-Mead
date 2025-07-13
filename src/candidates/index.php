@@ -526,13 +526,14 @@ $createdByMapping = [
 
             <div class="mode-switch">
                 <h4 style="margin-bottom: 15px;">Mode Selection</h4>
-                 <i class="fa fa-users"></i> View Candidates
+
+                   <a href="?mode=mailshot" class="mode-button <?php echo $mode === 'mailshot' ? 'active' : ''; ?>">
+                    <i class="fa fa-paper-plane"></i> View Candidates
+                </a>
                 <a href="?mode=candidates" class="mode-button <?php echo $mode === 'candidates' ? 'active' : ''; ?>">
                     <a href="?mode=candidates" class="mode-button <?php echo $mode === 'candidates' ? 'inactive' : ''; ?>">
                     <a href="?mode=candidates" class="mode-button <?php echo $mode === 'candidates' ? 'pending compliance' : ''; ?>">
                     <a href="?mode=candidates" class="mode-button"<?php echo $mode === 'candidates' ? 'Archived' : ''; ?>">
-                        <
-                    <!-- <i class="fa fa-users"></i> View Candidates -->
                 </a>
                 <a href="?mode=mailshot" class="mode-button <?php echo $mode === 'mailshot' ? 'active' : ''; ?>">
                     <i class="fa fa-paper-plane"></i> Create Mailshot
