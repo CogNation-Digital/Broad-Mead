@@ -524,43 +524,75 @@ $createdByMapping = [
         <div class="pc-content">
             <?php include "../../includes/breadcrumb.php"; ?>
 
-            <div class="mode-switch">
-                <h4 style="margin-bottom: 15px;">Mode Selection</h4>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+    <!-- View Candidates -->
+    <a href="?mode=candidates" 
+       style="padding: 10px 15px; background: <?= ($mode ?? '') === 'candidates' ? '#007bff' : '#e0e0e0' ?>; 
+              color: <?= ($mode ?? '') === 'candidates' ? 'white' : '#333' ?>; 
+              text-decoration: none; border-radius: 4px; transition: all 0.3s; display: flex; align-items: center; gap: 8px;">
+        <i class="fa fa-users"></i> View Candidates
+    </a>
+    
+    <!-- Create Mailshot -->
+    <a href="?mode=mailshot" 
+       style="padding: 10px 15px; background: <?= ($mode ?? '') === 'mailshot' ? '#007bff' : '#e0e0e0' ?>; 
+              color: <?= ($mode ?? '') === 'mailshot' ? 'white' : '#333' ?>; 
+              text-decoration: none; border-radius: 4px; transition: all 0.3s; display: flex; align-items: center; gap: 8px;">
+        <i class="fa fa-paper-plane"></i> Create Mailshot
+    </a>
+    
+    <!-- Weekly KPI Report -->
+    <a href="?mode=kpi" 
+       style="padding: 10px 15px; background: <?= ($mode ?? '') === 'kpi' ? '#007bff' : '#e0e0e0' ?>; 
+              color: <?= ($mode ?? '') === 'kpi' ? 'white' : '#333' ?>; 
+              text-decoration: none; border-radius: 4px; transition: all 0.3s; display: flex; align-items: center; gap: 8px;">
+        <i class="fa fa-chart-bar"></i> Weekly KPI Report
+    </a>
+</div>
 
-                   <a href="?mode=candidates" class="mode-button <?php echo $mode === 'candidates' ? 'active' : ''; ?>">
-                    <i class="fa fa-paper-plane"></i> View Candidates
-                </a>
-                <a href="?mode=candidates" class="mode-button <?php echo $mode === 'candidates' ? 'active' : ''; ?>">
-                    <a href="?mode=candidates" class="mode-button <?php echo $mode === 'candidates' ? 'inactive' : ''; ?>">
-                    <a href="?mode=candidates" class="mode-button <?php echo $mode === 'candidates' ? 'pending compliance' : ''; ?>">
-                    <a href="?mode=candidates" class="mode-button <?php echo $mode === 'candidates' ? 'Archived' : ''; ?>">
-                </a>
+<?php if (($mode ?? '') === 'candidates'): ?>
+<div style="display: flex; gap: 8px; margin-bottom: 20px;">
+    <a href="?mode=candidates&status=active" 
+       style="padding: 8px 12px; background: <?= ($status ?? 'active') === 'active' ? '#28a745' : '#f5f5f5' ?>; 
+              color: <?= ($status ?? 'active') === 'active' ? 'white' : '#555' ?>; 
+              text-decoration: none; border-radius: 4px; font-size: 14px;">
+        <i class="fa fa-check-circle"></i> Active
+    </a>
+    <a href="?mode=candidates&status=inactive" 
+       style="padding: 8px 12px; background: <?= ($status ?? '') === 'inactive' ? '#28a745' : '#f5f5f5' ?>; 
+              color: <?= ($status ?? '') === 'inactive' ? 'white' : '#555' ?>; 
+              text-decoration: none; border-radius: 4px; font-size: 14px;">
+        <i class="fa fa-times-circle"></i> Inactive
+    </a>
+    <a href="?mode=candidates&status=pending" 
+       style="padding: 8px 12px; background: <?= ($status ?? '') === 'pending' ? '#28a745' : '#f5f5f5' ?>; 
+              color: <?= ($status ?? '') === 'pending' ? 'white' : '#555' ?>; 
+              text-decoration: none; border-radius: 4px; font-size: 14px;">
+        <i class="fa fa-hourglass-half"></i> Pending
+    </a>
+    <a href="?mode=candidates&status=archived" 
+       style="padding: 8px 12px; background: <?= ($status ?? '') === 'archived' ? '#28a745' : '#f5f5f5' ?>; 
+              color: <?= ($status ?? '') === 'archived' ? 'white' : '#555' ?>; 
+              text-decoration: none; border-radius: 4px; font-size: 14px;">
+        <i class="fa fa-archive"></i> Archived
+    </a>
+</div>
 
 
-                <a href="?mode=mailshot" class="mode-button <?php echo $mode === 'mailshot' ? 'active' : ''; ?>">
-                    <i class="fa fa-paper-plane"></i> Create Mailshot
-                </a>
-                <?php
-                $has_kpi_permission = true;
-                if ($has_kpi_permission):
-                ?>
-                    <a href="?mode=kpi" class="mode-button <?php echo strtolower($mode) === 'kpi' ? 'active' : ''; ?>">
-                        <i class="fa fa-bar-chart"></i> Weekly KPI Search
-                    </a>
-                <?php endif; ?>
-            </div>
 
-            <h2 style="margin-bottom: 30px; color: #343a40;">
-                <?php
-                if ($mode === 'kpi') {
-                    echo 'KPI Reporting - Candidate Performance';
-                } elseif ($mode === 'mailshot') {
-                    echo 'Mailshot - Candidate Filtering';
-                } else {
-                    echo 'Candidates - Email Filtering System';
-                }
-                ?>
-            </h2>
+   <!-- Export Buttons -->
+<div style="display: flex; gap: 8px;">
+       
+        <a href="?mode=candidates&status=<?= $status ?? 'active' ?>&export=excel" 
+           style="padding: 8px 12px; background: #4CAF50; color: white; text-decoration: none; border-radius: 4px;">
+            <i class="fa fa-file-excel"></i> Excel
+        </a>
+        <a href="?mode=candidates&status=<?= $status ?? 'active' ?>&export=csv" 
+           style="padding: 8px 12px; background: #2196F3; color: white; text-decoration: none; border-radius: 4px;">
+            <i class="fa fa-file-csv"></i> CSV
+        </a>
+    </div>
+<?php endif; ?>
 
             <?php if ($mode === 'kpi'): ?>
                 <div class="kpi-info">
