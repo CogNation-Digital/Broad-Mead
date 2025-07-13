@@ -1022,41 +1022,136 @@ $createdByMapping = [
                         </div>
 
                         <?php if ($mode === 'mailshot'): ?>
-                            <div class="mailshot-actions">
-                                <h5>Mailshot Actions</h5>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="mailshot-subject">Email Subject</label>
-                                            <input type="text" name="subject" id="mailshot-subject" class="form-control" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="mailshot-template">Email Template</label>
-                                            <select name="template" id="mailshot-template" class="form-control" required>
-                                                <option value="">Select a template</option>
-                                                <option value="job_alert">Job Alert</option>
-                                                <option value="newsletter">Newsletter</option>
-                                                <option value="event_invitation">Event Invitation</option>
-                                                <option value="follow_up">Follow Up</option>
-                                                <option value="welcome">Welcome Email</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fa fa-paper-plane"></i> Send Mail
-                                    </button>
-                                    <span class="text-muted ml-3">
-                                        <i class="fa fa-info-circle"></i>
-                                        This will send emails to all selected candidates
-                                    </span>
-                                </div>
-                            </div>
-                        </form>
-                    <?php endif; ?>
+    <div class="mailshot-actions">
+        <h5>Mailshot Actions</h5>
+        <form method="post" action="send_mailshot.php">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="mailshot-subject">Email Subject</label>
+                        <input type="text" name="subject" id="mailshot-subject" class="form-control" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="mailshot-template">Email Template</label>
+                        <select name="template" id="mailshot-template" class="form-control" onchange="loadTemplate(this.value)">
+                            <option value="">Select a template</option>
+                            <option value="job_alert">Job Alert</option>
+                            <option value="newsletter">Newsletter</option>
+                            <option value="event_invitation">Event Invitation</option>
+                            <option value="follow_up">Follow Up</option>
+                            <option value="welcome">Welcome Email</option>
+                            <option value="custom">Custom Email</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="mailshot-body">Email Body</label>
+                <textarea name="body" id="mailshot-body" class="form-control" rows="10" required></textarea>
+                <small class="form-text text-muted">
+                    You can use these placeholders: {first_name}, {last_name}, {job_title}
+                </small>
+            </div>
+
+            <div class="form-group">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="include_attachment" id="include-attachment">
+                    <label class="form-check-label" for="include-attachment">
+                        Include attachment
+                    </label>
+                </div>
+                <div id="attachment-field" style="display:none; margin-top:10px;">
+                    <input type="file" name="attachment" class="form-control-file">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" name="send_mailshot" class="btn btn-primary">
+                    <i class="fa fa-paper-plane"></i> Send Mailshot
+                </button>
+                <button type="button" class="btn btn-secondary ml-2" onclick="previewEmail()">
+                    <i class="fa fa-eye"></i> Preview
+                </button>
+                <span class="text-muted ml-3">
+                    <i class="fa fa-info-circle"></i>
+                    This will send emails to all selected candidates
+                </span>
+            </div>
+        </form>
+    </div>
+
+    <!-- Preview Modal -->
+    <div class="modal fade" id="previewModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Email Preview</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="email-preview-content">
+                    <!-- Preview content will be inserted here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Load template content
+    function loadTemplate(template) {
+        if (template === 'custom') {
+            document.getElementById('mailshot-body').value = '';
+            return;
+        }
+        
+        // In a real implementation, you would fetch this from your server
+        const templates = {
+            job_alert: "Hello {first_name},\n\nWe found a new job that matches your profile: {job_title}...",
+            newsletter: "Hello {first_name},\n\nHere's our latest newsletter...",
+            // Add other templates
+        };
+        
+        if (templates[template]) {
+            document.getElementById('mailshot-body').value = templates[template];
+        }
+    }
+    
+    // Toggle attachment field
+    document.getElementById('include-attachment').addEventListener('change', function() {
+        document.getElementById('attachment-field').style.display = this.checked ? 'block' : 'none';
+    });
+    
+    // Preview email
+    function previewEmail() {
+        const subject = document.getElementById('mailshot-subject').value;
+        const body = document.getElementById('mailshot-body').value;
+        
+        // Replace placeholders with sample data
+        let previewContent = body
+            .replace(/{first_name}/g, 'John')
+            .replace(/{last_name}/g, 'Doe')
+            .replace(/{job_title}/g, 'Software Developer');
+            
+        // Display in modal
+        document.getElementById('email-preview-content').innerHTML = `
+            <h4>${subject}</h4>
+            <hr>
+            <pre>${previewContent}</pre>
+            <hr>
+            <p class="text-muted">This is a preview. Actual emails will use each candidate's real information.</p>
+        `;
+        
+        $('#previewModal').modal('show');
+    }
+    </script>
+<?php endif; ?>
 
                 <?php elseif ($mode !== 'kpi'): ?>
                     <div class="alert alert-info text-center">
