@@ -3,6 +3,9 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 include "includes/config.php";
 
+// if (isset($_GET['export'])) {
+//     die("Export triggered - headers not sent: " . (headers_sent() ? 'YES' : 'NO'));
+// }
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -226,14 +229,78 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
     }
 }
 
-// Output JavaScript console logs
-if (!empty($console_logs)) {
-    echo "<script>";
-    foreach ($console_logs as $log) {
-        echo "console.log('" . addslashes($log) . "');";
+
+
+
+
+// 2. Export Handler (must come before ANY output)
+
+if (isset($_GET['export'])) {
+    try {
+        // Verify connection exists
+        if (!isset($pdo)) {
+            throw new Exception('Database not connected');
+        }
+
+        $status = $_GET['status'] ?? 'active';
+        $exportType = $_GET['export'];
+        
+        // Validate export type
+        if (!in_array($exportType, ['excel', 'csv'])) {
+            throw new Exception('Invalid export type');
+        }
+
+        // Fetch data
+        $stmt = $pdo->prepare("SELECT * FROM candidates WHERE status = ?");
+        $stmt->execute([$status]);
+        $candidates = $stmt->fetchAll();
+
+        if (empty($candidates)) {
+            die("No records found");
+        }
+
+        // Clear any existing output
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+
+        // Generate file
+        $filename = "candidates_".date('Y-m-d')."_".$status;
+        
+        if ($exportType === 'excel') {
+            header("Content-Type: application/vnd.ms-excel");
+            header("Content-Disposition: attachment; filename=\"$filename.xls\"");
+            
+            $header = false;
+            foreach ($candidates as $row) {
+                if (!$header) {
+                    echo implode("\t", array_keys($row)) . "\r\n";
+                    $header = true;
+                }
+                echo implode("\t", array_values($row)) . "\r\n";
+            }
+            exit;
+        }
+        
+        if ($exportType === 'csv') {
+            header("Content-Type: text/csv");
+            header("Content-Disposition: attachment; filename=\"$filename.csv\"");
+            
+            $output = fopen('php://output', 'w');
+            fputcsv($output, array_keys($candidates[0]));
+            foreach ($candidates as $row) {
+                fputcsv($output, $row);
+            }
+            fclose($output);
+            exit;
+        }
+
+    } catch (Exception $e) {
+        die("Export failed: " . $e->getMessage());
     }
-    echo "</script>";
 }
+
+
 
 $keyword_filter = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
 $location_filter = isset($_GET['location']) ? trim($_GET['location']) : '';
@@ -580,18 +647,19 @@ $createdByMapping = [
 
 
 
-   <!-- Export Buttons -->
-<div style="display: flex; gap: 8px;">
-       
-        <a href="?mode=candidates&status=<?= $status ?? 'active' ?>&export=excel" 
-           style="padding: 8px 12px; background: #4CAF50; color: white; text-decoration: none; border-radius: 4px;">
-            <i class="fa fa-file-excel"></i> Excel
-        </a>
-        <a href="?mode=candidates&status=<?= $status ?? 'active' ?>&export=csv" 
-           style="padding: 8px 12px; background: #2196F3; color: white; text-decoration: none; border-radius: 4px;">
-            <i class="fa fa-file-csv"></i> CSV
-        </a>
-    </div>
+<div style="display: flex; gap: 10px; margin-top: 15px;">
+    <a href="?mode=candidates&status=<?= htmlspecialchars($status ?? 'active') ?>&export=excel"
+       class="export-btn excel" 
+       onclick="return confirm('Export <?= htmlspecialchars($status ?? 'active') ?> candidates to Excel?')">
+       <i class="fa fa-file-excel"></i> Excel
+    </a>
+    
+    <a href="?mode=candidates&status=<?= htmlspecialchars($status ?? 'active') ?>&export=csv"
+       class="export-btn csv"
+       onclick="return confirm('Export <?= htmlspecialchars($status ?? 'active') ?> candidates to CSV?')">
+       <i class="fa fa-file-csv"></i> CSV
+    </a>
+</div>
 <?php endif; ?>
 
             <?php if ($mode === 'kpi'): ?>
