@@ -533,7 +533,7 @@ $createdByMapping = [
                 <a href="?mode=candidates" class="mode-button <?php echo $mode === 'candidates' ? 'active' : ''; ?>">
                     <a href="?mode=candidates" class="mode-button <?php echo $mode === 'candidates' ? 'inactive' : ''; ?>">
                     <a href="?mode=candidates" class="mode-button <?php echo $mode === 'candidates' ? 'pending compliance' : ''; ?>">
-                    <a href="?mode=candidates" class="mode-button"<?php echo $mode === 'candidates' ? 'Archived' : ''; ?>">
+                    <a href="?mode=candidates" class="mode-button <?php echo $mode === 'candidates' ? 'Archived' : ''; ?>">
                 </a>
 
 
