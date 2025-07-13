@@ -526,8 +526,14 @@ $createdByMapping = [
 
             <div class="mode-switch">
                 <h4 style="margin-bottom: 15px;">Mode Selection</h4>
+                 <i class="fa fa-users"></i> View Candidates
                 <a href="?mode=candidates" class="mode-button <?php echo $mode === 'candidates' ? 'active' : ''; ?>">
-                    <i class="fa fa-users"></i> View Candidates
+                    <a href="?mode=candidates" class="mode-button <?php echo $mode === 'candidates' ? 'inactive' : ''; ?>">
+
+                    <a href="?mode=candidates" class="mode-button <?php echo $mode === 'candidates' ? 'pending compliance' : ''; ?>">
+                    <a href="?mode=candidates" class="mode-button"<?php echo $mode === 'candidates' ? 'Archived' : ''; ?>">
+                        <
+                    <!-- <i class="fa fa-users"></i> View Candidates -->
                 </a>
                 <a href="?mode=mailshot" class="mode-button <?php echo $mode === 'mailshot' ? 'active' : ''; ?>">
                     <i class="fa fa-paper-plane"></i> Create Mailshot
@@ -681,21 +687,21 @@ $createdByMapping = [
                         <input type="hidden" name="status" value="<?php echo htmlspecialchars($status_filter); ?>">
                     </form>
                 </div>
+<?php if ($mode === 'candidates'): ?>
+    <div class="status-tabs">
+        <a href="?mode=candidates&status=all&keyword=<?php echo urlencode($keyword_filter); ?>&location=<?php echo urlencode($location_filter); ?>&position=<?php echo urlencode($position_filter); ?>&center_postcode=<?php echo urlencode($center_postcode); ?>&distance_miles=<?php echo urlencode($distance_miles); ?>"
+           class="status-tab <?php echo $status_filter === 'all' ? 'active' : ''; ?>">All Candidates</a>
+        <a href="?mode=candidates&status=active&keyword=<?php echo urlencode($keyword_filter); ?>&location=<?php echo urlencode($location_filter); ?>&position=<?php echo urlencode($position_filter); ?>&center_postcode=<?php echo urlencode($center_postcode); ?>&distance_miles=<?php echo urlencode($distance_miles); ?>"
+           class="status-tab <?php echo $status_filter === 'active' ? 'active' : ''; ?>">Active</a>
+        <a href="?mode=candidates&status=archived&keyword=<?php echo urlencode($keyword_filter); ?>&location=<?php echo urlencode($location_filter); ?>&position=<?php echo urlencode($position_filter); ?>&center_postcode=<?php echo urlencode($center_postcode); ?>&distance_miles=<?php echo urlencode($distance_miles); ?>"
+           class="status-tab <?php echo $status_filter === 'archived' ? 'active' : ''; ?>">Archived</a>
+        <a href="?mode=candidates&status=inactive&keyword=<?php echo urlencode($keyword_filter); ?>&location=<?php echo urlencode($location_filter); ?>&position=<?php echo urlencode($position_filter); ?>&center_postcode=<?php echo urlencode($center_postcode); ?>&distance_miles=<?php echo urlencode($distance_miles); ?>"
+           class="status-tab <?php echo $status_filter === 'inactive' ? 'active' : ''; ?>">Inactive</a>
+        <a href="?mode=candidates&status=pending&keyword=<?php echo urlencode($keyword_filter); ?>&location=<?php echo urlencode($location_filter); ?>&position=<?php echo urlencode($position_filter); ?>&center_postcode=<?php echo urlencode($center_postcode); ?>&distance_miles=<?php echo urlencode($distance_miles); ?>"
+           class="status-tab <?php echo $status_filter === 'pending' ? 'active' : ''; ?>">Pending Compliance</a>
+    </div>
+<?php endif; ?>
 
-                <?php if ($mode === 'candidates'): ?>
-                    <div class="status-tabs">
-                        <a href="?mode=candidates&status=all&keyword=<?php echo urlencode($keyword_filter); ?>&location=<?php echo urlencode($location_filter); ?>&position=<?php echo urlencode($position_filter); ?>¢er_postcode=<?php echo urlencode($center_postcode); ?>&distance_miles=<?php echo urlencode($distance_miles); ?>"
-                           class="status-tab <?php echo $status_filter === 'all' ? 'active' : ''; ?>">All Candidates</a>
-                        <a href="?mode=candidates&status=active&keyword=<?php echo urlencode($keyword_filter); ?>&location=<?php echo urlencode($location_filter); ?>&position=<?php echo urlencode($position_filter); ?>¢er_postcode=<?php echo urlencode($center_postcode); ?>&distance_miles=<?php echo urlencode($distance_miles); ?>"
-                           class="status-tab <?php echo $status_filter === 'active' ? 'active' : ''; ?>">Active</a>
-                        <a href="?mode=candidates&status=archived&keyword=<?php echo urlencode($keyword_filter); ?>&location=<?php echo urlencode($location_filter); ?>&position=<?php echo urlencode($position_filter); ?>¢er_postcode=<?php echo urlencode($center_postcode); ?>&distance_miles=<?php echo urlencode($distance_miles); ?>"
-                           class="status-tab <?php echo $status_filter === 'archived' ? 'active' : ''; ?>">Archived</a>
-                        <a href="?mode=candidates&status=inactive&keyword=<?php echo urlencode($keyword_filter); ?>&location=<?php echo urlencode($location_filter); ?>&position=<?php echo urlencode($position_filter); ?>¢er_postcode=<?php echo urlencode($center_postcode); ?>&distance_miles=<?php echo urlencode($distance_miles); ?>"
-                           class="status-tab <?php echo $status_filter === 'inactive' ? 'active' : ''; ?>">Inactive</a>
-                        <a href="?mode=candidates&status=pending&keyword=<?php echo urlencode($keyword_filter); ?>&location=<?php echo urlencode($location_filter); ?>&position=<?php echo urlencode($position_filter); ?>¢er_postcode=<?php echo urlencode($center_postcode); ?>&distance_miles=<?php echo urlencode($distance_miles); ?>"
-                           class="status-tab <?php echo $status_filter === 'pending' ? 'active' : ''; ?>">Pending Compliance</a>
-                    </div>
-                <?php endif; ?>
 
                 <?php
                 if ($mode !== 'kpi') {
@@ -913,7 +919,6 @@ $createdByMapping = [
                             </table>
                         </div>
 
-                        
                         <?php if ($mode === 'mailshot'): ?>
                             <div class="mailshot-actions">
                                 <h5>Mailshot Actions</h5>
@@ -1393,9 +1398,6 @@ $createdByMapping = [
 
 
 
-
-
-
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
             // Enable/disable and validate date inputs based on KPI period selection
@@ -1573,7 +1575,7 @@ $createdByMapping = [
                 });
             <?php endif; ?>
 
-
+            
             function exportTableToCSV(filename) {
                 const table = document.getElementById('detailedKpiTable');
                 if (!table) {

@@ -3,6 +3,239 @@ if (!isset($_COOKIE['USERID'])) {
     header("location: $LINK/login ");
 }
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+$host = 'localhost';
+$user = 'root';
+$password = '';
+$dbname1 = 'broadmead';
+$dbname2 = 'broadmead_v3';
+$dsn1 = 'mysql:host=' . $host . ';dbname=' . $dbname1;
+$dsn2 = 'mysql:host=' . $host . ';dbname=' . $dbname2;
+
+// Database connections
+try {
+    $db_1 = new PDO($dsn1, $user, $password);
+    $db_1->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
+    $db_1->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $db_2 = new PDO($dsn2, $user, $password);
+    $db_2->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
+    $db_2->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    echo "<b>Database Connection Error: </b> " . $e->getMessage();
+    exit;
+}
+
+// Process mailshot when form is submitted
+if (isset($_POST['send_mailshot'])) {
+    $_SESSION['mailshot_initiated'] = true;
+
+    $selected_clients = json_decode($_POST['selected_clients'], true) ?? [];
+    $mailshot_subject = $_POST['mailshot_subject'] ?? '';
+    $mailshot_message = $_POST['mailshot_message'] ?? '';
+    
+    // Validation
+    if (empty($selected_clients)) {
+        $error_message = "Please select at least one client.";
+    } elseif (empty($mailshot_subject)) {
+        $error_message = "Email subject is required.";
+    } elseif (empty($mailshot_message)) {
+        $error_message = "Email message is required.";
+    } else {
+        // SMTP Configuration
+        $from_email = "learn@natec.icu";
+        $from_name = "Recruitment Team";
+        $smtp_host = 'smtp.titan.email';
+        $smtp_username = 'learn@natec.icu';
+        $smtp_password = '@WhiteDiamond0100';
+        $smtp_port = 587;
+
+        $success_count = 0;
+        $error_count = 0;
+        $error_details = [];
+
+        // Test SMTP connection first
+        try {
+            $test_mail = new PHPMailer(true);
+            $test_mail->isSMTP();
+            $test_mail->Host = $smtp_host;
+            $test_mail->SMTPAuth = true;
+            $test_mail->Username = $smtp_username;
+            $test_mail->Password = $smtp_password;
+            $test_mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $test_mail->Port = $smtp_port;
+            
+            if (!$test_mail->smtpConnect()) {
+                throw new Exception("SMTP connection failed");
+            }
+            $test_mail->smtpClose();
+        } catch (Exception $e) {
+            $error_message = "SMTP Configuration Error: " . $e->getMessage();
+            error_log("SMTP Error: " . $e->getMessage());
+        }
+
+        // Proceed if SMTP test passed
+        if (!isset($error_message)) {
+            foreach ($selected_clients as $client_id) {
+                try {
+                    // Get client details from either database
+                    $client = null;
+                    
+                    // Try broadmead_v3 first
+                    $stmt = $db_2->prepare("SELECT Name, Email FROM _clients WHERE ClientID = ?");
+                    $stmt->execute([$client_id]);
+                    $client = $stmt->fetch();
+                    
+                    // If not found, try broadmead
+                    if (!$client) {
+                        $stmt = $db_1->prepare("SELECT Name, Email FROM clients WHERE id = ?");
+                        $stmt->execute([$client_id]);
+                        $client = $stmt->fetch();
+                    }
+
+                    if ($client && filter_var($client->Email, FILTER_VALIDATE_EMAIL)) {
+                        $mail = new PHPMailer(true);
+                        $mail->isSMTP();
+                        $mail->Host = $smtp_host;
+                        $mail->SMTPAuth = true;
+                        $mail->Username = $smtp_username;
+                        $mail->Password = $smtp_password;
+                        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                        $mail->Port = $smtp_port;
+                        $mail->Timeout = 30;
+                        $mail->SMTPOptions = array(
+                            'ssl' => array(
+                                'verify_peer' => false,
+                                'verify_peer_name' => false,
+                                'allow_self_signed' => true
+                            )
+                        );
+
+                        $personalized_message = str_replace('[CLIENT_NAME]', $client->Name, $mailshot_message);
+                        
+                        $mail->setFrom($from_email, $from_name);
+                        $mail->addAddress($client->Email, $client->Name);
+                        $mail->addReplyTo($from_email, $from_name);
+                        $mail->isHTML(true);
+                        $mail->Subject = $mailshot_subject;
+                        $mail->Body = nl2br(htmlspecialchars($personalized_message));
+                        $mail->AltBody = strip_tags($personalized_message);
+
+                         if ($mail->send()) {
+       $success_count++;
+       
+       // Log the mailshot using ClientKeyID
+       if ($mail->send()) {
+    $success_count++;
+    
+    // Log the mailshot using the correct column names
+    $log_query = $db_2->prepare("INSERT INTO mailshot_log (ClientKeyID, Subject, Template, SentBy, SentDate) 
+                                  VALUES (:client_key_id, :subject, :template, :sent_by, NOW())");
+    $log_query->bindParam(':client_key_id', $clientKeyID); // Make sure you have this variable set
+    $log_query->bindParam(':subject', $mailshot_subject);
+    $log_query->bindParam(':template', $mailshot_template); // Use the appropriate variable for the template
+    $log_query->bindParam(':sent_by', $USERID);
+    
+    // if ($log_query->execute()) {
+    //     // Log successful
+    // } else {
+    //     echo "Error logging mailshot: " . implode(", ", $log_query->errorInfo());
+    // }
+} else {
+    $error_count++;
+    $error_details[] = "Failed to send to: {$client->Email} - " . $mail->ErrorInfo;
+}
+if ($mail->send()) {
+    $success_count++;
+    
+    // Check if $clientKeyID is set
+    if (empty($clientKeyID)) {
+        // echo "Error: ClientKeyID is not set.";
+        // $error_count++;
+        // $error_details[] = "ClientKeyID is not available for logging.";
+    } else {
+        // Log the mailshot using the correct column names
+        $log_query = $db_2->prepare("INSERT INTO mailshot_log (ClientKeyID, Subject, Template, SentBy, SentDate) 
+                                      VALUES (:client_key_id, :subject, :template, :sent_by, NOW())");
+        $log_query->bindParam(':client_key_id', $clientKeyID);
+        $log_query->bindParam(':subject', $mailshot_subject);
+        $log_query->bindParam(':template', $mailshot_template);
+        $log_query->bindParam(':sent_by', $USERID);
+        
+        if ($log_query->execute()) {
+            // Log successful
+        } else {
+            echo "Error logging mailshot: " . implode(", ", $log_query->errorInfo());
+        }
+    }
+} else {
+    $error_count++;
+    $error_details[] = "Failed to send to: {$client->Email} - " . $mail->ErrorInfo;
+}
+
+$mail->clearAddresses();
+usleep(100000); // Small delay between emails
+                        } else {
+                            $error_count++;
+                            $error_details[] = "Failed to send to: {$client->Email} - " . $mail->ErrorInfo;
+                        }
+                    } else {
+                        $error_count++;
+                        $error_details[] = "Invalid email for client ID: $client_id";
+                    }
+                } catch (Exception $e) {
+                    $error_count++;
+                    $error_details[] = "Error processing client ID: $client_id - " . $e->getMessage();
+                }
+            }
+
+            if ($success_count > 0) {
+                $success_message = "Successfully sent mailshot to $success_count clients.";
+                $NOTIFICATION = "$NAME has successfully sent mailshot to $success_count clients.";
+                Notify($USERID, $ClientKeyID, $NOTIFICATION);
+            }
+            
+            if ($error_count > 0) {
+                $error_message = "Mailshot completed with $error_count errors. " . implode("\n", array_slice($error_details, 0, 5));
+                if (count($error_details) > 5) {
+                    $error_message .= "\n... plus " . (count($error_details) - 5) . " more errors.";
+                }
+            }
+        }
+    }
+}
+
+// Handle search separately
+if (isset($_POST['Search'])) {
+    $Name = $_POST['Name'] ?? '';
+    $ClientType = $_POST['ClientType'] ?? '';
+    $_client_id = $_POST['_client_id'] ?? '';
+    $EmailAddress = $_POST['Email'] ?? '';
+    $PhoneNumber = $_POST['Number'] ?? '';
+    $Address = $_POST['Address'] ?? '';
+    $Postcode = $_POST['Postcode'] ?? '';
+    $City = $_POST['City'] ?? '';
+    
+    if (!empty($SearchID)) {
+        $query = $db_2->prepare("INSERT INTO `search_queries`(`SearchID`, `column`, `value`) 
+                  VALUES (:SearchID, :column, :value)");
+
+        foreach ($_POST as $key => $value) {
+            if (!empty($value) && $key !== 'Search') {
+                $query->bindParam(':SearchID', $SearchID);
+                $query->bindParam(':column', $key);
+                $query->bindParam(':value', $value);
+                $query->execute();
+            }
+        }
+
+        header("location: $LINK/clients/?q=$SearchID");
+        exit();
+    }
+}
+
 if (isset($_POST['delete'])) {
     $ID = $_POST['ID'];
     $name = $_POST['name'];
@@ -163,20 +396,22 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
                                     </select>
                                 </div>
                             </div>
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllFilters()">
-                                        <i class="ti ti-refresh"></i> Clear All Filters
-                                    </button>
-                                    <span id="filterResults" class="ms-3 text-muted"></span>
-                                </div>
-                                <div class="col-md-6 text-end">
-                                    <button type="button" class="btn btn-primary btn-sm" id="mailshotBtn" onclick="openMailshotModal()" style="display: none;">
-                                        <i class="ti ti-mail"></i> Send Mailshot (<span id="selectedCount">0</span>)
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                         <div class="row mb-3">
+    <div class="col-md-6">
+        <button type="button" style="background-color: #0d6efd; color: white; border: 1px solid #0d6efd; padding: 0.25rem 0.5rem; border-radius: 0.25rem; margin-right: 0.5rem;" onclick="clearAllFilters()">
+            <i class="ti ti-refresh"></i> Clear All Filters
+        </button>
+        <button type="button" style="background-color: #0d6efd; color: white; border: 1px solid #0d6efd; padding: 0.25rem 0.5rem; border-radius: 0.25rem;" onclick="applyFilters()">
+            <i class="ti ti-filter"></i> Apply Filters
+        </button>
+        <span id="filterResults" style="margin-left: 1rem; color: #6c757d;"></span>
+    </div>
+    <div style="margin-left: auto; padding-left: 15px;">
+        <button type="button" style="background-color: #0d6efd; color: white; border: 1px solid #0d6efd; padding: 0.25rem 0.5rem; border-radius: 0.25rem; display: none;" id="mailshotBtn" onclick="openMailshotModal()">
+            <i class="ti ti-mail"></i> Send Mailshot (<span id="selectedCount">0</span>)
+        </button>
+    </div>
+</div>
 
                         <ul class="nav nav-tabs analytics-tab" id="myTab" role="tablist" style="margin-left:30px;">
                             <li class="nav-item" role="presentation">
@@ -602,7 +837,7 @@ $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
         updateSelectedCount();
     });
 
-    // Delete functionality
+    // Delete    // Delete functionality
     document.getElementById('confirmDelete').addEventListener('click', function() {
         let checkboxes = document.querySelectorAll('.checkbox-item:checked');
         let ids = [];
