@@ -1,5 +1,5 @@
 <?php
-session_start();
+// session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 include "includes/config.php";
@@ -40,25 +40,53 @@ $mode = isset($_GET['mode']) ? $_GET['mode'] : 'candidates';
 //     $mode = 'mailshot';
 // }
 
+
+$success_message = '';
+$error_message = '';
+
+// Retrieve messages from session if they exist (after a redirect)
+if (isset($_SESSION['success_message'])) {
+    $success_message = $_SESSION['success_message'];
+    unset($_SESSION['success_message']); // Clear the message after displaying
+}
+if (isset($_SESSION['error_message'])) {
+    $error_message = $_SESSION['error_message'];
+    unset($_SESSION['error_message']); // Clear the message after displaying
+}
+
+
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
-    error_log("POST data received: " . print_r($_POST, true));
+    error_log("POST data received for candidates mailshot: " . print_r($_POST, true));
+
+    // Initialize a temporary error variable for this POST request
+    $current_post_error = '';
 
     // Validation
     if (empty($_POST['selected_candidates'])) {
-        $error_message = "Please select at least one candidate.";
+        $current_post_error = "Please select at least one candidate.";
     } elseif (empty($_POST['subject'])) {
-        $error_message = "Email subject is required.";
-    } elseif (empty($_POST['template']) && empty($_POST['body'])) { // Added check for custom body
-        $error_message = "Please select an email template or provide a custom email body.";
-    } else {
+        $current_post_error = "Email subject is required.";
+    } elseif (empty($_POST['template']) && empty($_POST['body'])) {
+        $current_post_error = "Please select an email template or provide a custom email body.";
+    }
+
+    // If no validation errors, proceed with mailshot logic
+    if (empty($current_post_error)) {
         $candidate_ids = $_POST['selected_candidates'];
+        // Ensure $candidate_ids is always an array
+        if (!is_array($candidate_ids)) {
+            $candidate_ids = [$candidate_ids];
+        }
+
         $subject = $_POST['subject'];
         $template = $_POST['template'];
-        $custom_body = $_POST['body'] ?? ''; // Get the custom body if available
+        $custom_body = $_POST['body'] ?? '';
 
         error_log("Processing mailshot for " . count($candidate_ids) . " candidates");
 
-        // Email templates
+        // Email templates (as you had them)
         $templates = [
             'job_alert' => [
                 'subject' => 'New Job Opportunities Matching Your Profile',
@@ -86,37 +114,112 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
 
         // Determine the email body based on template selection
         if ($template === 'custom') {
-            // If "Custom Email" is selected, use the body from the textarea
             $email_body = $custom_body;
         } elseif (isset($templates[$template])) {
-            // If a predefined template is selected, use its body
             $email_body = $templates[$template]['body'];
         } else {
-            // Fallback if no template is selected but a custom body might be provided
-            // This handles cases where 'template' might be empty but 'body' is filled
-            $email_body = $custom_body;
+            $email_body = $custom_body; // Fallback
         }
 
-        // Now you'll use $email_body for sending your emails
-        // ... (rest of your mail sending logic)
-        error_log("Email Subject: " . $subject);
-        error_log("Email Body: " . $email_body);
+        $emails_sent_count = 0;
+        $total_candidates = count($candidate_ids);
 
-        // Example of how you might use $email_body for sending:
-        // foreach ($candidate_ids as $candidate_id) {
-        //     // Fetch candidate details (name, email etc.) using $candidate_id
-        //     // $candidate_email = getCandidateEmail($candidate_id);
-        //     // $personalized_body = str_replace('[Name]', $candidate_name, $email_body);
-        //     // sendEmail($candidate_email, $subject, $personalized_body);
-        // }
-        // $success_message = "Mailshot sent successfully to selected candidates!";
+        // Start of actual email sending process
+        try {
+            // Assume $db_1 is your database connection for candidates
+            if (!isset($db_1) || !($db_1 instanceof PDO)) {
+                throw new Exception('Database connection not available for sending emails.');
+            }
+
+            foreach ($candidate_ids as $candidate_id) {
+                // Fetch candidate details (email, first_name, last_name, job_title)
+                $stmt = $db_1->prepare("SELECT  name, email, jobTitle FROM _candidates WHERE id = ?");
+                $stmt->execute([$candidate_id]);
+                $candidate = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($candidate && filter_var($candidate['email'], FILTER_VALIDATE_EMAIL)) {
+                    $recipient_email = $candidate['email'];
+                    $recipient_first_name = htmlspecialchars($candidate['first_name'] ?? 'Candidate');
+                    $recipient_last_name = htmlspecialchars($candidate['last_name'] ?? '');
+                    $recipient_job_title = htmlspecialchars($candidate['job_title'] ?? 'N/A');
+
+                    // Personalize the email body
+                    $personalized_body = str_replace(
+                        ['[Name]', '{first_name}', '{last_name}', '{job_title}', '[LoginLink]', '[NewsletterLink]', '[EventLink]'],
+                        [
+                            $recipient_first_name, // Default for [Name] if only first name available
+                            $recipient_first_name,
+                            $recipient_last_name,
+                            $recipient_job_title,
+                            'YOUR_LOGIN_LINK_HERE', // IMPORTANT: Replace with actual dynamic links if needed
+                            'YOUR_NEWSLETTER_LINK_HERE',
+                            'YOUR_EVENT_LINK_HERE'
+                        ],
+                        $email_body
+                    );
+
+                    // --- YOUR ACTUAL EMAIL SENDING FUNCTION CALL GOES HERE ---
+                    // This is a placeholder. You'll replace `sendActualEmailFunction()`
+                    // with your real email sending logic (e.g., PHPMailer, PHP's mail() function).
+                    // Example:
+                    // if (sendActualEmailFunction($recipient_email, $subject, $personalized_body)) {
+                    //     $emails_sent_count++;
+                    // } else {
+                    //     error_log("Failed to send email to " . $recipient_email);
+                    // }
+                    
+                    // For demonstration, let's just increment and log
+                    error_log("Simulated email sent to " . $recipient_email . " with subject: " . $subject);
+                    $emails_sent_count++;
+                    // END OF PLACEHOLDER
+
+                } else {
+                    error_log("Skipping email for candidate ID " . $candidate_id . ": " . ($candidate ? "Invalid email." : "Candidate not found."));
+                }
+            }
+
+            // Set success message after successful email sending loop
+            if ($emails_sent_count > 0) {
+                $_SESSION['success_message'] = "Mailshot successfully sent to " . $emails_sent_count . " of " . $total_candidates . " selected candidates.";
+            } else {
+                $_SESSION['error_message'] = "Mailshot process completed, but no emails were successfully sent.";
+            }
+
+        } catch (Exception $e) {
+            // Catch any errors during the email sending process
+            error_log("Mailshot sending error: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
+            $_SESSION['error_message'] = "An error occurred during email sending. Please check logs for details.";
+        }
+
+    } else {
+        // If there were validation errors, store them in session
+        $_SESSION['error_message'] = $current_post_error;
     }
+
+    // --- PRG REDIRECTION ---
+    // Redirect back to the same page as a GET request.
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit; // IMPORTANT: Stop script execution immediately after the redirect header
 }
 
+// ... (Rest of your HTML goes below this PHP block) ...
+
+
+ if (!empty($success_message)): ?>
+    <div class="alert alert-success" role="alert">
+        <?php echo htmlspecialchars($success_message); ?>
+    </div>
+
+ if (!empty($error_message)): ?>
+    <div class="alert alert-danger" role="alert">
+        <?php echo htmlspecialchars($error_message); ?>
+    </div>
+<?php endif; 
 
 if ($mode === 'mailshot') {
         $final_subject = empty($subject) ? $template_details['subject'] : $subject;
      $base_body = $email_body;
+
         $from_email = "learn@natec.icu";
         $from_name = "Recruitment Team";
 
@@ -688,7 +791,7 @@ $createdByMapping = [
        style="padding: 8px 12px; background: <?= ($status ?? '') === 'pending' ? '#28a745' : '#f5f5f5' ?>; 
               color: <?= ($status ?? '') === 'pending' ? 'white' : '#555' ?>; 
               text-decoration: none; border-radius: 4px; font-size: 14px;">
-        <i class="fa fa-hourglass-half"></i> Pending
+        <i class="fa fa-hourglass-half"></i> Pending Compliance
     </a>
     <a href="?mode=candidates&status=archived" 
        style="padding: 8px 12px; background: <?= ($status ?? '') === 'archived' ? '#28a745' : '#f5f5f5' ?>; 
