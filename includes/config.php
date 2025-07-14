@@ -1,13 +1,13 @@
 <?php
-$lifetime = 60 * 60 * 24 * 7; // 1 week i
-session_set_cookie_params($lifetime);
-ini_set('session.gc_maxlifetime', $lifetime);
-session_start();
+$lifetime = 60 * 60 * 24 * 7; // 1 week
+// session_set_cookie_params($lifetime);
+// ini_set('session.gc_maxlifetime', $lifetime);
+// session_start();
 $serverName = $_SERVER['SERVER_NAME'];
+
 // Database connection class
 class Database
 {
-
     private $host;
     private $dbname;
     private $username;
@@ -55,10 +55,6 @@ class Database
 }
 
 // Example usage
-$db = new Database();
-$conn = $db->getConnection();
-
-
 $db = new Database();
 $conn = $db->getConnection();
 
@@ -115,35 +111,32 @@ function NoData()
     return "<div class='text-danger'>No Data Found</div>";
 }
 
-$HOST_SERVER =  getenv('HTTP_HOST');
-$PROTOCAL = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
-$DIRECTORY = ($serverName === 'localhost') ? "/broadmead" : "";
-$LINK = $PROTOCAL . $_SERVER['HTTP_HOST'] . $DIRECTORY;
-$TITLE = "Broad-Mead - Simplified Recruitment Software | Applicant Tracking System + CRM Software";
-$ICON = $LINK . "/assets/images/icon.png";
-$LOGO = $LINK . "/assets/images/logo.png";
-$ProfilePlaceholder = $LINK . '/assets/images/default.webp';
-$_blank = $LINK . '/assets/_blank.png';
-$FontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+// Define TruncateText function here to ensure it's available globally
+if (!function_exists('TruncateText')) {
+    /**
+     * Truncates a string to a specified length, adding an ellipsis if truncated.
+     *
+     * @param string $text The input string.
+     * @param int $maxLength The maximum length of the string.
+     * @param string $ellipsis The string to append if truncation occurs.
+     * @return string The truncated string.
+     */
+    function TruncateText(string $text, int $maxLength, string $ellipsis = '...'): string
+    {
+        if (strlen($text) > $maxLength) {
+            // Find the last space within the maxLength to avoid cutting words
+            $truncatedText = substr($text, 0, $maxLength);
+            $lastSpace = strrpos($truncatedText, ' ');
 
-if (isset($_POST['theme'])) {
-    $theme = $_POST['theme'];
-    $expiryTime = time() + strtotime('+60 days');
-    setcookie('theme', $theme,  $expiryTime, '/');
-}
-
-$theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
-
-$File_Dictory = $_SERVER['DOCUMENT_ROOT'] . $DIRECTORY . '/assets/files/';
-function TruncateText($text, $maxLength, $ellipsis = '...')
-{
-    if (strlen($text) > $maxLength) {
-        $text = wordwrap($text, $maxLength);
-        $text = substr($text, 0, strpos($text, "\n"));
-        $text .= $ellipsis;
+            if ($lastSpace !== false && $lastSpace > ($maxLength - 10)) { // Ensure enough characters before the last space
+                $truncatedText = substr($truncatedText, 0, $lastSpace);
+            }
+            return $truncatedText . $ellipsis;
+        }
+        return $text;
     }
-    return $text;
 }
+
 function FormatDate($date)
 {
     // Remove the 'T' if present in the date string
@@ -160,7 +153,26 @@ function FormatDate($date)
 }
 
 
+$HOST_SERVER = getenv('HTTP_HOST');
+$PROTOCAL = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+$DIRECTORY = ($serverName === 'localhost') ? "/broadmead" : "";
+$LINK = $PROTOCAL . $_SERVER['HTTP_HOST'] . $DIRECTORY;
+$TITLE = "Broad-Mead - Simplified Recruitment Software | Applicant Tracking System + CRM Software";
+$ICON = $LINK . "/assets/images/icon.png";
+$LOGO = $LINK . "/assets/images/logo.png";
+$ProfilePlaceholder = $LINK . '/assets/images/default.webp';
+$_blank = $LINK . '/assets/_blank.png';
+$FontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 
+if (isset($_POST['theme'])) {
+    $theme = $_POST['theme'];
+    $expiryTime = time() + strtotime('+60 days');
+    setcookie('theme', $theme, $expiryTime, '/');
+}
+
+$theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
+
+$File_Dictory = $_SERVER['DOCUMENT_ROOT'] . $DIRECTORY . '/assets/files/';
 
 
 date_default_timezone_set('Europe/London');
@@ -185,7 +197,7 @@ function IsCheckPermission($USERID, $PERMISSION)
 function Notify($USERID, $ClientID, $Notification)
 {
     global $date;
-    $query = "INSERT INTO `notifications`(`ClientKeyID`, `hasUseID`, `Notification` , `Date`) VALUES  (:ClientKeyID, :hasUseID, :Notification, :Date)";
+    $query = "INSERT INTO `notifications`(`ClientKeyID`, `hasUseID`, `Notification` , `Date`) VALUES (:ClientKeyID, :hasUseID, :Notification, :Date)";
     $stmt = $GLOBALS['conn']->prepare($query);
     $stmt->bindParam(':ClientKeyID', $ClientID);
     $stmt->bindParam(':hasUseID', $USERID);
@@ -287,8 +299,6 @@ function getPageCategory($page)
         "users" => "Users",
         "update_permissions" => "Update Permissions",
         "shift_types" => "Shift Types",
-
-
     ];
 
     foreach ($categories as $pattern => $category) {
@@ -428,7 +438,7 @@ if (isset($_COOKIE['USERID'])) {
             $stmt->bindParam(2, $toDate, PDO::PARAM_STR);
             $stmt->bindParam(3, $USERID);
             $stmt->execute();
-            $response =  "Date range saved successfully.";
+            $response = "Date range saved successfully.";
         } else {
             // Insert new record
             $stmt = $conn->prepare("INSERT INTO `_date_ranges` (UserID, FromDate, ToDate) VALUES (?, ?, ?)");
@@ -436,7 +446,7 @@ if (isset($_COOKIE['USERID'])) {
             $stmt->bindParam(2, $fromDate, PDO::PARAM_STR);
             $stmt->bindParam(3, $toDate, PDO::PARAM_STR);
             $stmt->execute();
-            $response =  "Date range saved successfully.";
+            $response = "Date range saved successfully.";
         }
     }
 
@@ -481,9 +491,10 @@ if (isset($_COOKIE['USERID'])) {
     }
 }
 
-
-
+// PHPMailer autoload should be included if not using Composer or if Composer's autoloader isn't globally available.
+// If you installed PHPMailer via Composer, this path is typically correct:
 require $_SERVER['DOCUMENT_ROOT'] . "$DIRECTORY/vendor/autoload.php";
+
 function SendEmail($email, $subject, $message, $hasTemplate, $templateUrl)
 {
     $mail = new PHPMailer(true);
@@ -553,7 +564,7 @@ function GetHours($start, $end)
     $endTime = new DateTime($end);
     $interval = $startTime->diff($endTime);
     $hours = round($interval->h + ($interval->i / 60), 2);
-    return  $hours;
+    return $hours;
 }
 
 $documenttype = array(
@@ -634,7 +645,7 @@ if (isset($_POST['CreateTimesheet'])) {
         $hasBranchID = $row->hasBranchID;
 
         // Prepare the INSERT query
-        $query = "INSERT INTO `_timesheet`(`ClientKeyID`, `TimesheetID`, `TimesheetNo`, `hasClientID`, `hasBranchID`, `CandidateID`, `VacancyID`, `CreatedBy`, `Date`)  VALUES (:ClientKeyID, :TimesheetID, :TimesheetNo, :hasClientID, :hasBranchID, :CandidateID, :VacancyID, :CreatedBy, :Date)";
+        $query = "INSERT INTO `_timesheet`(`ClientKeyID`, `TimesheetID`, `TimesheetNo`, `hasClientID`, `hasBranchID`, `CandidateID`, `VacancyID`, `CreatedBy`, `Date`) VALUES (:ClientKeyID, :TimesheetID, :TimesheetNo, :hasClientID, :hasBranchID, :CandidateID, :VacancyID, :CreatedBy, :Date)";
 
         $stmt = $conn->prepare($query);
 
@@ -700,14 +711,14 @@ if (isset($_POST['CreateTimesheet'])) {
             // Execute the insert query
             $insertQuery->execute();
 
-            $candidateNameStmt = $conn->prepare("SELECT Name FROM `_candidates` WHERE  CandidateID = :CandidateID");
+            $candidateNameStmt = $conn->prepare("SELECT Name FROM `_candidates` WHERE CandidateID = :CandidateID");
             $candidateNameStmt->bindParam(':CandidateID', $CandidateID);
             $candidateNameStmt->execute();
             $candidateName = $candidateNameStmt->fetchColumn();
 
             $Modification = "Created timesheet";
             LastModified($TimesheetID, $USERID, $Modification);
-            $Notification = "$NAME successfully created  a new timesheet for $candidateName Timesheet No. $TimesheetNo";
+            $Notification = "$NAME successfully created a new timesheet for $candidateName Timesheet No. $TimesheetNo";
 
             Notify($USERID, $ClientKeyID, $Notification);
         }
