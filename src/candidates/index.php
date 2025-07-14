@@ -268,69 +268,88 @@ if ($mode === 'mailshot') {
 
 if (isset($_GET['export'])) {
     try {
-        // Verify connection exists
-        if (!isset($pdo)) {
-            throw new Exception('Database not connected');
+        // Verify that $db_1 (your connection object) is properly set and is a PDO instance.
+        // This is crucial. If this check fails, it means your database connection logic above
+        // isn't successfully creating the $db_1 object before this code runs.
+        if (!isset($db_1) || !($db_1 instanceof PDO)) {
+            // Log for debugging
+            error_log("Export Error: \$db_1 (PDO connection) is not available or not a PDO instance.");
+            throw new Exception('Database connection not established for export.');
         }
 
         $status = $_GET['status'] ?? 'active';
         $exportType = $_GET['export'];
-        
+
         // Validate export type
         if (!in_array($exportType, ['excel', 'csv'])) {
             throw new Exception('Invalid export type');
         }
 
-        // Fetch data
-        $stmt = $pdo->prepare("SELECT * FROM candidates WHERE status = ?");
+        // --- THE FIX IS HERE (LINE 285 in your context) ---
+        // Use $db_1 (or $db_2 if your 'candidates' table is in broadmead_v3)
+        $stmt = $db_1->prepare("SELECT * FROM _candidates WHERE status = ?");
         $stmt->execute([$status]);
-        $candidates = $stmt->fetchAll();
+        $candidates = $stmt->fetchAll(PDO::FETCH_ASSOC); // Fetch as associative array for better headers
 
         if (empty($candidates)) {
-            die("No records found");
+            // Provide a more informative message if no records are found
+            die("No records found to export with status: " . htmlspecialchars($status));
         }
 
-        // Clear any existing output
+        // Clear any existing output buffers to prevent file corruption
         if (ob_get_level()) {
             ob_end_clean();
         }
 
         // Generate file
         $filename = "candidates_".date('Y-m-d')."_".$status;
-        
+
         if ($exportType === 'excel') {
             header("Content-Type: application/vnd.ms-excel");
             header("Content-Disposition: attachment; filename=\"$filename.xls\"");
-            
-            $header = false;
+
+            $header_output = false;
             foreach ($candidates as $row) {
-                if (!$header) {
+                if (!$header_output) {
+                    // Output column headers based on keys of the first row
                     echo implode("\t", array_keys($row)) . "\r\n";
-                    $header = true;
+                    $header_output = true;
                 }
+                // Output data values
                 echo implode("\t", array_values($row)) . "\r\n";
             }
-            exit;
+            exit; // Important: Stop script execution after file output
         }
-        
+
         if ($exportType === 'csv') {
             header("Content-Type: text/csv");
             header("Content-Disposition: attachment; filename=\"$filename.csv\"");
-            
+
+            // Open output stream
             $output = fopen('php://output', 'w');
-            fputcsv($output, array_keys($candidates[0]));
+
+            // Write headers from the first row's keys (assuming FETCH_ASSOC)
+            if (!empty($candidates)) {
+                 fputcsv($output, array_keys($candidates[0]));
+            }
+
+            // Write data rows
             foreach ($candidates as $row) {
                 fputcsv($output, $row);
             }
+
+            // Close output stream
             fclose($output);
-            exit;
+            exit; // Important: Stop script execution after file output
         }
 
     } catch (Exception $e) {
-        die("Export failed: " . $e->getMessage());
+        // Log the actual exception message for server-side debugging
+        error_log("Export Process Error: " . $e->getMessage() . " (File: " . $e->getFile() . " Line: " . $e->getLine() . ")");
+        // Display a user-friendly error message
+        die("Export failed: An unexpected error occurred during the export. Please try again or contact support.");
     }
 }
-
 
 
 $keyword_filter = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
