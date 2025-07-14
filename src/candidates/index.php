@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
 
         $template_details = $templates[$template] ?? [
             'subject' => $subject,
-            'body' => "Hello [Name],\n\nThank you for being part of our network.\n\nBest regards,\nThe Recruitment Team"
+            // 'body' => "Hello [Name],\n\nThank you for being part of our network.\n\nBest regards,\nThe Recruitment Team"
         ];
 
         $final_subject = empty($subject) ? $template_details['subject'] : $subject;
