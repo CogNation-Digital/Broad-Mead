@@ -34,24 +34,29 @@ try {
 
 $mode = isset($_GET['mode']) ? $_GET['mode'] : 'candidates';
 
-// Process mailshot
+// // Process mailshot
+// if (isset($_POST['mailshot'])) {
+//     $mode = 'mailshot';
+// }
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
     error_log("POST data received: " . print_r($_POST, true));
-    
+
     // Validation
     if (empty($_POST['selected_candidates'])) {
         $error_message = "Please select at least one candidate.";
     } elseif (empty($_POST['subject'])) {
         $error_message = "Email subject is required.";
-    } elseif (empty($_POST['template'])) {
-        $error_message = "Please select an email template.";
+    } elseif (empty($_POST['template']) && empty($_POST['body'])) { // Added check for custom body
+        $error_message = "Please select an email template or provide a custom email body.";
     } else {
         $candidate_ids = $_POST['selected_candidates'];
         $subject = $_POST['subject'];
         $template = $_POST['template'];
-        
+        $custom_body = $_POST['body'] ?? ''; // Get the custom body if available
+
         error_log("Processing mailshot for " . count($candidate_ids) . " candidates");
-        
+
         // Email templates
         $templates = [
             'job_alert' => [
@@ -76,13 +81,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
             ]
         ];
 
-        $template_details = $templates[$template] ?? [
-            'subject' => $subject,
-            'body' => "Hello [Name],\n\nThank you for being part of our network.\n\nBest regards,\nThe Recruitment Team"
-        ];
+        $email_body = '';
 
+        // Determine the email body based on template selection
+        if ($template === 'custom') {
+            // If "Custom Email" is selected, use the body from the textarea
+            $email_body = $custom_body;
+        } elseif (isset($templates[$template])) {
+            // If a predefined template is selected, use its body
+            $email_body = $templates[$template]['body'];
+        } else {
+            // Fallback if no template is selected but a custom body might be provided
+            // This handles cases where 'template' might be empty but 'body' is filled
+            $email_body = $custom_body;
+        }
+
+        // Now you'll use $email_body for sending your emails
+        // ... (rest of your mail sending logic)
+        error_log("Email Subject: " . $subject);
+        error_log("Email Body: " . $email_body);
+
+        // Example of how you might use $email_body for sending:
+        // foreach ($candidate_ids as $candidate_id) {
+        //     // Fetch candidate details (name, email etc.) using $candidate_id
+        //     // $candidate_email = getCandidateEmail($candidate_id);
+        //     // $personalized_body = str_replace('[Name]', $candidate_name, $email_body);
+        //     // sendEmail($candidate_email, $subject, $personalized_body);
+        // }
+        // $success_message = "Mailshot sent successfully to selected candidates!";
+    }
+}
+if ($mode === 'mailshot') {
         $final_subject = empty($subject) ? $template_details['subject'] : $subject;
-        $base_body = $template_details['body'];
+     $base_body = $email_body;
         $from_email = "learn@natec.icu";
         $from_name = "Recruitment Team";
 
@@ -227,7 +258,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
             }
         }
     }
-}
+
 
 
 
