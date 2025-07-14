@@ -1,4 +1,5 @@
 <?php
+session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 include "includes/config.php";
@@ -111,6 +112,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
         // $success_message = "Mailshot sent successfully to selected candidates!";
     }
 }
+
+
 if ($mode === 'mailshot') {
         $final_subject = empty($subject) ? $template_details['subject'] : $subject;
      $base_body = $email_body;
