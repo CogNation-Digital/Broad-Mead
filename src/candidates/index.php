@@ -56,29 +56,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
         $templates = [
             'job_alert' => [
                 'subject' => 'New Job Opportunities Matching Your Profile',
-                // 'body' => "Hello [Name],\n\nWe have new job opportunities that match your profile. Log in to your account to view them:\n\n[LoginLink]\n\nBest regards,\nThe Recruitment Team"
+                'body' => "Hello [Name],\n\nWe have new job opportunities that match your profile. Log in to your account to view them:\n\n[LoginLink]\n\nBest regards,\nThe Recruitment Team"
             ],
             'newsletter' => [
                 'subject' => 'Our Latest Industry Insights',
-                // 'body' => "Hello [Name],\n\nCheck out our latest newsletter with industry insights and job tips:\n\n[NewsletterLink]\n\nBest regards,\nThe Recruitment Team"
+                'body' => "Hello [Name],\n\nCheck out our latest newsletter with industry insights and job tips:\n\n[NewsletterLink]\n\nBest regards,\nThe Recruitment Team"
             ],
             'event_invitation' => [
                 'subject' => 'Invitation to Recruitment Event',
-                // 'body' => "Hello [Name],\n\nYou are invited to our upcoming recruitment event. Please RSVP here:\n\n[EventLink]\n\nBest regards,\nThe Recruitment Team"
+                'body' => "Hello [Name],\n\nYou are invited to our upcoming recruitment event. Please RSVP here:\n\n[EventLink]\n\nBest regards,\nThe Recruitment Team"
             ],
             'follow_up' => [
                 'subject' => 'Following Up on Your Application',
-                // 'body' => "Hello [Name],\n\nFollowing up on your recent application. Any updates?\n\nBest regards,\nThe Recruitment Team"
+                'body' => "Hello [Name],\n\nFollowing up on your recent application. Any updates?\n\nBest regards,\nThe Recruitment Team"
             ],
             'welcome' => [
                 'subject' => 'Welcome to Our Candidate Network',
-                // 'body' => "Hello [Name],\n\nWelcome to our candidate database! We will contact you when we find a match.\n\nBest regards,\nThe Recruitment Team"
+                'body' => "Hello [Name],\n\nWelcome to our candidate database! We will contact you when we find a match.\n\nBest regards,\nThe Recruitment Team"
             ]
         ];
 
         $template_details = $templates[$template] ?? [
             'subject' => $subject,
-            // 'body' => "Hello [Name],\n\nThank you for being part of our network.\n\nBest regards,\nThe Recruitment Team"
+            'body' => "Hello [Name],\n\nThank you for being part of our network.\n\nBest regards,\nThe Recruitment Team"
         ];
 
         $final_subject = empty($subject) ? $template_details['subject'] : $subject;
