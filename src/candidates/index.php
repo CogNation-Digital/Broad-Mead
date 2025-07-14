@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
             ],
             'follow_up' => [
                 'subject' => 'Following Up on Your Application',
-                'body' => "Hello [Name],\n\nFollowing up on your recent application. Any updates?\n\nBest regards,\nThe Recruitment Team"
+                // 'body' => "Hello [Name],\n\nFollowing up on your recent application. Any updates?\n\nBest regards,\nThe Recruitment Team"
             ],
             'welcome' => [
                 'subject' => 'Welcome to Our Candidate Network',
