@@ -789,7 +789,7 @@ $createdByMapping = [
     </a>
     <a href="?mode=candidates&status=pending" 
        style="padding: 8px 12px; background: <?= ($status ?? '') === 'pending' ? '#28a745' : '#f5f5f5' ?>; 
-              color: <?= ($status ?? '') === 'pending' ? 'white' : '#555' ?>; 
+              color: <?= ($status ?? '') === 'pending compliance' ? 'white' : '#555' ?>; 
               text-decoration: none; border-radius: 4px; font-size: 14px;">
         <i class="fa fa-hourglass-half"></i> Pending Compliance
     </a>
