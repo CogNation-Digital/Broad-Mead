@@ -9,7 +9,7 @@ $mail = new PHPMailer(true);
 
 try {
     // Email details
-    $email = "Andie@cog-nation.com";
+    $email = "euphemiachikungulu347@gmail.com";
     $name = "Euphemia Chikungulu";
     $subject = "Test Email from Nocturnal Recruitment";
 

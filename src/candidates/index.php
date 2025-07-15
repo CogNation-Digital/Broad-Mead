@@ -2,10 +2,8 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Ensure PHPMailer autoload is included.
-// If you installed PHPMailer via Composer, this path is correct.
-// Otherwise, you need to manually include PHPMailer class files (e.g., PHPMailer.php, SMTP.php, Exception.php).
-// require 'vendor/autoload.php';
+
+// require 'vendor/autoload.php'; // Uncommented assuming Composer is used
 
 include "includes/config.php"; // Assuming this includes necessary configurations like $theme
 
@@ -113,6 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
         $smtp_password = '@WhiteDiamond0100';
         $smtp_port = 587;
 
+        
         // Test SMTP connection once before sending emails to candidates
         try {
             $test_mail = new PHPMailer(true);
@@ -143,6 +142,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
         // Proceed with sending emails only if SMTP test passed
         if (!isset($error_message)) {
             foreach ($candidate_ids as $candidate_id) {
+                $log_status = ''; // Initialize status for each candidate
+                $log_error = ''; // Initialize error for each candidate
                 try {
                     error_log("Processing candidate ID: " . $candidate_id);
 
@@ -200,33 +201,103 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
 
                         if ($mail->send()) {
                             $success_count++;
+                            $log_status = 'sent';
+                            $log_error = '';
                             $console_logs[] = "SUCCESS: Email sent to {$to} (Candidate ID: {$candidate_id})";
                             error_log("SUCCESS: Email sent to {$to}");
                         } else {
                             $error_count++;
+                            $log_status = 'failed';
+                            $log_error = $mail->ErrorInfo;
                             $error_details[] = "Failed to send to: $to - " . $mail->ErrorInfo;
                             $console_logs[] = "ERROR: Failed to send to {$to} (Candidate ID: {$candidate_id}) - " . $mail->ErrorInfo;
                             error_log("ERROR: Failed to send to {$to} - " . $mail->ErrorInfo);
                         }
 
+                        // --- Start Mailshot Logging ---
+                        try {
+                            $log_stmt = $db_2->prepare(
+                                "INSERT INTO mailshot_logs (candidate_id, email, subject, template, body, status, error, sent_at)
+                                 VALUES (:candidate_id, :email, :subject, :template, :body, :status, :error, NOW())"
+                            );
+                            $log_stmt->execute([
+                                ':candidate_id' => $candidate_id,
+                                ':email' => $to,
+                                ':subject' => $final_subject,
+                                ':template' => $template_key,
+                                ':body' => $personalized_body,
+                                ':status' => $log_status,
+                                ':error' => $log_error
+                            ]);
+                            error_log("Mailshot log saved for candidate ID: {$candidate_id}, Status: {$log_status}");
+                        } catch (PDOException $e) {
+                            error_log("DATABASE ERROR: Failed to log mailshot for candidate ID {$candidate_id}: " . $e->getMessage());
+                            // You might want to add this error to $error_details or $console_logs as well
+                        }
+                        // --- End Mailshot Logging ---
+
                         $mail->clearAddresses(); // Clear addresses for the next iteration
                         $mail->clearAttachments(); // Clear attachments
                         usleep(100000); // 0.1 second delay to avoid hitting SMTP rate limits
-                    } else {
+                    } else { // Candidate not found or invalid email
                         $candidate_email = $candidate->Email ?? 'N/A';
                         $error_count++;
-                        $error_details[] = "Invalid email or candidate not found for ID: $candidate_id (Email: $candidate_email)";
+                        $log_status = 'failed';
+                        $log_error = "Invalid email or candidate not found for ID: $candidate_id (Email: $candidate_email)";
+                        $error_details[] = $log_error;
                         $console_logs[] = "ERROR: Invalid email or candidate not found for ID {$candidate_id} (Email: {$candidate_email})";
                         error_log("ERROR: Invalid email or candidate not found for ID {$candidate_id}");
+                        
+                        // Log the failure when candidate or email is invalid
+                        try {
+                            $log_stmt = $db_2->prepare(
+                                "INSERT INTO mailshot_logs (candidate_id, email, subject, template, body, status, error, sent_at)
+                                 VALUES (:candidate_id, :email, :subject, :template, :body, :status, :error, NOW())"
+                            );
+                            $log_stmt->execute([
+                                ':candidate_id' => $candidate_id,
+                                ':email' => $candidate_email,
+                                ':subject' => $final_subject,
+                                ':template' => $template_key,
+                                ':body' => $personalized_body ?? $base_body, // Use personalized if available, otherwise base
+                                ':status' => $log_status,
+                                ':error' => $log_error
+                            ]);
+                            error_log("Mailshot log saved for candidate ID: {$candidate_id}, Status: {$log_status} (Invalid Candidate/Email)");
+                        } catch (PDOException $e) {
+                            error_log("DATABASE ERROR: Failed to log mailshot (invalid candidate/email) for ID {$candidate_id}: " . $e->getMessage());
+                        }
                     }
-                } catch (Exception $e) {
+                } catch (Exception $e) { // General exception during candidate processing
                     $candidate_email = isset($candidate) && isset($candidate->Email) ? $candidate->Email : 'N/A';
                     $error_count++;
-                    $error_details[] = "Error processing candidate ID: $candidate_id - " . $e->getMessage();
+                    $log_status = 'failed';
+                    $log_error = "Error processing candidate ID: $candidate_id - " . $e->getMessage();
+                    $error_details[] = $log_error;
                     $console_logs[] = "ERROR: Exception for candidate ID {$candidate_id} - " . $e->getMessage();
                     error_log("ERROR: Exception for candidate ID {$candidate_id} - " . $e->getMessage());
+
+                    // Log the failure due to an exception
+                    try {
+                        $log_stmt = $db_2->prepare(
+                            "INSERT INTO mailshot_logs (candidate_id, email, subject, template, body, status, error, sent_at)
+                             VALUES (:candidate_id, :email, :subject, :template, :body, :status, :error, NOW())"
+                        );
+                        $log_stmt->execute([
+                            ':candidate_id' => $candidate_id,
+                            ':email' => $candidate_email,
+                            ':subject' => $final_subject,
+                            ':template' => $template_key,
+                            ':body' => $personalized_body ?? $base_body, // Use personalized if available, otherwise base
+                            ':status' => $log_status,
+                            ':error' => $log_error
+                        ]);
+                        error_log("Mailshot log saved for candidate ID: {$candidate_id}, Status: {$log_status} (Exception)");
+                    } catch (PDOException $e) {
+                        error_log("DATABASE ERROR: Failed to log mailshot (exception) for ID {$candidate_id}: " . $e->getMessage());
+                    }
                 }
-            }
+            } // End of foreach ($candidate_ids as $candidate_id)
 
             // Final message after mailshot processing
             if ($error_count === 0) {
@@ -243,7 +314,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
         }
     }
 }
-
+// ... (rest of your index.php file content, including HTML if any) ...
+     // Closing brace for 'if (!isset($error_message))'
+ // Closing brace for 'if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot')'
 // --- Export Handler (must come before ANY output) ---
 // This section handles both 'candidates' and 'kpi' report exports
 if (isset($_GET['export'])) {
