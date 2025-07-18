@@ -4,6 +4,8 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 require_once '../../includes/config.php'; // Ensure this includes necessary configurations like $theme, $LINK, etc.
+// Make sure you have PHPMailer loaded, e.g., via Composer:
+// require 'vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -48,6 +50,9 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
         // If it's not defined, you might need to fetch it from the session or user data.
         // For now, assuming it's available.
         $export_where_conditions = ["ClientKeyID = :client_key_id", "isBranch IS NULL"];
+        // Ensure $ClientKeyID is defined before using it. You might need to retrieve it from session or user data.
+        // For demonstration, let's assume a dummy value if not already set.
+        $ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1; // Example: Fetch from cookie or default
         $export_params = [':client_key_id' => $ClientKeyID]; 
 
         if (!empty($nameFilter)) {
@@ -144,7 +149,8 @@ if (isset($_POST['send_mailshot'])) {
     $selected_clients = json_decode($_POST['selected_clients'], true) ?? [];
     $mailshot_subject = $_POST['mailshot_subject'] ?? '';
     $mailshot_message = $_POST['mailshot_message'] ?? '';
-    
+    $mailshot_template_selected = $_POST['mailshot_template'] ?? 'Custom Mailshot'; // Get selected template value
+
     // Validation
     if (empty($selected_clients)) {
         $error_message = "Please select at least one client.";
@@ -223,6 +229,7 @@ if (isset($_POST['send_mailshot'])) {
                             )
                         );
 
+                        // Personalize the message with the client's actual name
                         $personalized_message = str_replace('[CLIENT_NAME]', $client->Name, $mailshot_message);
                         
                         $mail->setFrom($from_email, $from_name);
@@ -253,16 +260,21 @@ if (isset($_POST['send_mailshot'])) {
 
             // --- Log Mailshot Summary AFTER all emails are processed ---
             try {
-                $mailshot_template_log = "Custom Mailshot"; // Template name for logging this type of mailshot
+                // Use the selected template value for logging, or 'Custom Mailshot' if none selected
+                $log_template_name = ($mailshot_template_selected !== '') ? $mailshot_template_selected : "Custom Mailshot";
                 
                 $log_query = $db_2->prepare("INSERT INTO mailshot_log (ClientKeyID, Subject, Template, RecipientsCount, SuccessCount, FailedCount, SentBy, SentDate) 
                                               VALUES (:client_key_id, :subject, :template, :recipients_count, :success_count, :failed_count, :sent_by, NOW())");
                 
                 // Assuming $ClientKeyID is the identifier for the current user's associated client key.
                 // This is typically the ID of the account/entity that initiated the mailshot.
+                // Ensure $ClientKeyID and $USERID are defined from your config or session.
+                $ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1; // Example: Fetch from cookie or default
+                $USERID = $USERID ?? $_COOKIE['USERID'] ?? 1; // Example: Fetch from cookie or default
+
                 $log_query->bindParam(':client_key_id', $ClientKeyID); 
                 $log_query->bindParam(':subject', $mailshot_subject);
-                $log_query->bindParam(':template', $mailshot_template_log);
+                $log_query->bindParam(':template', $log_template_name); // Log the chosen template
                 $log_query->bindParam(':recipients_count', $total_recipients, PDO::PARAM_INT);
                 $log_query->bindParam(':success_count', $successful_sends, PDO::PARAM_INT);
                 $log_query->bindParam(':failed_count', $failed_sends, PDO::PARAM_INT);
@@ -281,8 +293,11 @@ if (isset($_POST['send_mailshot'])) {
             // Update user-facing messages based on overall success/failure
             if ($successful_sends > 0 && $failed_sends === 0) {
                 $success_message = "Mailshot successfully sent to $successful_sends clients.";
-                $NOTIFICATION = "$NAME has successfully sent mailshot to $successful_sends clients.";
-                Notify($USERID, $ClientKeyID, $NOTIFICATION); 
+                $NOTIFICATION = ($NAME ?? 'A user') . " has successfully sent mailshot to $successful_sends clients.";
+                // Assuming Notify function is defined in config.php
+                if (function_exists('Notify')) {
+                     Notify($USERID, $ClientKeyID, $NOTIFICATION); 
+                }
             } elseif ($successful_sends > 0 && $failed_sends > 0) {
                 $error_message = "Mailshot completed with some issues: $successful_sends succeeded, $failed_sends failed.";
                 if (!empty($error_details)) {
@@ -291,8 +306,10 @@ if (isset($_POST['send_mailshot'])) {
                         $error_message .= "\n... plus " . (count($error_details) - 5) . " more errors.";
                     }
                 }
-                $NOTIFICATION = "$NAME sent mailshot to $successful_sends clients with $failed_sends failures.";
-                Notify($USERID, $ClientKeyID, $NOTIFICATION); 
+                $NOTIFICATION = ($NAME ?? 'A user') . " sent mailshot to $successful_sends clients with $failed_sends failures.";
+                if (function_exists('Notify')) {
+                     Notify($USERID, $ClientKeyID, $NOTIFICATION); 
+                }
             } elseif ($failed_sends > 0) {
                 $error_message = "Mailshot failed for all selected clients ($failed_sends failures).";
                 if (!empty($error_details)) {
@@ -351,8 +368,11 @@ if (isset($_POST['delete'])) {
     $stmt->bindParam(':ID', $ID);
 
     if ($stmt->execute()) {
-        $NOTIFICATION = "$NAME has successfully deleted the client named '$name'. Reason for deletion: $reason.";
-        Notify($USERID, $ClientKeyID, $NOTIFICATION); // Assuming Notify is defined
+        $NOTIFICATION = ($NAME ?? 'A user') . " has successfully deleted the client named '$name'. Reason for deletion: $reason.";
+        // Assuming Notify function is defined in config.php
+        if (function_exists('Notify')) {
+             Notify($USERID, $ClientKeyID, $NOTIFICATION); 
+        }
     } else {
         error_log("Error deleting record: " . implode(", ", $stmt->errorInfo()));
         // Optionally set an error message for display
@@ -380,6 +400,11 @@ $createdByMapping = [
     "2" => "Alex Lapompe",
     "9" => "Jack Dowler"
 ];
+
+// Ensure $ClientKeyID and $USERID are defined for rendering, if not already from config.php
+$ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1; // Example: Fetch from cookie or default
+$USERID = $USERID ?? $_COOKIE['USERID'] ?? 1; // Example: Fetch from cookie or default
+$NAME = $NAME ?? 'Guest User'; // Example: Fetch user's name
 
 ?>
 
@@ -426,7 +451,6 @@ $createdByMapping = [
                             </div>
                         </div>
 
-                        <!-- Quick Filters -->
                         <div class="card-body" style="padding-bottom: 0;">
                             <div class="row mb-3">
                                 <div class="col-md-3">
@@ -470,7 +494,6 @@ $createdByMapping = [
                                     <button type="button" style="background-color: #0d6efd; color: white; border: 1px solid #0d6efd; padding: 0.25rem 0.5rem; border-radius: 0.25rem;" onclick="applyFilters()">
                                         <i class="ti ti-filter"></i> Apply Filters
                                     </button>
-                                    <!-- New CSV Export Button -->
                                     <a href="#" id="exportCsvBtn" style="background-color: #21a366; color: white; border: 1px solid #21a366; padding: 0.25rem 0.5rem; border-radius: 0.25rem; text-decoration: none; display: inline-flex; align-items: center; margin-left: 0.5rem;" onclick="return confirm('Export filtered clients to CSV?')">
                                         <i class="ti ti-file-text"></i> Export CSV
                                     </a>
@@ -504,7 +527,7 @@ $createdByMapping = [
 
                         <div class="card-body">
                             <div class="table-responsive dt-responsive">
-                                <?php if (IsCheckPermission($USERID, "VIEW_CLIENTS")) : ?>
+                                <?php if (isset($USERID) && function_exists('IsCheckPermission') && IsCheckPermission($USERID, "VIEW_CLIENTS")) : // Added checks for defined variables ?>
                                     <table class="table table-bordered" id="clientsTable">
                                         <thead>
                                             <tr>
@@ -599,8 +622,7 @@ $createdByMapping = [
                                                     <td><?php echo htmlspecialchars($row->Number); ?></td>
                                                     <td><?php echo htmlspecialchars($row->City . ', ' . $row->Address); ?></td>
                                                     <td><?php echo htmlspecialchars($CreatedBy); ?></td>
-                                                    <td><?php echo htmlspecialchars(FormatDate($row->Date)); ?></td>
-                                                    <td>
+                                                    <td><?php echo htmlspecialchars(function_exists('FormatDate') ? FormatDate($row->Date) : $row->Date); ?></td> <td>
                                                         <div class="dropdown">
                                                             <a class="avtar avtar-s btn-link-secondary dropdown-toggle arrow-none" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="ti ti-dots-vertical f-18"></i></a>
                                                             <div class="dropdown-menu dropdown-menu-end">
@@ -611,7 +633,7 @@ $createdByMapping = [
                                                                         </svg>
                                                                     </span>
                                                                     Edit</a>
-                                                                <?php if (IsCheckPermission($USERID, "DELETE_CLIENT")) : ?>
+                                                                <?php if (isset($USERID) && function_exists('IsCheckPermission') && IsCheckPermission($USERID, "DELETE_CLIENT")) : ?>
                                                                     <a class="dropdown-item delete-entry" href="#" data-bs-toggle="modal" data-bs-target="#DeleteModal" data-id="<?php echo htmlspecialchars($row->ClientID); ?>" data-name="<?php echo htmlspecialchars($row->Name); ?>">
                                                                         <span class="text-danger">
                                                                             <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 20 20">
@@ -651,7 +673,6 @@ $createdByMapping = [
         </div>
     </div>
 
-    <!-- Delete Modal -->
     <div class="modal fade" id="DeleteModal" tabindex="-1" role="dialog" aria-labelledby="DeleteModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -678,35 +699,45 @@ $createdByMapping = [
         </div>
     </div>
 
-    <!-- Mailshot Modal -->
-    <div class="modal fade" id="mailshotModal" tabindex="-1" role="dialog" aria-labelledby="mailshotModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="mailshotModalLabel">Send Mailshot to Selected Clients</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form method="POST" action="">
-                    <div class="modal-body">
-                        <input type="hidden" name="selected_clients" id="mailshotSelectedClients">
-                        <div class="form-group mb-3">
-                            <label for="mailshot_subject">Subject:</label>
-                            <input type="text" class="form-control" id="mailshot_subject" name="mailshot_subject" required>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label for="mailshot_message">Message:</label>
-                            <textarea class="form-control" id="mailshot_message" name="mailshot_message" rows="8" placeholder="Enter your email message here. Use [CLIENT_NAME] for the client's name." required></textarea>
-                        </div>
-                        <p class="text-muted">Selected Clients: <span id="mailshotClientList"></span></p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" name="send_mailshot" class="btn btn-primary">Send Mailshot</button>
-                    </div>
-                </form>
+   <div class="modal fade" id="mailshotModal" tabindex="-1" role="dialog" aria-labelledby="mailshotModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mailshotModalLabel">Send Mailshot to Selected Clients</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+            <form method="POST" action="">
+                <div class="modal-body">
+                    <input type="hidden" name="selected_clients" id="mailshotSelectedClients">
+
+                    <div class="form-group mb-3">
+                        <label for="mailshot_template">Choose Template:</label>
+                        <select class="form-control" id="mailshot_template" name="mailshot_template">
+                            <option value="">-- Select a Template --</option>
+                            <option value="welcome">Welcome Email</option>
+                            <option value="promotion">New Promotion</option>
+                            <option value="followup">Follow-up Reminder</option>
+                            </select>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="mailshot_subject">Subject:</label>
+                        <input type="text" class="form-control" id="mailshot_subject" name="mailshot_subject" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="mailshot_message">Message:</label>
+                        <textarea class="form-control" id="mailshot_message" name="mailshot_message" rows="8" placeholder="Enter your email message here. Use [CLIENT_NAME] for the client's name." required></textarea>
+                    </div>
+                    <p class="text-muted">Selected Clients: <span id="mailshotClientList"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" name="send_mailshot" class="btn btn-primary">Send Mailshot</button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 
     <?php // include "../../includes/footer_scripts.php"; // Assuming this includes Bootstrap JS, etc. ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -736,6 +767,52 @@ $createdByMapping = [
             const mailshotBtn = document.getElementById('mailshotBtn');
             const selectedCountSpan = document.getElementById('selectedCount');
             const filterResultsSpan = document.getElementById('filterResults');
+            const mailshotSubjectField = document.getElementById('mailshot_subject');
+            const mailshotMessageField = document.getElementById('mailshot_message');
+            const mailshotTemplateDropdown = document.getElementById('mailshot_template');
+
+            // Define your templates (in a real application, these might come from a server endpoint)
+            const emailTemplates = {
+                'welcome': {
+                    subject: 'Welcome to Our Service!',
+                    message: 'Dear [CLIENT_NAME],\n\nWelcome aboard! We are thrilled to have you as part of our community. Explore our features and let us know if you have any questions.\n\nBest regards,\n[Your Company Name]'
+                },
+                'promotion': {
+                    subject: 'Exclusive Offer Just for You!',
+                    message: 'Hi [CLIENT_NAME],\n\nWe\'re excited to announce a special promotion just for our valued clients! Get [Discount/Offer Details] on your next purchase. This offer is valid until [Date].\n\nDon\'t miss out!\n[Your Company Name]'
+                },
+                'followup': {
+                    subject: 'Quick Follow-up Regarding Our Last Conversation',
+                    message: 'Hello [CLIENT_NAME],\n\nHope you\'re doing well. I wanted to follow up on our recent discussion about [Topic]. Please let me know if you have any further questions or if there\'s anything else I can assist you with.\n\nLooking forward to hearing from you,\n[Your Company Name]'
+                }
+                // Add more templates here with unique values matching the <option> values
+            };
+
+            // Event listener for template selection
+            if (mailshotTemplateDropdown) {
+                mailshotTemplateDropdown.addEventListener('change', function() {
+                    const selectedTemplateId = this.value;
+                    if (selectedTemplateId && emailTemplates[selectedTemplateId]) {
+                        const template = emailTemplates[selectedTemplateId];
+                        mailshotSubjectField.value = template.subject;
+                        mailshotMessageField.value = template.message;
+                    } else {
+                        // Clear fields if "Select a Template" or an invalid option is chosen
+                        mailshotSubjectField.value = '';
+                        mailshotMessageField.value = '';
+                    }
+                });
+            }
+
+            // Optional: Clear mailshot modal fields when it is hidden
+            var mailshotModal = document.getElementById('mailshotModal');
+            if (mailshotModal) {
+                mailshotModal.addEventListener('hidden.bs.modal', function () {
+                    mailshotTemplateDropdown.value = ''; // Reset template dropdown
+                    mailshotSubjectField.value = ''; // Clear subject
+                    mailshotMessageField.value = ''; // Clear message
+                });
+            }
 
             if (selectAllCheckbox) {
                 selectAllCheckbox.addEventListener('change', function() {
@@ -775,8 +852,8 @@ $createdByMapping = [
                 document.getElementById('mailshotSelectedClients').value = JSON.stringify(selectedClientIds);
                 document.getElementById('mailshotClientList').textContent = selectedClientNames.join(', ');
 
-                var mailshotModal = new bootstrap.Modal(document.getElementById('mailshotModal'));
-                mailshotModal.show();
+                var mailshotBootstrapModal = new bootstrap.Modal(document.getElementById('mailshotModal'));
+                mailshotBootstrapModal.show();
             };
 
             // Apply Filters function

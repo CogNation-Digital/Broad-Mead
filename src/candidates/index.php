@@ -7,8 +7,11 @@ ini_set('display_errors', 1);
 
 include "includes/config.php"; // Assuming this includes necessary configurations like $theme
 
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+
+
 
 // Database configuration
 $host = 'localhost';
@@ -1529,6 +1532,7 @@ $createdByMapping = [
                             </tbody>
                         </table>
                     </div>
+                    
                     <?php if ($mode === 'mailshot'): ?>
                             <div class="text-center mt-4">
                                 <button type="submit" class="btn-send"><i class="fa fa-paper-plane"></i> Send Mailshot</button>
