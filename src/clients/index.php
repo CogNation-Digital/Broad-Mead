@@ -36,6 +36,31 @@ try {
     exit;
 }
 
+// --- Define the AUTOMATIC EMAIL FOOTER ---
+$email_footer_html = '
+<br><br>
+<div style="font-family: Arial, sans-serif; font-size: 12px; color: #333333; line-height: 1.5;">
+    <p style="margin-bottom: 5px;">
+        <strong>Nocturnal Recruitment</strong>, Office 16, 321 High Road, RM6 6AX
+    </p>
+    <p style="margin-bottom: 5px;">
+        &#9742; 0208 050 2708 &nbsp; &#x1F4F1; 0755 357 0871 &nbsp; &#x2709; <a href="mailto:chax@nocturnalrecruitment.co.uk" style="color: #007bff; text-decoration: none;">chax@nocturnalrecruitment.co.uk</a> &nbsp; &#x1F310; <a href="https://www.nocturnalrecruitment.co.uk" target="_blank" style="color: #007bff; text-decoration: none;">www.nocturnalrecruitment.co.uk</a>
+    </p>
+    <p style="margin-top: 15px; margin-bottom: 5px; font-weight: bold;">
+        Company Registration – 11817091
+    </p>
+    <p style="margin-top: 15px; font-style: italic; color: #666666;">
+        Disclaimer* This email is intended only for the use of the addressee named above and may be confidential or legally privileged. If you are not the addressee, you must not read it and must not use any information contained in nor copy it nor inform any person other than Nocturnal Recruitment or the addressee of its existence or contents. If you have received this email in error, please delete it and notify our team at <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #007bff; text-decoration: none;">info@nocturnalrecruitment.co.uk</a>
+    </p>
+    <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #000000;">
+        BroadMead 3.0 &copy; 2025 - a product of
+        <a href="https://www.cog-nation.com" target="_blank" style="color: #E1AD01; text-decoration: none; font-weight: bold;">
+            CogNation Digital
+        </a>.
+    </div>
+</div>';
+
+
 // --- CSV Export Handler (must come before ANY output) ---
 if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
     try {
@@ -232,13 +257,18 @@ if (isset($_POST['send_mailshot'])) {
                         // Personalize the message with the client's actual name
                         $personalized_message = str_replace('[CLIENT_NAME]', $client->Name, $mailshot_message);
                         
+                        // Append the automatic footer to the personalized message
+                        // Use nl2br for the message to preserve line breaks from textarea, then append HTML footer
+                        $final_email_body = nl2br(htmlspecialchars($personalized_message)) . $email_footer_html;
+
+
                         $mail->setFrom($from_email, $from_name);
                         $mail->addAddress($client->Email, $client->Name);
                         $mail->addReplyTo($from_email, $from_name);
-                        $mail->isHTML(true);
+                        $mail->isHTML(true); // Crucial for sending HTML content
                         $mail->Subject = $mailshot_subject;
-                        $mail->Body = nl2br(htmlspecialchars($personalized_message));
-                        $mail->AltBody = strip_tags($personalized_message);
+                        $mail->Body = $final_email_body; // Use the final HTML body
+                        $mail->AltBody = strip_tags($personalized_message); // Alt body for plain text readers
 
                         if ($mail->send()) {
                             $successful_sends++;
@@ -403,7 +433,7 @@ $createdByMapping = [
 
 // Ensure $ClientKeyID and $USERID are defined for rendering, if not already from config.php
 $ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1; // Example: Fetch from cookie or default
-$USERID = $USERID ?? $_COOKIE['USERID'] ?? 1; // Example: Fetch from cookie or default
+$USERID = $USERID ?? $_COOKIE['USERID'] ?? 1; // Example: Fetch user's name
 $NAME = $NAME ?? 'Guest User'; // Example: Fetch user's name
 
 ?>
