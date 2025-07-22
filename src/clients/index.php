@@ -4,8 +4,6 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 require_once '../../includes/config.php'; // Ensure this includes necessary configurations like $theme, $LINK, etc.
-// Make sure you have PHPMailer loaded, e.g., via Composer:
-// require 'vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -36,23 +34,77 @@ try {
     exit;
 }
 
+// --- Fetch Logged-in User's Email ---
+$loggedInUserEmail = '';
+$USERID = $_COOKIE['USERID'] ?? null;
+if ($USERID) {
+    try {
+        $stmt = $db_2->prepare("SELECT Email FROM users WHERE UserID = :userid"); // Assuming 'users' table and 'Email' column
+        $stmt->bindParam(':userid', $USERID);
+        $stmt->execute();
+        $user = $stmt->fetch(PDO::FETCH_OBJ);
+        if ($user) {
+            $loggedInUserEmail = strtolower($user->Email);
+        }
+    } catch (PDOException $e) {
+        error_log("Error fetching user email: " . $e->getMessage());
+        // Handle error, e.g., set a default or deny access
+    }
+}
+
+// Define allowed emails for CSV export
+$allowedExportEmails = [
+    'alex@nocturnalrecruitment.co.uk',
+    'j.dowler@nocturnalrecruitment.co.uk',
+    'chax@nocturnalrecruitment.co.uk'
+];
+
 // --- Define the AUTOMATIC EMAIL FOOTER ---
 $email_footer_html = '
 <br><br>
-<div style="font-family: Arial, sans-serif; font-size: 12px; color: #333333; line-height: 1.5;">
-    <p style="margin-bottom: 5px;">
-        <strong>Nocturnal Recruitment</strong>, Office 16, 321 High Road, RM6 6AX
-    </p>
-    <p style="margin-bottom: 5px;">
-        &#9742; 0208 050 2708 &nbsp; &#x1F4F1; 0755 357 0871 &nbsp; &#x2709; <a href="mailto:chax@nocturnalrecruitment.co.uk" style="color: #007bff; text-decoration: none;">chax@nocturnalrecruitment.co.uk</a> &nbsp; &#x1F310; <a href="https://www.nocturnalrecruitment.co.uk" target="_blank" style="color: #007bff; text-decoration: none;">www.nocturnalrecruitment.co.uk</a>
-    </p>
-    <p style="margin-top: 15px; margin-bottom: 5px; font-weight: bold;">
+<div style="font-family: Arial, sans-serif; font-size: 12px; color: #333333; line-height: 1.5; background-color: #1a1a1a; padding: 20px; color: #ffffff;">
+    <div style="text-align: center; margin-bottom: 20px;">
+        <img src="https://i.ibb.co/L5w2t8J/nocturnal-recruitment-logo.png" alt="Nocturnal Recruitment Solutions" style="max-width: 200px; height: auto; display: block; margin: 0 auto;">
+    </div>
+    <div style="text-align: center; margin-bottom: 15px;">
+        <p style="margin: 0; padding: 0; font-size: 12px; color: #ffffff;">
+            <img src="https://i.ibb.co/h14251P/location-icon.png" alt="Location" style="vertical-align: middle; width: 14px; height: 14px; margin-right: 5px;">
+            <span style="color: #6daffb;">Nocturnal Recruitment, Office 16, 321 High Road, RM6 6AX</span>
+        </p>
+        <p style="margin: 5px 0 0 0; padding: 0; font-size: 12px; color: #ffffff;">
+            <img src="https://i.ibb.co/yY1h976/phone-icon.png" alt="Phone" style="vertical-align: middle; width: 14px; height: 14px; margin-right: 5px;">
+            <span style="color: #6daffb;">0208 050 2708</span> &nbsp;
+            <img src="https://i.ibb.co/N710N5M/mobile-icon.png" alt="Mobile" style="vertical-align: middle; width: 14px; height: 14px; margin-right: 5px;">
+            <span style="color: #6daffb;">0755 357 0871</span> &nbsp;
+            <img src="https://i.ibb.co/Jk1n6rK/email-icon.png" alt="Email" style="vertical-align: middle; width: 14px; height: 14px; margin-right: 5px;">
+            <a href="mailto:chax@nocturnalrecruitment.co.uk" style="color: #6daffb; text-decoration: none;">chax@nocturnalrecruitment.co.uk</a>
+        </p>
+        <p style="margin: 5px 0 0 0; padding: 0; font-size: 12px; color: #ffffff;">
+            <img src="https://i.ibb.co/M9d5NnL/website-icon.png" alt="Website" style="vertical-align: middle; width: 14px; height: 14px; margin-right: 5px;">
+            <a href="https://www.nocturnalrecruitment.co.uk" target="_blank" style="color: #6daffb; text-decoration: none;">www.nocturnalrecruitment.co.uk</a>
+        </p>
+    </div>
+
+    <div style="text-align: center; margin-bottom: 20px;">
+        <a href="https://www.linkedin.com/company/nocturnalrecruitment" target="_blank" style="margin: 0 5px; display: inline-block;">
+            <img src="https://i.ibb.co/zQJ6x0n/linkedin-icon.png" alt="LinkedIn" style="width: 30px; height: 30px;">
+        </a>
+        <a href="https://www.instagram.com/nocturnalrecruitment" target="_blank" style="margin: 0 5px; display: inline-block;">
+            <img src="https://i.ibb.co/gST1V5g/instagram-icon.png" alt="Instagram" style="width: 30px; height: 30px;">
+        </a>
+        <a href="https://www.facebook.com/nocturnalrecruitment" target="_blank" style="margin: 0 5px; display: inline-block;">
+            <img src="https://i.ibb.co/g3139V7/facebook-icon.png" alt="Facebook" style="width: 30px; height: 30px;">
+        </a>
+        <img src="https://i.ibb.co/Jk1n6rK/rec-corporate-member.png" alt="REC Corporate Member" style="vertical-align: middle; height: 30px; margin-left: 10px;">
+    </div>
+
+    <p style="text-align: center; margin: 0 0 10px 0; font-size: 12px; font-weight: bold; color: #ffffff;">
         Company Registration – 11817091
     </p>
-    <p style="margin-top: 15px; font-style: italic; color: #666666;">
-        Disclaimer* This email is intended only for the use of the addressee named above and may be confidential or legally privileged. If you are not the addressee, you must not read it and must not use any information contained in nor copy it nor inform any person other than Nocturnal Recruitment or the addressee of its existence or contents. If you have received this email in error, please delete it and notify our team at <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #007bff; text-decoration: none;">info@nocturnalrecruitment.co.uk</a>
+    <p style="margin: 0; font-style: italic; color: #aaaaaa; text-align: center; font-size: 10px;">
+        Disclaimer* This email is intended only for the use of the addressee named above and may be confidential or legally privileged. If you are not the addressee, you must not read it and must not use any information contained in nor copy it nor inform any person other than Nocturnal Recruitment or the addressee of its existence or contents. If you have received this email in error, please delete it and notify our team at <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #6daffb; text-decoration: none;">info@nocturnalrecruitment.co.uk</a>
     </p>
-    <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #000000;">
+    <div style="text-align: center; margin-top: 15px; font-size: 11px; color: #888888;">
         BroadMead 3.0 &copy; 2025 - a product of
         <a href="https://www.cog-nation.com" target="_blank" style="color: #E1AD01; text-decoration: none; font-weight: bold;">
             CogNation Digital
@@ -63,6 +115,11 @@ $email_footer_html = '
 
 // --- CSV Export Handler (must come before ANY output) ---
 if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
+    // Check if the logged-in user is allowed to export
+    if (!in_array($loggedInUserEmail, $allowedExportEmails)) {
+        die("Access Denied: You do not have permission to export client data.");
+    }
+
     try {
         // Retrieve filter parameters from GET request
         $nameFilter = $_GET['nameFilter'] ?? '';
@@ -78,7 +135,7 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
         // Ensure $ClientKeyID is defined before using it. You might need to retrieve it from session or user data.
         // For demonstration, let's assume a dummy value if not already set.
         $ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1; // Example: Fetch from cookie or default
-        $export_params = [':client_key_id' => $ClientKeyID]; 
+        $export_params = [':client_key_id' => $ClientKeyID];
 
         if (!empty($nameFilter)) {
             $export_where_conditions[] = "Name LIKE :name";
@@ -207,7 +264,7 @@ if (isset($_POST['send_mailshot'])) {
             $test_mail->Password = $smtp_password;
             $test_mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $test_mail->Port = $smtp_port;
-            
+
             if (!$test_mail->smtpConnect()) {
                 throw new Exception("SMTP connection failed");
             }
@@ -223,12 +280,12 @@ if (isset($_POST['send_mailshot'])) {
                 try {
                     // Get client details from either database
                     $client = null;
-                    
+
                     // Try broadmead_v3 first
                     $stmt = $db_2->prepare("SELECT Name, Email FROM _clients WHERE ClientID = ?");
                     $stmt->execute([$client_id]);
                     $client = $stmt->fetch();
-                    
+
                     // If not found, try broadmead
                     if (!$client) {
                         $stmt = $db_1->prepare("SELECT Name, Email FROM clients WHERE id = ?");
@@ -256,7 +313,7 @@ if (isset($_POST['send_mailshot'])) {
 
                         // Personalize the message with the client's actual name
                         $personalized_message = str_replace('[CLIENT_NAME]', $client->Name, $mailshot_message);
-                        
+
                         // Append the automatic footer to the personalized message
                         // Use nl2br for the message to preserve line breaks from textarea, then append HTML footer
                         $final_email_body = nl2br(htmlspecialchars($personalized_message)) . $email_footer_html;
@@ -292,24 +349,25 @@ if (isset($_POST['send_mailshot'])) {
             try {
                 // Use the selected template value for logging, or 'Custom Mailshot' if none selected
                 $log_template_name = ($mailshot_template_selected !== '') ? $mailshot_template_selected : "Custom Mailshot";
-                
-                $log_query = $db_2->prepare("INSERT INTO mailshot_log (ClientKeyID, Subject, Template, RecipientsCount, SuccessCount, FailedCount, SentBy, SentDate) 
+
+                $log_query = $db_2->prepare("INSERT INTO mailshot_log (ClientKeyID, Subject, Template, RecipientsCount, SuccessCount, FailedCount, SentBy, SentDate)
                                               VALUES (:client_key_id, :subject, :template, :recipients_count, :success_count, :failed_count, :sent_by, NOW())");
-                
+
                 // Assuming $ClientKeyID is the identifier for the current user's associated client key.
                 // This is typically the ID of the account/entity that initiated the mailshot.
                 // Ensure $ClientKeyID and $USERID are defined from your config or session.
                 $ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1; // Example: Fetch from cookie or default
-                $USERID = $USERID ?? $_COOKIE['USERID'] ?? 1; // Example: Fetch from cookie or default
+                $USERID = $USERID ?? $_COOKIE['USERID'] ?? 1; // Example: Fetch user's name
+                $NAME = $NAME ?? 'Guest User'; // Example: Fetch user's name
 
-                $log_query->bindParam(':client_key_id', $ClientKeyID); 
+                $log_query->bindParam(':client_key_id', $ClientKeyID);
                 $log_query->bindParam(':subject', $mailshot_subject);
                 $log_query->bindParam(':template', $log_template_name); // Log the chosen template
                 $log_query->bindParam(':recipients_count', $total_recipients, PDO::PARAM_INT);
                 $log_query->bindParam(':success_count', $successful_sends, PDO::PARAM_INT);
                 $log_query->bindParam(':failed_count', $failed_sends, PDO::PARAM_INT);
-                $log_query->bindParam(':sent_by', $USERID); 
-                
+                $log_query->bindParam(':sent_by', $USERID);
+
                 if (!$log_query->execute()) {
                     error_log("Error inserting mailshot summary log: " . implode(", ", $log_query->errorInfo()));
                     // Add a user-facing error if logging fails, but don't prevent showing email send results
@@ -326,7 +384,7 @@ if (isset($_POST['send_mailshot'])) {
                 $NOTIFICATION = ($NAME ?? 'A user') . " has successfully sent mailshot to $successful_sends clients.";
                 // Assuming Notify function is defined in config.php
                 if (function_exists('Notify')) {
-                     Notify($USERID, $ClientKeyID, $NOTIFICATION); 
+                     Notify($USERID, $ClientKeyID, $NOTIFICATION);
                 }
             } elseif ($successful_sends > 0 && $failed_sends > 0) {
                 $error_message = "Mailshot completed with some issues: $successful_sends succeeded, $failed_sends failed.";
@@ -338,7 +396,7 @@ if (isset($_POST['send_mailshot'])) {
                 }
                 $NOTIFICATION = ($NAME ?? 'A user') . " sent mailshot to $successful_sends clients with $failed_sends failures.";
                 if (function_exists('Notify')) {
-                     Notify($USERID, $ClientKeyID, $NOTIFICATION); 
+                     Notify($USERID, $ClientKeyID, $NOTIFICATION);
                 }
             } elseif ($failed_sends > 0) {
                 $error_message = "Mailshot failed for all selected clients ($failed_sends failures).";
@@ -367,10 +425,10 @@ if (isset($_POST['Search'])) {
     $Address = $_POST['Address'] ?? '';
     $Postcode = $_POST['Postcode'] ?? '';
     $City = $_POST['City'] ?? '';
-    
+
     // Assuming $SearchID is generated elsewhere, e.g., uniqid()
     // if (!empty($SearchID)) {
-    //     $query = $db_2->prepare("INSERT INTO `search_queries`(`SearchID`, `column`, `value`) 
+    //     $query = $db_2->prepare("INSERT INTO `search_queries`(`SearchID`, `column`, `value`)
     //             VALUES (:SearchID, :column, :value)");
 
     //     foreach ($_POST as $key => $value) {
@@ -401,7 +459,7 @@ if (isset($_POST['delete'])) {
         $NOTIFICATION = ($NAME ?? 'A user') . " has successfully deleted the client named '$name'. Reason for deletion: $reason.";
         // Assuming Notify function is defined in config.php
         if (function_exists('Notify')) {
-             Notify($USERID, $ClientKeyID, $NOTIFICATION); 
+             Notify($USERID, $ClientKeyID, $NOTIFICATION);
         }
     } else {
         error_log("Error deleting record: " . implode(", ", $stmt->errorInfo()));
@@ -435,6 +493,9 @@ $createdByMapping = [
 $ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1; // Example: Fetch from cookie or default
 $USERID = $USERID ?? $_COOKIE['USERID'] ?? 1; // Example: Fetch user's name
 $NAME = $NAME ?? 'Guest User'; // Example: Fetch user's name
+
+// Variable to control CSV export button visibility
+$showCsvExportButton = in_array($loggedInUserEmail, $allowedExportEmails);
 
 ?>
 
@@ -524,9 +585,11 @@ $NAME = $NAME ?? 'Guest User'; // Example: Fetch user's name
                                     <button type="button" style="background-color: #0d6efd; color: white; border: 1px solid #0d6efd; padding: 0.25rem 0.5rem; border-radius: 0.25rem;" onclick="applyFilters()">
                                         <i class="ti ti-filter"></i> Apply Filters
                                     </button>
+                                    <?php if ($showCsvExportButton): ?>
                                     <a href="#" id="exportCsvBtn" style="background-color: #21a366; color: white; border: 1px solid #21a366; padding: 0.25rem 0.5rem; border-radius: 0.25rem; text-decoration: none; display: inline-flex; align-items: center; margin-left: 0.5rem;" onclick="return confirm('Export filtered clients to CSV?')">
                                         <i class="ti ti-file-text"></i> Export CSV
                                     </a>
+                                    <?php endif; ?>
                                     <span id="filterResults" style="margin-left: 1rem; color: #6c757d;"></span>
                                 </div>
                                 <div style="margin-left: auto; padding-left: 15px;">
@@ -600,15 +663,15 @@ $NAME = $NAME ?? 'Guest User'; // Example: Fetch user's name
                                                     }
                                                 }
                                             }
-                                            
+
                                             // Apply tab filter (e.g., "active", "inactive")
                                             if ($isTab !== "all") {
                                                 $query_display .= " AND Status = :is_tab";
                                                 $params_display[':is_tab'] = $isTab;
                                             }
-                                            
+
                                             $query_display .= " ORDER BY Name ASC";
-                                            
+
                                             $stmt_display = $db_2->prepare($query_display);
                                             $stmt_display->execute($params_display);
                                             $n = 1;
@@ -618,16 +681,16 @@ $NAME = $NAME ?? 'Guest User'; // Example: Fetch user's name
                                                 $CreatedBy = $createdByMapping[$row->CreatedBy] ?? 'Unknown';
                                                 $status_class = strtolower($row->Status ?? 'not updated');
                                                 ?>
-                                                <tr class="client-row" 
+                                                <tr class="client-row"
                                                     data-name="<?php echo strtolower($row->Name); ?>"
                                                     data-email="<?php echo strtolower($row->Email); ?>"
                                                     data-status="<?php echo $status_class; ?>"
                                                     data-clienttype="<?php echo strtolower($row->ClientType); ?>">
                                                     <td><?php echo $n++; ?></td>
                                                     <td>
-                                                        <input class="form-check-input checkbox-item" 
-                                                               type="checkbox" 
-                                                               value="<?php echo $row->ClientID; ?>" 
+                                                        <input class="form-check-input checkbox-item"
+                                                               type="checkbox"
+                                                               value="<?php echo $row->ClientID; ?>"
                                                                data-name="<?php echo htmlspecialchars($row->Name); ?>"
                                                                data-email="<?php echo htmlspecialchars($row->Email); ?>"
                                                                onchange="updateSelectedCount()">
@@ -640,7 +703,7 @@ $NAME = $NAME ?? 'Guest User'; // Example: Fetch user's name
                                                             <span class="badge bg-success">Active</span>
                                                         <?php elseif ($row->Status == "Archived") : ?>
                                                             <span class="badge bg-warning">Archived</span>
-                                                        <?php elseif ($row->Status == "Inactive") : ?>
+                                                        <? elseif ($row->Status == "Inactive") : ?>
                                                             <span class="badge bg-danger">Inactive</span>
                                                         <?php elseif ($row->Status == "Targeted") : ?>
                                                             <span class="badge bg-info">Targeted</span>
@@ -781,7 +844,7 @@ $NAME = $NAME ?? 'Guest User'; // Example: Fetch user's name
                     var button = event.relatedTarget; // Button that triggered the modal
                     var clientId = button.getAttribute('data-id');
                     var clientName = button.getAttribute('data-name');
-                    
+
                     var modalClientIdInput = deleteModal.querySelector('#deleteClientId');
                     var modalClientNameInput = deleteModal.querySelector('#deleteClientName');
                     var modalClientNameDisplay = deleteModal.querySelector('#modalClientName');
@@ -892,7 +955,7 @@ $NAME = $NAME ?? 'Guest User'; // Example: Fetch user's name
                 const emailFilter = document.getElementById('emailFilter').value.toLowerCase();
                 const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
                 const clientTypeFilter = document.getElementById('clientTypeFilter').value.toLowerCase();
-                
+
                 const rows = document.querySelectorAll('#clientsTable tbody tr');
                 let visibleRowCount = 0;
 
@@ -935,7 +998,7 @@ $NAME = $NAME ?? 'Guest User'; // Example: Fetch user's name
                 const emailFilter = document.getElementById('emailFilter').value;
                 const statusFilter = document.getElementById('statusFilter').value;
                 const clientTypeFilter = document.getElementById('clientTypeFilter').value;
-                
+
                 // Get the current active tab status from the URL
                 const urlParams = new URLSearchParams(window.location.search);
                 const isTab = urlParams.get('isTab') || 'all';
