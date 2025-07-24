@@ -38,9 +38,7 @@ try {
 $loggedInUserEmail = '';
 if (isset($_SESSION['user_id'])) { // Assuming 'user_id' is stored in session after login
     try {
-        // Fetch email from the database based on the logged-in user's ID
-        // You'll need to know which table stores user information and their email.
-        // Replace 'users' and 'email' with your actual table and column names.
+      
         $stmt = $db_2->prepare("SELECT email FROM users WHERE id = :user_id");
         $stmt->execute([':user_id' => $_SESSION['user_id']]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
