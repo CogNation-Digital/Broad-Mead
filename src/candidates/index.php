@@ -86,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
 
         error_log("Processing mailshot for " . count($candidate_ids) . " candidates");
 
-        // Predefined Email templates
+       
         $templates = [
             'job_alert' => [
                 'subject' => 'New Job Opportunities Matching Your Profile',
