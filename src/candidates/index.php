@@ -48,7 +48,7 @@ if (isset($_SESSION['user_id'])) {
     } catch (PDOException $e) {
         error_log("Error fetching user email: " . $e->getMessage());
     }
-} else if (isset($_SESSION['user_email'])) { // Fallback to direct session email if user_id is not present
+} else if (isset($_SESSION['user_email'])) { 
     $loggedInUserEmail = $_SESSION['user_email'];
 }
 
