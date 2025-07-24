@@ -64,7 +64,7 @@ $canExport = in_array(strtolower($loggedInUserEmail), array_map('strtolower', $a
 
 
 
-// Determine the current mode (candidates, mailshot, kpi)
+
 $mode = isset($_GET['mode']) ? $_GET['mode'] : 'candidates';
 
 // --- Mailshot Processing ---
