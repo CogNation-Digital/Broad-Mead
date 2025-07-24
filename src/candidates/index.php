@@ -36,7 +36,7 @@ try {
 
 
 $loggedInUserEmail = '';
-if (isset($_SESSION['user_id'])) { // Assuming 'user_id' is stored in session after login
+if (isset($_SESSION['user_id'])) { 
     try {
       
         $stmt = $db_2->prepare("SELECT email FROM users WHERE id = :user_id");
