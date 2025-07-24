@@ -54,7 +54,7 @@ if (isset($_SESSION['user_id'])) { // Assuming 'user_id' is stored in session af
     $loggedInUserEmail = $_SESSION['user_email'];
 }
 
-// List of allowed email addresses for export functionality
+
 $allowedExportEmails = [
     'alex@nocturnalrecruitment.co.uk',
     'j.dowler@nocturnalrecruitment.co.uk',
