@@ -1,17 +1,15 @@
 <?php
 error_reporting(E_ALL);
 ini_set("display_errors", 1);
-
-
-// require 'vendor/autoload.php'; // Uncommented assuming Composer is used
-
-include "includes/config.php"; // Assuming this includes necessary configurations like $theme
-
-
+require_once '../../includes/config.php'; // Ensure this includes necessary configurations like $theme, $LINK, etc.
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-
+// Redirect if user is not logged in (matching clients page logic)
+if (!isset($_COOKIE['USERID'])) {
+    header("location: $LINK/login");
+    exit; // Always exit after a header redirect
+}
 
 // Database configuration
 $host = 'localhost';
@@ -25,7 +23,6 @@ try {
     $db_1 = new PDO('mysql:host=' . $host . ';dbname=' . $dbname1, $user, $password);
     $db_1->setAttribute(PDO::ATTR_DEFAULT_STR_PARAM, PDO::PARAM_STR);
     $db_1->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
     $db_2 = new PDO('mysql:host=' . $host . ';dbname=' . $dbname2, $user, $password);
     $db_2->setAttribute(PDO::ATTR_DEFAULT_STR_PARAM, PDO::PARAM_STR);
     $db_2->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -34,43 +31,39 @@ try {
     exit;
 }
 
-
+// --- Fetch Logged-in User's Email (matching clients page logic) ---
 $loggedInUserEmail = '';
-if (isset($_SESSION['user_id'])) { 
+$USERID = $_COOKIE['USERID'] ?? null;
+if ($USERID) {
     try {
-      
-        $stmt = $db_2->prepare("SELECT email FROM users WHERE id = :user_id");
-        $stmt->execute([':user_id' => $_SESSION['user_id']]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt = $db_2->prepare("SELECT Email FROM users WHERE UserID = :userid"); // Using same column names as clients page
+        $stmt->bindParam(':userid', $USERID);
+        $stmt->execute();
+        $user = $stmt->fetch(PDO::FETCH_OBJ);
         if ($user) {
-            $loggedInUserEmail = $user['email'];
+            $loggedInUserEmail = strtolower($user->Email); // Apply strtolower for case-insensitive comparison
         }
     } catch (PDOException $e) {
         error_log("Error fetching user email: " . $e->getMessage());
+        // Handle error, e.g., set a default or deny access
     }
-} else if (isset($_SESSION['user_email'])) { 
-    $loggedInUserEmail = $_SESSION['user_email'];
 }
 
-
+// Define allowed export emails (case-insensitive comparison)
 $allowedExportEmails = [
     'alex@nocturnalrecruitment.co.uk',
     'j.dowler@nocturnalrecruitment.co.uk',
     'chax@nocturnalrecruitment.co.uk'
 ];
 
-
-$canExport = in_array(strtolower($loggedInUserEmail), array_map('strtolower', $allowedExportEmails));
-
-
-
+// Check if current user can export (case-insensitive)
+$canExport = in_array($loggedInUserEmail, array_map('strtolower', $allowedExportEmails));
 
 $mode = isset($_GET['mode']) ? $_GET['mode'] : 'candidates';
 
 // --- Mailshot Processing ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
     error_log("POST data received: " . print_r($_POST, true));
-
     // Validation for mailshot form
     if (empty($_POST['selected_candidates'])) {
         $error_message = "Please select at least one candidate.";
@@ -83,10 +76,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
         $subject = $_POST['subject'];
         $template_key = $_POST['template']; 
         $custom_template_content = $_POST['custom_template_content'] ?? ''; 
-
+        
         error_log("Processing mailshot for " . count($candidate_ids) . " candidates");
-
-       
+               
         $templates = [
             'job_alert' => [
                 'subject' => 'New Job Opportunities Matching Your Profile',
@@ -132,7 +124,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
         $base_body = $template_details['body'];
         $from_email = "learn@natec.icu"; // Sender email address
         $from_name = "Recruitment Team"; // Sender name
-
         $success_count = 0;
         $error_count = 0;
         $error_details = [];
@@ -143,8 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
         $smtp_username = 'learn@natec.icu';
         $smtp_password = '@WhiteDiamond0100';
         $smtp_port = 587;
-
-        
+                
         // Test SMTP connection once before sending emails to candidates
         try {
             $test_mail = new PHPMailer(true);
@@ -159,13 +149,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
             $test_mail->Debugoutput = function($str, $level) use (&$console_logs) {
                 $console_logs[] = "SMTP DEBUG: " . trim($str);
             };
-
             if (!$test_mail->smtpConnect()) {
                 throw new Exception("SMTP connection failed");
             }
             $test_mail->smtpClose();
             $console_logs[] = "SMTP connection test successful";
-
         } catch (Exception $e) {
             $error_message = "SMTP Configuration Error: " . $e->getMessage();
             $console_logs[] = "ERROR: SMTP Configuration failed - " . $e->getMessage();
@@ -179,7 +167,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
                 $log_error = ''; // Initialize error for each candidate
                 try {
                     error_log("Processing candidate ID: " . $candidate_id);
-
                     // Try fetching candidate details from db_2 (_candidates) first
                     $stmt = $db_2->prepare("SELECT id, Name, Email, ProfileImage FROM _candidates WHERE id = ?");
                     $stmt->execute([$candidate_id]);
@@ -196,7 +183,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
                     if ($candidate && filter_var($candidate->Email, FILTER_VALIDATE_EMAIL)) {
                         $to = $candidate->Email;
                         $name = $candidate->Name ?: 'Candidate'; // Use 'Candidate' if name is empty
-
                         error_log("Sending email to: " . $to . " (" . $name . ")");
 
                         // Personalize the email body with candidate's name and dynamic links
@@ -280,7 +266,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
                         $error_details[] = $log_error;
                         $console_logs[] = "ERROR: Invalid email or candidate not found for ID {$candidate_id} (Email: {$candidate_email})";
                         error_log("ERROR: Invalid email or candidate not found for ID {$candidate_id}");
-                        
+                                                
                         // Log the failure when candidate or email is invalid
                         try {
                             $log_stmt = $db_2->prepare(
@@ -309,7 +295,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
                     $error_details[] = $log_error;
                     $console_logs[] = "ERROR: Exception for candidate ID {$candidate_id} - " . $e->getMessage();
                     error_log("ERROR: Exception for candidate ID {$candidate_id} - " . $e->getMessage());
-
                     // Log the failure due to an exception
                     try {
                         $log_stmt = $db_2->prepare(
@@ -347,15 +332,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
         }
     }
 }
-// ... (rest of your index.php file content, including HTML if any) ...
-     // Closing brace for 'if (!isset($error_message))'
- // Closing brace for 'if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot')'
+
 // --- Export Handler (must come before ANY output) ---
 // This section handles both 'candidates' and 'kpi' report exports
 if (isset($_GET['export'])) {
     // Check if the user is authorized to export
     if (!$canExport) {
-        die("Access Denied: You do not have permission to export data.");
+        die("Access Denied: You do not have permission to export data. Only authorized users (alex@nocturnalrecruitment.co.uk, j.dowler@nocturnalrecruitment.co.uk, chax@nocturnalrecruitment.co.uk) can export data.");
     }
 
     try {
@@ -391,14 +374,17 @@ if (isset($_GET['export'])) {
                 $export_where_conditions[] = "Status = :status";
                 $export_params[':status'] = $status_filter_export;
             }
+
             if (!empty($keyword_filter_export)) {
                 $export_where_conditions[] = "(Name LIKE :keyword OR Email LIKE :keyword OR JobTitle LIKE :keyword)";
                 $export_params[':keyword'] = '%' . $keyword_filter_export . '%';
             }
+
             if (!empty($location_filter_export)) {
                 $export_where_conditions[] = "(City LIKE :location OR Address LIKE :location OR Postcode LIKE :location)";
                 $export_params[':location'] = '%' . $location_filter_export . '%';
             }
+
             if (!empty($position_filter_export)) {
                 $export_where_conditions[] = "JobTitle LIKE :position";
                 $export_params[':position'] = '%' . $position_filter_export . '%';
@@ -440,7 +426,6 @@ if (isset($_GET['export'])) {
                 }
                 $data_to_export = $temp_data;
             }
-
         } elseif ($exportMode === 'kpi') {
             // Filters for KPI report export
             $kpi_period_export = $_GET['kpi_period'] ?? 'current_week';
@@ -451,10 +436,9 @@ if (isset($_GET['export'])) {
 
             // Recalculate KPIs with export filters to get the detailed candidates list
             $kpi_data_for_export = calculateKPIs($db_2, $kpi_period_export, $kpi_start_date_export, $kpi_end_date_export, $kpi_status_filter_export, $kpi_location_filter_export);
-
             $data_to_export = $kpi_data_for_export['detailed_candidates'] ?? [];
-            $filename = "kpi_report_detailed_".date('Y-m-d')."_".$kpi_period_export;
 
+            $filename = "kpi_report_detailed_".date('Y-m-d')."_".$kpi_period_export;
             if (!empty($data_to_export)) {
                 // Define specific headers for KPI detailed candidates export
                 $headers = ['ID', 'Name', 'Email', 'Job Title', 'Status', 'City', 'Postcode', 'Date Added', 'Added By', 'Profile Picture URL'];
@@ -481,7 +465,6 @@ if (isset($_GET['export'])) {
         if ($exportType === 'excel') {
             header("Content-Type: application/vnd.ms-excel");
             header("Content-Disposition: attachment; filename=\"$filename.xls\"");
-
             // Output headers
             echo implode("\t", $headers) . "\r\n";
             // Output data rows
@@ -495,7 +478,6 @@ if (isset($_GET['export'])) {
         if ($exportType === 'csv') {
             header("Content-Type: text/csv");
             header("Content-Disposition: attachment; filename=\"$filename.csv\"");
-
             $output = fopen('php://output', 'w');
             // Output headers
             fputcsv($output, $headers);
@@ -506,12 +488,10 @@ if (isset($_GET['export'])) {
             fclose($output);
             exit;
         }
-
     } catch (Exception $e) {
         die("Export failed: " . $e->getMessage());
     }
 }
-
 
 // --- Filter Parameters for Display ---
 // These variables hold the current filter selections for rendering the page
@@ -587,12 +567,10 @@ if (!empty($center_postcode) && $distance_miles > 0) {
     $candidates_for_display = $raw_candidates_for_display;
 }
 
-
 // --- Postcode and Distance Calculation Functions ---
 // These functions are used for location-based filtering
 function getPostcodeCoordinates($postcode) {
     static $postcodeCache = []; // Cache to avoid repeated API calls for the same postcode
-
     if (isset($postcodeCache[$postcode])) {
         return $postcodeCache[$postcode];
     }
@@ -604,7 +582,6 @@ function getPostcodeCoordinates($postcode) {
     $api_url = "https://api.postcodes.io/postcodes/" . urlencode($postcode);
     $response = @file_get_contents($api_url);
     $data = $response ? json_decode($response, true) : null;
-
     if ($data && $data['status'] == 200 && isset($data['result']['latitude']) && isset($data['result']['longitude'])) {
         $coordinates = ['latitude' => $data['result']['latitude'], 'longitude' => $data['result']['longitude']];
     } else {
@@ -647,13 +624,13 @@ function calculateDistanceBetweenPostcodes($postcode1, $postcode2) {
     $c = 2 * atan2(sqrt($a), sqrt(1-$a));
 
     $distance = $earthRadius * $c;
+
     return $distance;
 }
 
 // --- Date Range Helper for KPI ---
 function getDateRangeForPeriod($period) {
     $today = new DateTime();
-
     switch ($period) {
         case 'current_week':
             $start = clone $today;
@@ -717,19 +694,16 @@ function getPreviousPeriodRange($period, $currentRange) {
 // --- KPI Calculation Function (updated to include status and location filters) ---
 function calculateKPIs($db, $period, $start_date = null, $end_date = null, $status_filter = 'all', $location_filter = '') {
     $kpis = [];
-
     try {
         // Determine the date range for the current KPI period
         if ($period === 'custom' && $start_date && $end_date) {
             $start = new DateTime($start_date);
             $end = new DateTime($end_date);
-
             if ($start > $end) {
                 throw new Exception("Start date cannot be after end date.");
             }
             // Optional: Add check for future start dates if you only want past data
             // if ($start > new DateTime()) { /* handle error or warning */ }
-
             $dateRange = [
                 'start' => $start->format('Y-m-d'),
                 'end' => $end->format('Y-m-d')
@@ -752,6 +726,7 @@ function calculateKPIs($db, $period, $start_date = null, $end_date = null, $stat
             $base_where_conditions[] = "Status = :status_filter";
             $base_params[':status_filter'] = $status_filter;
         }
+
         if (!empty($location_filter)) {
             $base_where_conditions[] = "(City LIKE :location_filter OR Address LIKE :location_filter OR Postcode LIKE :location_filter)";
             $base_params[':location_filter'] = '%' . $location_filter . '%';
@@ -765,7 +740,6 @@ function calculateKPIs($db, $period, $start_date = null, $end_date = null, $stat
         $kpis['detailed_candidates'] = $stmt_all_candidates->fetchAll(PDO::FETCH_ASSOC);
 
         // --- Calculate Key Performance Indicators ---
-
         // Total candidates in the period (filtered by status/location)
         $stmt = $db->prepare("SELECT COUNT(*) as total FROM _candidates $base_where_clause");
         $stmt->execute($base_params);
@@ -825,6 +799,7 @@ function calculateKPIs($db, $period, $start_date = null, $end_date = null, $stat
             ':start_date' => $previousPeriod['start'] . ' 00:00:00',
             ':end_date' => $previousPeriod['end'] . ' 23:59:59'
         ];
+
         // Apply the same status/location filters to the previous period count for fair comparison
         $prev_where_conditions = ["Date BETWEEN :start_date AND :end_date"];
         if ($status_filter !== 'all') {
@@ -835,6 +810,7 @@ function calculateKPIs($db, $period, $start_date = null, $end_date = null, $stat
             $prev_where_conditions[] = "(City LIKE :location_filter OR Address LIKE :location_filter OR Postcode LIKE :location_filter)";
             $prev_period_params[':location_filter'] = '%' . $location_filter . '%';
         }
+
         $prev_where_clause = 'WHERE ' . implode(' AND ', $prev_where_conditions);
 
         $stmt = $db->prepare("SELECT COUNT(*) as previous_total FROM _candidates $prev_where_clause");
@@ -881,8 +857,11 @@ $createdByMapping = [
     "2" => "Alex Lapompe",
     "9" => "Jack Dowler"
 ];
-?>
 
+// Debug output to check if user is authorized (remove this in production)
+error_log("Debug - Logged in user email: " . $loggedInUserEmail);
+error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -905,6 +884,7 @@ $createdByMapping = [
             background-color: #f4f7f6; /* Light background */
             color: #333; /* Dark grey text */
         }
+
         .pc-container {
             margin-left: 280px; /* Adjust based on sidebar width from includes/sidebar.php */
             padding: 20px;
@@ -912,6 +892,7 @@ $createdByMapping = [
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Soft shadow */
         }
+
         .pc-content {
             padding: 20px;
         }
@@ -923,6 +904,7 @@ $createdByMapping = [
             margin-bottom: 25px;
             flex-wrap: wrap; /* Allow wrapping on smaller screens */
         }
+
         .nav-buttons a {
             padding: 10px 15px;
             border-radius: 8px;
@@ -934,14 +916,17 @@ $createdByMapping = [
             gap: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
+
         .nav-buttons a:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
         .nav-buttons a.active {
             background: #007bff; /* Blue for active tab */
             color: white;
         }
+
         .nav-buttons a:not(.active) {
             background: #e0e0e0; /* Light grey for inactive tabs */
             color: #333;
@@ -954,6 +939,7 @@ $createdByMapping = [
             margin-bottom: 20px;
             flex-wrap: wrap;
         }
+
         .status-filter-buttons a {
             padding: 8px 12px;
             border-radius: 6px;
@@ -965,14 +951,17 @@ $createdByMapping = [
             gap: 6px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
+
         .status-filter-buttons a:hover {
             transform: translateY(-1px);
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
+
         .status-filter-buttons a.active {
             background: #28a745; /* Green for active status */
             color: white;
         }
+
         .status-filter-buttons a:not(.active) {
             background: #f5f5f5; /* Very light grey for inactive status filters */
             color: #555;
@@ -986,6 +975,7 @@ $createdByMapping = [
             margin-bottom: 20px;
             flex-wrap: wrap;
         }
+
         .export-btn {
             padding: 8px 15px;
             border-radius: 6px;
@@ -997,14 +987,17 @@ $createdByMapping = [
             gap: 6px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
+
         .export-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
         .export-btn.excel {
             background-color: #21a366; /* Green for Excel */
             color: white;
         }
+
         .export-btn.csv {
             background-color: #6c757d; /* Grey for CSV */
             color: white;
@@ -1021,11 +1014,13 @@ $createdByMapping = [
             font-weight: 500;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
         }
+
         .success-message {
             background-color: #d4edda; /* Light green */
             color: #155724; /* Dark green text */
             border: 1px solid #c3e6cb;
         }
+
         .error-message {
             background-color: #f8d7da; /* Light red */
             color: #721c24; /* Dark red text */
@@ -1041,6 +1036,7 @@ $createdByMapping = [
             margin-bottom: 25px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
+
         .filter-section h5, .kpi-filter-section h5 {
             color: #343a40;
             margin-bottom: 20px;
@@ -1049,21 +1045,25 @@ $createdByMapping = [
             border-bottom: 1px solid #dee2e6; /* Separator line */
             padding-bottom: 10px;
         }
+
         .filter-row {
             display: flex;
             flex-wrap: wrap;
             gap: 15px; /* Spacing between filter inputs */
             margin-bottom: 15px;
         }
+
         .filter-row .col-md-3 {
             flex: 1 1 calc(25% - 15px); /* Four columns on larger screens, adjusting for gap */
             min-width: 200px; /* Minimum width for filter inputs to prevent squishing */
         }
+
         .filter-label {
             font-weight: 500;
             margin-bottom: 5px;
             color: #495057;
         }
+
         .filter-input, .filter-select, .mailshot-textarea {
             width: 100%;
             padding: 10px 12px;
@@ -1074,21 +1074,25 @@ $createdByMapping = [
             background-color: white;
             transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
         }
+
         .filter-input:focus, .filter-select:focus, .mailshot-textarea:focus {
             border-color: #80bdff; /* Blue border on focus */
             outline: 0;
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Blue glow on focus */
         }
+
         .filter-select[multiple] {
             height: auto;
             min-height: 120px; /* Minimum height for multi-select dropdowns */
         }
+
         .filter-buttons {
             display: flex;
             gap: 10px;
             margin-top: 20px;
             flex-wrap: wrap;
         }
+
         .filter-buttons button {
             padding: 10px 20px;
             border: none;
@@ -1099,20 +1103,25 @@ $createdByMapping = [
             transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
         }
+
         .filter-buttons button:hover {
             transform: translateY(-1px);
         }
+
         .filter-buttons button[type="submit"] {
             background-color: #007bff; /* Blue submit button */
             color: white;
         }
+
         .filter-buttons button[type="submit"]:hover {
             background-color: #0056b3;
         }
+
         .filter-buttons button[type="reset"] {
             background-color: #6c757d; /* Grey reset button */
             color: white;
         }
+
         .filter-buttons button[type="reset"]:hover {
             background-color: #5a6268;
         }
@@ -1121,12 +1130,14 @@ $createdByMapping = [
         .mailshot-form .form-group {
             margin-bottom: 15px;
         }
+
         .mailshot-form label {
             display: block;
             font-weight: 500;
             margin-bottom: 5px;
             color: #495057;
         }
+
         .mailshot-form .btn-send {
             background-color: #28a745; /* Green send button */
             color: white;
@@ -1139,6 +1150,7 @@ $createdByMapping = [
             transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
         .mailshot-form .btn-send:hover {
             background-color: #218838;
             transform: translateY(-1px);
@@ -1154,6 +1166,7 @@ $createdByMapping = [
             color: #0050b3; /* Darker blue text */
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
+
         .kpi-info h5 {
             color: #003a8c; /* Even darker blue heading */
             margin-bottom: 10px;
@@ -1162,6 +1175,7 @@ $createdByMapping = [
             align-items: center;
             gap: 8px;
         }
+
         .kpi-info ul {
             list-style: disc;
             margin-left: 20px;
@@ -1177,6 +1191,7 @@ $createdByMapping = [
             gap: 20px;
             margin-bottom: 30px;
         }
+
         .kpi-card {
             background-color: white;
             border-radius: 8px;
@@ -1185,24 +1200,29 @@ $createdByMapping = [
             text-align: center;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
+
         .kpi-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
         }
+
         .kpi-card .value {
             font-size: 2.5rem;
             font-weight: 700;
             color: #007bff; /* Blue value */
             margin-bottom: 5px;
         }
+
         .kpi-card .label {
             font-size: 1rem;
             color: #555;
             font-weight: 500;
         }
+
         .kpi-card.growth .value {
             color: #28a745; /* Green for positive growth */
         }
+
         .kpi-card.decline .value {
             color: #dc3545; /* Red for negative growth */
         }
@@ -1215,12 +1235,14 @@ $createdByMapping = [
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
+
         .candidates-table, .kpi-detail-table {
             width: 100%;
             border-collapse: collapse; /* Collapse borders for clean look */
             font-size: 0.9rem;
             color: #343a40;
         }
+
         .candidates-table th, .kpi-detail-table th {
             background-color: #f2f2f2; /* Light grey header */
             padding: 12px 15px;
@@ -1229,15 +1251,18 @@ $createdByMapping = [
             font-weight: 600;
             color: #495057;
         }
+
         .candidates-table td, .kpi-detail-table td {
             padding: 10px 15px;
             border-bottom: 1px solid #e9ecef; /* Light grey line for rows */
             /* border-right: 1px solid #e9ecef; /* Column borders */
         }
+
         /* Remove right border from last column and left from first for cleaner edges */
         .candidates-table td:last-child, .kpi-detail-table td:last-child {
             border-right: none;
         }
+
         .candidates-table td:first-child, .kpi-detail-table td:first-child {
             border-left: none;
         }
@@ -1246,9 +1271,11 @@ $createdByMapping = [
         .candidates-table tbody tr:nth-child(odd) {
             background-color: #fcfcfc; /* Very light grey for odd rows */
         }
+
         .candidates-table tbody tr:nth-child(even) {
             background-color: #ffffff; /* White for even rows */
         }
+
         .candidates-table tbody tr:hover {
             background-color: #eaf6ff; /* Light blue on hover */
         }
@@ -1272,6 +1299,7 @@ $createdByMapping = [
             font-weight: 600;
             text-transform: capitalize;
         }
+
         .status-badge.active { background-color: #d4edda; color: #155724; } /* Green */
         .status-badge.inactive { background-color: #f8d7da; color: #721c24; } /* Red */
         .status-badge.pending { background-color: #fff3cd; color: #856404; } /* Yellow */
@@ -1298,6 +1326,7 @@ $createdByMapping = [
                 flex: 1 1 calc(50% - 15px); /* Two columns on medium screens */
             }
         }
+
         @media (max-width: 768px) {
             .filter-row .col-md-3 {
                 flex: 1 1 100%; /* Single column on small screens */
@@ -1323,6 +1352,7 @@ $createdByMapping = [
     <?php include "../../includes/sidebar.php"; ?>
     <?php include "../../includes/header.php"; ?>
     <?php include "../../includes/toast.php"; ?>
+
     <div class="pc-container">
         <div class="pc-content">
             <?php include "../../includes/breadcrumb.php"; ?>
@@ -1376,12 +1406,16 @@ $createdByMapping = [
                    onclick="return confirm('Export filtered candidates to Excel?')">
                     <i class="fa fa-file-excel"></i> Export Excel
                 </a>
-
                 <a href="?mode=candidates&export=csv&status=<?= htmlspecialchars($status_filter) ?>&keyword=<?= htmlspecialchars($keyword_filter) ?>&location=<?= htmlspecialchars($location_filter) ?>&position=<?= htmlspecialchars($position_filter) ?>&center_postcode=<?= htmlspecialchars($center_postcode) ?>&distance_miles=<?= htmlspecialchars($distance_miles) ?>"
                    class="export-btn csv"
                    onclick="return confirm('Export filtered candidates to CSV?')">
                     <i class="fa fa-file-csv"></i> Export CSV
                 </a>
+            </div>
+            <?php else: ?>
+            <!-- Debug message for unauthorized users (remove in production) -->
+            <div class="alert alert-info">
+                <small>Export functionality is restricted to authorized users only. Current user: <?= htmlspecialchars($loggedInUserEmail) ?></small>
             </div>
             <?php endif; ?>
             <?php endif; ?>
@@ -1407,6 +1441,7 @@ $createdByMapping = [
                     <i class="fa fa-check-circle"></i> <?php echo nl2br(htmlspecialchars($success_message)); ?>
                 </div>
             <?php endif; ?>
+
             <?php if (isset($error_message)): ?>
                 <div class="error-message">
                     <i class="fa fa-exclamation-triangle"></i> <?php echo nl2br(htmlspecialchars($error_message)); ?>
@@ -1421,7 +1456,6 @@ $createdByMapping = [
                     </h5>
                     <form method="GET" action="">
                         <input type="hidden" name="mode" value="<?php echo htmlspecialchars($mode); ?>">
-
                         <div class="row filter-row">
                             <div class="col-md-3">
                                 <div class="filter-label">Keywords (Name, Email, Job Title)</div>
@@ -1480,6 +1514,7 @@ $createdByMapping = [
                     <h4 class="mb-4">
                         <?php echo $mode === 'mailshot' ? 'Select Candidates for Mailshot' : 'Candidate List'; ?>
                     </h4>
+
                     <?php if ($mode === 'mailshot'): ?>
                         <!-- Mailshot Form -->
                         <form method="POST" action="?mode=mailshot" class="mailshot-form">
@@ -1569,7 +1604,7 @@ $createdByMapping = [
                             </tbody>
                         </table>
                     </div>
-                    
+                                        
                     <?php if ($mode === 'mailshot'): ?>
                             <div class="text-center mt-4">
                                 <button type="submit" class="btn-send"><i class="fa fa-paper-plane"></i> Send Mailshot</button>
@@ -1823,7 +1858,7 @@ $createdByMapping = [
                                         <tr>
                                             <td>
                                                 <?php
-                                                $profile_pic_url = !empty($candidate['ProfileImageL']) ? htmlspecialchars($candidate['ProfileImage']) : 'https://placehold.co/40x40/cccccc/333333?text=N/A';
+                                                $profile_pic_url = !empty($candidate['ProfileImage']) ? htmlspecialchars($candidate['ProfileImage']) : 'https://placehold.co/40x40/cccccc/333333?text=N/A';
                                                 ?>
                                                 <img src="<?= $profile_pic_url ?>" alt="Profile" class="profile-pic" onerror="this.onerror=null;this.src='https://placehold.co/40x40/cccccc/333333?text=N/A';">
                                             </td>
@@ -1848,7 +1883,6 @@ $createdByMapping = [
                     </div>
                 <?php endif; ?>
             <?php endif; ?>
-
         </div>
     </div>
 
@@ -1871,7 +1905,6 @@ $createdByMapping = [
             const periodSelect = document.getElementById('kpi_period');
             const startDateInput = document.getElementById('kpi_start_date');
             const endDateInput = document.getElementById('kpi_end_date');
-
             if (periodSelect.value === 'custom') {
                 startDateInput.removeAttribute('disabled');
                 endDateInput.removeAttribute('disabled');
@@ -1888,7 +1921,6 @@ $createdByMapping = [
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize Mailshot custom template state on page load
             toggleCustomTemplate();
-
             // Initialize KPI custom date inputs state on page load
             toggleCustomDateInputs();
 
@@ -1909,4 +1941,3 @@ $createdByMapping = [
     <?php // include "../../includes/footer_scripts.php"; ?>
 </body>
 </html>
-
