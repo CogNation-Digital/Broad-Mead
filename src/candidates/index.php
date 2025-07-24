@@ -1,6 +1,6 @@
 <?php
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set("display_errors", 1);
 
 
 // require 'vendor/autoload.php'; // Uncommented assuming Composer is used
@@ -33,6 +33,38 @@ try {
     echo "<b>Database Connection Error: </b> " . $e->getMessage();
     exit;
 }
+
+
+$loggedInUserEmail = '';
+if (isset($_SESSION['user_id'])) { // Assuming 'user_id' is stored in session after login
+    try {
+        // Fetch email from the database based on the logged-in user's ID
+        // You'll need to know which table stores user information and their email.
+        // Replace 'users' and 'email' with your actual table and column names.
+        $stmt = $db_2->prepare("SELECT email FROM users WHERE id = :user_id");
+        $stmt->execute([':user_id' => $_SESSION['user_id']]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($user) {
+            $loggedInUserEmail = $user['email'];
+        }
+    } catch (PDOException $e) {
+        error_log("Error fetching user email: " . $e->getMessage());
+    }
+} else if (isset($_SESSION['user_email'])) { // Fallback to direct session email if user_id is not present
+    $loggedInUserEmail = $_SESSION['user_email'];
+}
+
+// List of allowed email addresses for export functionality
+$allowedExportEmails = [
+    'alex@nocturnalrecruitment.co.uk',
+    'j.dowler@nocturnalrecruitment.co.uk',
+    'chax@nocturnalrecruitment.co.uk'
+];
+
+// Check if the logged-in user's email is in the allowed list (case-insensitive)
+$canExport = in_array(strtolower($loggedInUserEmail), array_map('strtolower', $allowedExportEmails));
+// --- User Authentication and Authorization for Export --- END
+
 
 // Determine the current mode (candidates, mailshot, kpi)
 $mode = isset($_GET['mode']) ? $_GET['mode'] : 'candidates';
@@ -323,6 +355,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
 // --- Export Handler (must come before ANY output) ---
 // This section handles both 'candidates' and 'kpi' report exports
 if (isset($_GET['export'])) {
+    // Check if the user is authorized to export
+    if (!$canExport) {
+        die("Access Denied: You do not have permission to export data.");
+    }
+
     try {
         // Use db_2 for exports as it's the primary candidate database
         if (!isset($db_2)) {
@@ -1334,6 +1371,7 @@ $createdByMapping = [
             </div>
 
             <!-- Export Buttons for Candidates List -->
+            <?php if ($canExport): // Only show export buttons if user is authorized ?>
             <div class="export-buttons">
                 <a href="?mode=candidates&export=excel&status=<?= htmlspecialchars($status_filter) ?>&keyword=<?= htmlspecialchars($keyword_filter) ?>&location=<?= htmlspecialchars($location_filter) ?>&position=<?= htmlspecialchars($position_filter) ?>&center_postcode=<?= htmlspecialchars($center_postcode) ?>&distance_miles=<?= htmlspecialchars($distance_miles) ?>"
                    class="export-btn excel"
@@ -1347,6 +1385,7 @@ $createdByMapping = [
                     <i class="fa fa-file-csv"></i> Export CSV
                 </a>
             </div>
+            <?php endif; ?>
             <?php endif; ?>
 
             <?php if ($mode === 'kpi'): ?>
@@ -1598,6 +1637,7 @@ $createdByMapping = [
                 </div>
 
                 <!-- Export Buttons for KPI Report -->
+                <?php if ($canExport): // Only show export buttons if user is authorized ?>
                 <div class="export-buttons">
                     <a href="?mode=kpi&export=excel&kpi_period=<?= htmlspecialchars($kpi_period) ?>&kpi_start_date=<?= htmlspecialchars($kpi_start_date) ?>&kpi_end_date=<?= htmlspecialchars($kpi_end_date) ?>&kpi_status_filter=<?= htmlspecialchars($kpi_status_filter) ?>&kpi_location_filter=<?= htmlspecialchars($kpi_location_filter) ?>"
                        class="export-btn excel"
@@ -1610,6 +1650,7 @@ $createdByMapping = [
                         <i class="fa fa-file-csv"></i> Export KPI CSV
                     </a>
                 </div>
+                <?php endif; ?>
 
                 <?php if (isset($kpi_data['error'])): ?>
                     <div class="error-message">
@@ -1870,3 +1911,4 @@ $createdByMapping = [
     <?php // include "../../includes/footer_scripts.php"; ?>
 </body>
 </html>
+
