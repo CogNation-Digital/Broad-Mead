@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
     } else {
         $candidate_ids = $_POST['selected_candidates'];
         $subject = $_POST['subject'];
-        $template_key = $_POST['template']; // This is the key (e.g., 'job_alert') or 'custom'
+        $template_key = $_POST['template']; 
         $custom_template_content = $_POST['custom_template_content'] ?? ''; // New field for custom content
 
         error_log("Processing mailshot for " . count($candidate_ids) . " candidates");
