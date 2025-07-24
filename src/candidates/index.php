@@ -59,7 +59,7 @@ $allowedExportEmails = [
     'chax@nocturnalrecruitment.co.uk'
 ];
 
-// Check if the logged-in user's email is in the allowed list (case-insensitive)
+
 $canExport = in_array(strtolower($loggedInUserEmail), array_map('strtolower', $allowedExportEmails));
 // --- User Authentication and Authorization for Export --- END
 
