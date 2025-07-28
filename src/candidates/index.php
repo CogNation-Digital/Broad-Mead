@@ -1,4 +1,5 @@
 <?php
+session_start(); // Start the session at the very beginning to use session variables
 error_reporting(E_ALL);
 ini_set("display_errors", 1);
 require_once '../../includes/config.php'; // Ensure this includes necessary configurations like $theme, $LINK, etc.
@@ -31,23 +32,30 @@ try {
     exit;
 }
 
-// --- Fetch Logged-in User's Email (matching clients page logic) ---
+// --- Fetch Logged-in User's Email ---
 $loggedInUserEmail = '';
 $USERID = $_COOKIE['USERID'] ?? null;
 if ($USERID) {
     try {
-        $stmt = $db_2->prepare("SELECT Email FROM users WHERE UserID = :userid"); // Using same column names as clients page
+        $stmt = $db_2->prepare("SELECT Email FROM users WHERE UserID = :userid");
         $stmt->bindParam(':userid', $USERID);
         $stmt->execute();
         $user = $stmt->fetch(PDO::FETCH_OBJ);
-        if ($user) {
+        if ($user && filter_var($user->Email, FILTER_VALIDATE_EMAIL)) {
             $loggedInUserEmail = strtolower($user->Email); // Apply strtolower for case-insensitive comparison
+        } else {
+            error_log("Logged-in user's email not found or invalid for UserID: " . $USERID);
+            // Fallback or handle error if email is not found or invalid
+            $loggedInUserEmail = "default_sender@yourdomain.com"; // Fallback email
         }
     } catch (PDOException $e) {
         error_log("Error fetching user email: " . $e->getMessage());
-        // Handle error, e.g., set a default or deny access
+        $loggedInUserEmail = "default_sender@yourdomain.com"; // Fallback email on DB error
     }
+} else {
+    $loggedInUserEmail = "default_sender@yourdomain.com"; // Fallback if USERID cookie is not set
 }
+
 
 // Define allowed export emails (case-insensitive comparison)
 $allowedExportEmails = [
@@ -56,29 +64,90 @@ $allowedExportEmails = [
     'chax@nocturnalrecruitment.co.uk'
 ];
 
+$email_footer_html = '
+<br><br>
+<div style="font-family: Arial, sans-serif; font-size: 12px; color: #333333; line-height: 1.5; background-color: #1a1a1a; padding: 20px; color: #ffffff;">
+    <div style="text-align: center; margin-bottom: 20px;">
+        <img src="https://i.ibb.co/L5w2t8J/nocturnal-recruitment-logo.png" alt="Nocturnal Recruitment Solutions" style="max-width: 200px; height: auto; display: block; margin: 0 auto;">
+    </div>
+    <div style="text-align: center; margin-bottom: 15px;">
+        <p style="margin: 0; padding: 0; font-size: 12px; color: #ffffff;">
+            <img src="https://i.ibb.co/h14251P/location-icon.png" alt="Location" style="vertical-align: middle; width: 14px; height: 14px; margin-right: 5px;">
+            <span style="color: #6daffb;">Nocturnal Recruitment, Office 16, 321 High Road, RM6 6AX</span>
+        </p>
+        <p style="margin: 5px 0 0 0; padding: 0; font-size: 12px; color: #ffffff;">
+            <img src="https://i.ibb.co/yY1h976/phone-icon.png" alt="Phone" style="vertical-align: middle; width: 14px; height: 14px; margin-right: 5px;">
+            <span style="color: #6daffb;">0208 050 2708</span> &nbsp;
+            <img src="https://i.ibb.co/N710N5M/mobile-icon.png" alt="Mobile" style="vertical-align: middle; width: 14px; height: 14px; margin-right: 5px;">
+            <span style="color: #6daffb;">0755 357 0871</span> &nbsp;
+            <img src="https://i.ibb.co/Jk1n6rK/email-icon.png" alt="Email" style="vertical-align: middle; width: 14px; height: 14px; margin-right: 5px;">
+            <a href="mailto:chax@nocturnalrecruitment.co.uk" style="color: #6daffb; text-decoration: none;">chax@nocturnalrecruitment.co.uk</a>
+        </p>
+        <p style="margin: 5px 0 0 0; padding: 0; font-size: 12px; color: #ffffff;">
+            <img src="https://i.ibb.co/M9d5NnL/website-icon.png" alt="Website" style="vertical-align: middle; width: 14px; height: 14px; margin-right: 5px;">
+            <a href="https://www.nocturnalrecruitment.co.uk" target="_blank" style="color: #6daffb; text-decoration: none;">www.nocturnalrecruitment.co.uk</a>
+        </p>
+    </div>
+
+    <div style="text-align: center; margin-bottom: 20px;">
+        <a href="https://www.linkedin.com/company/nocturnalrecruitment" target="_blank" style="margin: 0 5px; display: inline-block;">
+            <img src="https://i.ibb.co/zQJ6x0n/linkedin-icon.png" alt="LinkedIn" style="width: 30px; height: 30px;">
+        </a>
+        <a href="https://www.instagram.com/nocturnalrecruitment" target="_blank" style="margin: 0 5px; display: inline-block;">
+            <img src="https://i.ibb.co/gST1V5g/instagram-icon.png" alt="Instagram" style="width: 30px; height: 30px;">
+        </a>
+        <a href="https://www.facebook.com/nocturnalrecruitment" target="_blank" style="margin: 0 5px; display: inline-block;">
+            <img src="https://i.ibb.co/g3139V7/facebook-icon.png" alt="Facebook" style="width: 30px; height: 30px;">
+        </a>
+        <img src="https://i.ibb.co/Jk1n6rK/rec-corporate-member.png" alt="REC Corporate Member" style="vertical-align: middle; height: 30px; margin-left: 10px;">
+    </div>
+
+    <p style="text-align: center; margin: 0 0 10px 0; font-size: 12px; font-weight: bold; color: #ffffff;">
+        Company Registration – 11817091
+    </p>
+    <p style="margin: 0; font-style: italic; color: #aaaaaa; text-align: center; font-size: 10px;">
+        Disclaimer* This email is intended only for the use of the addressee named above and may be confidential or legally privileged. If you are not the addressee, you must not read it and must not use any information contained in nor copy it nor inform any person other than Nocturnal Recruitment or the addressee of its existence or contents. If you have received this email in error, please delete it and notify our team at <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #6daffb; text-decoration: none;">info@nocturnalrecruitment.co.uk</a>
+    </p>
+    <div style="text-align: center; margin-top: 15px; font-size: 11px; color: #888888;">
+        BroadMead 3.0 &copy; 2025 - a product of
+        <a href="https://www.cog-nation.com" target="_blank" style="color: #E1AD01; text-decoration: none; font-weight: bold;">
+            CogNation Digital
+        </a>.
+    </div>
+</div>';
+
+
+
 // Check if current user can export (case-insensitive)
 $canExport = in_array($loggedInUserEmail, array_map('strtolower', $allowedExportEmails));
 
 $mode = isset($_GET['mode']) ? $_GET['mode'] : 'candidates';
+
+// --- Retrieve and Clear Session Messages (for PRG pattern) ---
+$success_message = $_SESSION['success_message'] ?? null;
+$error_message = $_SESSION['error_message'] ?? null;
+unset($_SESSION['success_message']);
+unset($_SESSION['error_message']);
+
 
 // --- Mailshot Processing ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
     error_log("POST data received: " . print_r($_POST, true));
     // Validation for mailshot form
     if (empty($_POST['selected_candidates'])) {
-        $error_message = "Please select at least one candidate.";
+        $_SESSION['error_message'] = "Please select at least one candidate.";
     } elseif (empty($_POST['subject'])) {
-        $error_message = "Email subject is required.";
+        $_SESSION['error_message'] = "Email subject is required.";
     } elseif (empty($_POST['template']) && empty($_POST['custom_template_content'])) {
-        $error_message = "Please select an email template or provide custom content.";
+        $_SESSION['error_message'] = "Please select an email template or provide custom content.";
     } else {
         $candidate_ids = $_POST['selected_candidates'];
         $subject = $_POST['subject'];
-        $template_key = $_POST['template']; 
-        $custom_template_content = $_POST['custom_template_content'] ?? ''; 
-        
+        $template_key = $_POST['template'];
+        $custom_template_content = $_POST['custom_template_content'] ?? '';
+
         error_log("Processing mailshot for " . count($candidate_ids) . " candidates");
-               
+
         $templates = [
             'job_alert' => [
                 'subject' => 'New Job Opportunities Matching Your Profile',
@@ -122,19 +191,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
 
         $final_subject = empty($subject) ? $template_details['subject'] : $subject;
         $base_body = $template_details['body'];
-        $from_email = "learn@natec.icu"; // Sender email address
+        // The sender email address (From header) will be the logged-in user's email
+        $from_email = $loggedInUserEmail;
         $from_name = "Recruitment Team"; // Sender name
         $success_count = 0;
         $error_count = 0;
-        $error_details = [];
+        $temp_error_details = []; // Use a temporary array for errors before setting session
         $console_logs = []; // For debugging SMTP issues
 
-        // SMTP Configuration (defined once for all emails)
+          $from_email = "learn@natec.icu";
+        $from_name = "Recruitment Team";
         $smtp_host = 'smtp.titan.email';
         $smtp_username = 'learn@natec.icu';
         $smtp_password = '@WhiteDiamond0100';
         $smtp_port = 587;
-                
+
+        
+
         // Test SMTP connection once before sending emails to candidates
         try {
             $test_mail = new PHPMailer(true);
@@ -155,13 +228,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
             $test_mail->smtpClose();
             $console_logs[] = "SMTP connection test successful";
         } catch (Exception $e) {
-            $error_message = "SMTP Configuration Error: " . $e->getMessage();
+            $_SESSION['error_message'] = "SMTP Configuration Error: " . $e->getMessage();
             $console_logs[] = "ERROR: SMTP Configuration failed - " . $e->getMessage();
             error_log("SMTP Error: " . $e->getMessage());
+            header("Location: ?mode=mailshot"); // Redirect immediately on config error
+            exit;
         }
 
         // Proceed with sending emails only if SMTP test passed
-        if (!isset($error_message)) {
+        if (!isset($_SESSION['error_message'])) { // Check session error message instead of local variable
             foreach ($candidate_ids as $candidate_id) {
                 $log_status = ''; // Initialize status for each candidate
                 $log_error = ''; // Initialize error for each candidate
@@ -171,13 +246,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
                     $stmt = $db_2->prepare("SELECT id, Name, Email, ProfileImage FROM _candidates WHERE id = ?");
                     $stmt->execute([$candidate_id]);
                     $candidate = $stmt->fetch(PDO::FETCH_OBJ);
-// If not found in db_2, try db_1 (candidates) as a fallback
-if (!$candidate) {
-    // Modified: CONCAT(first_name) as Name ensures only the first name is picked
-    $stmt = $db_1->prepare("SELECT id, first_name as Name, email as Email FROM candidates WHERE id = ?");
-    $stmt->execute([$candidate_id]);
-    $candidate = $stmt->fetch(PDO::FETCH_OBJ);
-}
+                    // If not found in db_2, try db_1 (candidates) as a fallback
+                    if (!$candidate) {
+                        // Modified: CONCAT(first_name) as Name ensures only the first name is picked
+                        $stmt = $db_1->prepare("SELECT id, first_name as Name, email as Email FROM candidates WHERE id = ?");
+                        $stmt->execute([$candidate_id]);
+                        $candidate = $stmt->fetch(PDO::FETCH_OBJ);
+                    }
 
                     // Ensure candidate exists and has a valid email address
                     if ($candidate && filter_var($candidate->Email, FILTER_VALIDATE_EMAIL)) {
@@ -191,7 +266,8 @@ if (!$candidate) {
                             [$name, 'https://broad-mead.com/login', 'https://broad-mead.com/newsletter', 'https://broad-mead.com/events'],
                             $base_body
                         );
-
+// Add the email footer to every email
+$personalized_body_with_footer = $personalized_body . $email_footer_html;
                         // Initialize PHPMailer for each email to ensure a clean state
                         $mail = new PHPMailer(true);
                         $mail->isSMTP();
@@ -210,12 +286,14 @@ if (!$candidate) {
                             )
                         );
 
+                        // Set the From address to the logged-in user's email
                         $mail->setFrom($from_email, $from_name);
+                        // Add a Reply-To header to the logged-in user's email for replies
+                        $mail->addReplyTo($loggedInUserEmail, $from_name);
                         $mail->addAddress($to, $name);
-                        $mail->addReplyTo($from_email, $from_name);
                         $mail->isHTML(true); // Set email format to HTML
                         $mail->Subject = $final_subject;
-                        $mail->Body = nl2br(htmlspecialchars($personalized_body)); // Convert newlines to <br> and escape HTML
+                      $mail->Body = $personalized_body_with_footer; // Now includes footer - no need for nl2br since footer is already HTML // Convert newlines to <br> and escape HTML
                         $mail->AltBody = $personalized_body; // Plain text alternative for non-HTML clients
 
                         if ($mail->send()) {
@@ -228,7 +306,7 @@ if (!$candidate) {
                             $error_count++;
                             $log_status = 'failed';
                             $log_error = $mail->ErrorInfo;
-                            $error_details[] = "Failed to send to: $to - " . $mail->ErrorInfo;
+                            $temp_error_details[] = "Failed to send to: $to - " . $mail->ErrorInfo;
                             $console_logs[] = "ERROR: Failed to send to {$to} (Candidate ID: {$candidate_id}) - " . $mail->ErrorInfo;
                             error_log("ERROR: Failed to send to {$to} - " . $mail->ErrorInfo);
                         }
@@ -251,10 +329,8 @@ if (!$candidate) {
                             error_log("Mailshot log saved for candidate ID: {$candidate_id}, Status: {$log_status}");
                         } catch (PDOException $e) {
                             error_log("DATABASE ERROR: Failed to log mailshot for candidate ID {$candidate_id}: " . $e->getMessage());
-                            // You might want to add this error to $error_details or $console_logs as well
+                           
                         }
-                        // --- End Mailshot Logging ---
-
                         $mail->clearAddresses(); // Clear addresses for the next iteration
                         $mail->clearAttachments(); // Clear attachments
                         usleep(100000); // 0.1 second delay to avoid hitting SMTP rate limits
@@ -263,10 +339,10 @@ if (!$candidate) {
                         $error_count++;
                         $log_status = 'failed';
                         $log_error = "Invalid email or candidate not found for ID: $candidate_id (Email: $candidate_email)";
-                        $error_details[] = $log_error;
+                        $temp_error_details[] = $log_error;
                         $console_logs[] = "ERROR: Invalid email or candidate not found for ID {$candidate_id} (Email: {$candidate_email})";
                         error_log("ERROR: Invalid email or candidate not found for ID {$candidate_id}");
-                                                
+
                         // Log the failure when candidate or email is invalid
                         try {
                             $log_stmt = $db_2->prepare(
@@ -292,7 +368,7 @@ if (!$candidate) {
                     $error_count++;
                     $log_status = 'failed';
                     $log_error = "Error processing candidate ID: $candidate_id - " . $e->getMessage();
-                    $error_details[] = $log_error;
+                    $temp_error_details[] = $log_error;
                     $console_logs[] = "ERROR: Exception for candidate ID {$candidate_id} - " . $e->getMessage();
                     error_log("ERROR: Exception for candidate ID {$candidate_id} - " . $e->getMessage());
                     // Log the failure due to an exception
@@ -306,7 +382,7 @@ if (!$candidate) {
                             ':email' => $candidate_email,
                             ':subject' => $final_subject,
                             ':template' => $template_key,
-                            ':body' => $personalized_body ?? $base_body, // Use personalized if available, otherwise base
+                            ':body' => $personalized_body_with_footer ?? ($personalized_body ?? $base_body), // Use with footer if available// Use personalized if available, otherwise base
                             ':status' => $log_status,
                             ':error' => $log_error
                         ]);
@@ -317,20 +393,23 @@ if (!$candidate) {
                 }
             } // End of foreach ($candidate_ids as $candidate_id)
 
-            // Final message after mailshot processing
             if ($error_count === 0) {
-                $success_message = "Mailshot processing completed. Successfully sent to $success_count candidates.";
+                $_SESSION['success_message'] = "Mailshot processing completed. Successfully sent to $success_count candidates.";
             } else {
-                $error_message = "Mailshot processing completed with issues: $success_count succeeded, $error_count failed.";
-                if (!empty($error_details)) {
-                    $error_message .= "\n\nFirst 5 errors:\n" . implode("\n", array_slice($error_details, 0, 5));
-                    if (count($error_details) > 5) {
-                        $error_message .= "\n... plus " . (count($error_details) - 5) . " more errors.";
+                $message = "Mailshot processing completed with issues: $success_count succeeded, $error_count failed.";
+                if (!empty($temp_error_details)) {
+                    $message .= "\n\nFirst 5 errors:\n" . implode("\n", array_slice($temp_error_details, 0, 5));
+                    if (count($temp_error_details) > 5) {
+                        $message .= "\n... plus " . (count($temp_error_details) - 5) . " more errors.";
                     }
                 }
+                $_SESSION['error_message'] = $message;
             }
         }
     }
+    // Always redirect after POST to prevent resubmission on refresh
+    header("Location: ?mode=mailshot");
+    exit;
 }
 
 // --- Export Handler (must come before ANY output) ---
@@ -646,10 +725,6 @@ function getDateRangeForPeriod($period) {
         case 'current_month':
             $start = new DateTime('first day of this month');
             $end = new DateTime('last day of this month');
-            break;
-        case 'last_month':
-            $start = new DateTime('first day of last month');
-            $end = new DateTime('last day of last month');
             break;
         case 'current_quarter':
             $quarter = ceil($today->format('n') / 3);
@@ -1604,7 +1679,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                             </tbody>
                         </table>
                     </div>
-                                        
+
                     <?php if ($mode === 'mailshot'): ?>
                             <div class="text-center mt-4">
                                 <button type="submit" class="btn-send"><i class="fa fa-paper-plane"></i> Send Mailshot</button>
