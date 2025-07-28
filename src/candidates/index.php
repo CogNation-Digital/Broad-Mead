@@ -90,16 +90,20 @@ $email_footer_html = '
     </div>
 
     <div style="text-align: center; margin-bottom: 20px;">
+        <!-- LinkedIn Icon - Already correct -->
         <a href="https://www.linkedin.com/company/nocturnalrecruitment" target="_blank" style="margin: 0 5px; display: inline-block;">
             <img src="https://i.ibb.co/zQJ6x0n/linkedin-icon.png" alt="LinkedIn" style="width: 30px; height: 30px;">
         </a>
+        <!-- Instagram Icon - Already correct -->
         <a href="https://www.instagram.com/nocturnalrecruitment" target="_blank" style="margin: 0 5px; display: inline-block;">
             <img src="https://i.ibb.co/gST1V5g/instagram-icon.png" alt="Instagram" style="width: 30px; height: 30px;">
         </a>
+        <!-- Facebook Icon - Already correct -->
         <a href="https://www.facebook.com/nocturnalrecruitment" target="_blank" style="margin: 0 5px; display: inline-block;">
             <img src="https://i.ibb.co/g3139V7/facebook-icon.png" alt="Facebook" style="width: 30px; height: 30px;">
         </a>
-        <img src="https://i.ibb.co/Jk1n6rK/rec-corporate-member.png" alt="REC Corporate Member" style="vertical-align: middle; height: 30px; margin-left: 10px;">
+        <!-- REC Corporate Member - Fixed the duplicate URL issue -->
+        <img src="https://i.ibb.co/mXp8qKJ/rec-corporate-member.png" alt="REC Corporate Member" style="vertical-align: middle; height: 30px; margin-left: 10px;">
     </div>
 
     <p style="text-align: center; margin: 0 0 10px 0; font-size: 12px; font-weight: bold; color: #ffffff;">
@@ -115,7 +119,6 @@ $email_footer_html = '
         </a>.
     </div>
 </div>';
-
 
 
 // Check if current user can export (case-insensitive)
