@@ -580,12 +580,12 @@ if (isset($_GET['export'])) {
 $keyword_filter = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
 $location_filter = isset($_GET['location']) ? trim($_GET['location']) : '';
 $position_filter = isset($_GET['position']) ? trim($_GET['position']) : '';
-// Default status filter depends on the mode
+
 $status_filter = isset($_GET['status']) ? $_GET['status'] : ($mode === 'mailshot' ? 'active' : 'all');
 $center_postcode = isset($_GET['center_postcode']) ? trim($_GET['center_postcode']) : '';
 $distance_miles = isset($_GET['distance_miles']) ? (int)$_GET['distance_miles'] : 0;
 
-// KPI specific filters for display
+
 $kpi_period = isset($_GET['kpi_period']) ? $_GET['kpi_period'] : 'current_week';
 $kpi_start_date = isset($_GET['kpi_start_date']) ? $_GET['kpi_start_date'] : '';
 $kpi_end_date = isset($_GET['kpi_end_date']) ? $_GET['kpi_end_date'] : '';
