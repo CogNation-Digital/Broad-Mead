@@ -261,10 +261,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
                     
                     if ($candidate && filter_var($candidate->Email, FILTER_VALIDATE_EMAIL)) {
                         $to = $candidate->Email;
-                        $name = $candidate->Name ?: 'Candidate'; // Use 'Candidate' if name is empty
+                        $name = $candidate->Name ?: 'Candidate'; 
                         error_log("Sending email to: " . $to . " (" . $name . ")");
 
-                        // Personalize the email body with candidate's name and dynamic links
+                        
                         $personalized_body = str_replace(
                             ['[Name]', '[LoginLink]', '[NewsletterLink]', '[EventLink]'],
                             [$name, 'https://broad-mead.com/login', 'https://broad-mead.com/newsletter', 'https://broad-mead.com/events'],
