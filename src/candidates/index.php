@@ -53,11 +53,11 @@ if ($USERID) {
         $loggedInUserEmail = "default_sender@yourdomain.com"; // Fallback email on DB error
     }
 } else {
-    $loggedInUserEmail = "default_sender@yourdomain.com"; // Fallback if USERID cookie is not set
+    $loggedInUserEmail = "default_sender@yourdomain.com"; 
 }
 
 
-// Define allowed export emails (case-insensitive comparison)
+
 $allowedExportEmails = [
     'alex@nocturnalrecruitment.co.uk',
     'j.dowler@nocturnalrecruitment.co.uk',
