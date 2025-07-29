@@ -547,7 +547,7 @@ if (isset($_GET['export'])) {
         if ($exportType === 'excel') {
             header("Content-Type: application/vnd.ms-excel");
             header("Content-Disposition: attachment; filename=\"$filename.xls\"");
-            // Output headers
+            
             echo implode("\t", $headers) . "\r\n";
             // Output data rows
             foreach ($data_to_export as $row) {
