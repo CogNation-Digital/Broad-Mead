@@ -1,5 +1,5 @@
 <?php
-session_start(); // Start the session at the very beginning to use session variables
+session_start(); 
 error_reporting(E_ALL);
 ini_set("display_errors", 1);
 require_once '../../includes/config.php'; 
