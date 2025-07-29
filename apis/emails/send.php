@@ -48,7 +48,7 @@ try {
     $mail->Port = 465;
 
     $mail->setFrom('recruitmentnocturnal@gmail.com', 'Nocturnal Recruitment');
-    $mail->addReplyTo('info@nocturnalrecruitment.co.uk', 'Nocturnal Recruitment'); // Correct Reply-To
+    $mail->addReplyTo('info@nocturnalrecruitment.co.uk', 'Nocturnal Recruitment'); 
     $mail->addAddress($email, $name);
 
 
