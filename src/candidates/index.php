@@ -347,7 +347,7 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
                         $console_logs[] = "ERROR: Invalid email or candidate not found for ID {$candidate_id} (Email: {$candidate_email})";
                         error_log("ERROR: Invalid email or candidate not found for ID {$candidate_id}");
 
-                        // Log the failure when candidate or email is invalid
+                        
                         try {
                             $log_stmt = $db_2->prepare(
                                 "INSERT INTO mailshot_logs (candidate_id, email, subject, template, body, status, error, sent_at)
@@ -358,7 +358,7 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
                                 ':email' => $candidate_email,
                                 ':subject' => $final_subject,
                                 ':template' => $template_key,
-                                ':body' => $personalized_body ?? $base_body, // Use personalized if available, otherwise base
+                                ':body' => $personalized_body ?? $base_body, 
                                 ':status' => $log_status,
                                 ':error' => $log_error
                             ]);
