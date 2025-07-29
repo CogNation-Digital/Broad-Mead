@@ -178,11 +178,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
             ]
         ];
 
-        // Determine the final template details based on selection
+    
         if ($template_key === 'custom') {
             $template_details = [
-                'subject' => $subject, // Use the subject from the form input
-                'body' => $custom_template_content // Use the custom content from the textarea
+                'subject' => $subject, 
+                'body' => $custom_template_content 
             ];
         } else {
             
