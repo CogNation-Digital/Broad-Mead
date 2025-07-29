@@ -32,7 +32,7 @@ try {
     exit;
 }
 
-// --- Fetch Logged-in User's Email ---
+
 $loggedInUserEmail = '';
 $USERID = $_COOKIE['USERID'] ?? null;
 if ($USERID) {
@@ -42,7 +42,7 @@ if ($USERID) {
         $stmt->execute();
         $user = $stmt->fetch(PDO::FETCH_OBJ);
         if ($user && filter_var($user->Email, FILTER_VALIDATE_EMAIL)) {
-            $loggedInUserEmail = strtolower($user->Email); // Apply strtolower for case-insensitive comparison
+            $loggedInUserEmail = strtolower($user->Email); 
         } else {
             error_log("Logged-in user's email not found or invalid for UserID: " . $USERID);
             
