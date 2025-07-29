@@ -240,9 +240,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
         }
 
     
-        if (!isset($_SESSION['error_message'])) { // Check session error message instead of local variable
+        if (!isset($_SESSION['error_message'])) { 
             foreach ($candidate_ids as $candidate_id) {
-                $log_status = ''; // Initialize status for each candidate
+                $log_status = ''; 
                 $log_error = ''; // Initialize error for each candidate
                 try {
                     error_log("Processing candidate ID: " . $candidate_id);
