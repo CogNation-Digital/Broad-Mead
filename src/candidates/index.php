@@ -258,7 +258,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
                         $candidate = $stmt->fetch(PDO::FETCH_OBJ);
                     }
 
-                    // Ensure candidate exists and has a valid email address
+                    
                     if ($candidate && filter_var($candidate->Email, FILTER_VALIDATE_EMAIL)) {
                         $to = $candidate->Email;
                         $name = $candidate->Name ?: 'Candidate'; // Use 'Candidate' if name is empty
