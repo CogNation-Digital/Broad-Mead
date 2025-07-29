@@ -651,7 +651,7 @@ if (!empty($center_postcode) && $distance_miles > 0) {
 
 
 function getPostcodeCoordinates($postcode) {
-    static $postcodeCache = []; // Cache to avoid repeated API calls for the same postcode
+    static $postcodeCache = []; 
     if (isset($postcodeCache[$postcode])) {
         return $postcodeCache[$postcode];
     }
@@ -673,8 +673,8 @@ function getPostcodeCoordinates($postcode) {
 
     // Mock coordinates as per original code, for demonstration
     $coordinates = [
-        'latitude' => 51.5 + (rand(-100, 100) / 1000), // Random latitude around London
-        'longitude' => -0.1 + (rand(-100, 100) / 1000) // Random longitude around London
+        'latitude' => 51.5 + (rand(-100, 100) / 1000), 
+        'longitude' => -0.1 + (rand(-100, 100) / 1000) 
     ];
 
     $postcodeCache[$postcode] = $coordinates;
