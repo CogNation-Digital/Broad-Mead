@@ -295,10 +295,10 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
                         
                         $mail->addReplyTo($loggedInUserEmail, $from_name);
                         $mail->addAddress($to, $name);
-                        $mail->isHTML(true); // Set email format to HTML
+                        $mail->isHTML(true); 
                         $mail->Subject = $final_subject;
-                      $mail->Body = $personalized_body_with_footer; // Now includes footer - no need for nl2br since footer is already HTML // Convert newlines to <br> and escape HTML
-                        $mail->AltBody = $personalized_body; // Plain text alternative for non-HTML clients
+                      $mail->Body = $personalized_body_with_footer; 
+                        $mail->AltBody = $personalized_body; 
 
                         if ($mail->send()) {
                             $success_count++;
