@@ -172,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
                 'subject' => 'Welcome to Our Candidate Network',
                 'body' => "Hello [Name],\n\nWelcome to our candidate database! We will contact you when we find a match.\n\nBest regards,\nThe Recruitment Team"
             ],
-            'custom' => [ // Placeholder for custom template, content comes from custom_template_content
+            'custom' => [ 
                 'subject' => $subject,
                 'body' => $custom_template_content
             ]
