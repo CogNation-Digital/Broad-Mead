@@ -212,7 +212,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
 
 
 
-        // Test SMTP connection once before sending emails to candidates
+       
         try {
             $test_mail = new PHPMailer(true);
             $test_mail->isSMTP();
