@@ -235,7 +235,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
             $_SESSION['error_message'] = "SMTP Configuration Error: " . $e->getMessage();
             $console_logs[] = "ERROR: SMTP Configuration failed - " . $e->getMessage();
             error_log("SMTP Error: " . $e->getMessage());
-            header("Location: ?mode=mailshot"); // Redirect immediately on config error
+            header("Location: ?mode=mailshot"); 
             exit;
         }
 
