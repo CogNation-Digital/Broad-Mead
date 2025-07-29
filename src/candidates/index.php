@@ -6,7 +6,7 @@ require_once '../../includes/config.php'; // Ensure this includes necessary conf
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Redirect if user is not logged in (matching clients page logic)
+
 if (!isset($_COOKIE['USERID'])) {
     header("location: $LINK/login");
     exit; 
