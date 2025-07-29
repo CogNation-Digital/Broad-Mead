@@ -250,9 +250,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
                     $stmt = $db_2->prepare("SELECT id, Name, Email, ProfileImage FROM _candidates WHERE id = ?");
                     $stmt->execute([$candidate_id]);
                     $candidate = $stmt->fetch(PDO::FETCH_OBJ);
-                    // If not found in db_2, try db_1 (candidates) as a fallback
+                    
                     if (!$candidate) {
-                        // Modified: CONCAT(first_name) as Name ensures only the first name is picked
+                        
                         $stmt = $db_1->prepare("SELECT id, first_name as Name, email as Email FROM candidates WHERE id = ?");
                         $stmt->execute([$candidate_id]);
                         $candidate = $stmt->fetch(PDO::FETCH_OBJ);
