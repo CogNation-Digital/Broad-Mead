@@ -395,7 +395,7 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
                         error_log("DATABASE ERROR: Failed to log mailshot (exception) for ID {$candidate_id}: " . $e->getMessage());
                     }
                 }
-            } // End of foreach ($candidate_ids as $candidate_id)
+            } 
 
             if ($error_count === 0) {
                 $_SESSION['success_message'] = "Mailshot processing completed. Successfully sent to $success_count candidates.";
