@@ -9,10 +9,10 @@ use PHPMailer\PHPMailer\Exception;
 // Redirect if user is not logged in (matching clients page logic)
 if (!isset($_COOKIE['USERID'])) {
     header("location: $LINK/login");
-    exit; // Always exit after a header redirect
+    exit; 
 }
 
-// Database configuration
+
 $host = 'localhost';
 $user = 'root';
 $password = '';
