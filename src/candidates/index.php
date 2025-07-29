@@ -367,7 +367,7 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
                             error_log("DATABASE ERROR: Failed to log mailshot (invalid candidate/email) for ID {$candidate_id}: " . $e->getMessage());
                         }
                     }
-                } catch (Exception $e) { // General exception during candidate processing
+                } catch (Exception $e) { 
                     $candidate_email = isset($candidate) && isset($candidate->Email) ? $candidate->Email : 'N/A';
                     $error_count++;
                     $log_status = 'failed';
@@ -375,7 +375,7 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
                     $temp_error_details[] = $log_error;
                     $console_logs[] = "ERROR: Exception for candidate ID {$candidate_id} - " . $e->getMessage();
                     error_log("ERROR: Exception for candidate ID {$candidate_id} - " . $e->getMessage());
-                    // Log the failure due to an exception
+                    
                     try {
                         $log_stmt = $db_2->prepare(
                             "INSERT INTO mailshot_logs (candidate_id, email, subject, template, body, status, error, sent_at)
