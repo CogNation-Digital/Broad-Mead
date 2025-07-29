@@ -121,7 +121,7 @@ $email_footer_html = '
 </div>';
 
 
-// Check if current user can export (case-insensitive)
+
 $canExport = in_array($loggedInUserEmail, array_map('strtolower', $allowedExportEmails));
 
 $mode = isset($_GET['mode']) ? $_GET['mode'] : 'candidates';
