@@ -243,10 +243,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
         if (!isset($_SESSION['error_message'])) { 
             foreach ($candidate_ids as $candidate_id) {
                 $log_status = ''; 
-                $log_error = ''; // Initialize error for each candidate
+                $log_error = ''; 
                 try {
                     error_log("Processing candidate ID: " . $candidate_id);
-                    // Try fetching candidate details from db_2 (_candidates) first
+                    
                     $stmt = $db_2->prepare("SELECT id, Name, Email, ProfileImage FROM _candidates WHERE id = ?");
                     $stmt->execute([$candidate_id]);
                     $candidate = $stmt->fetch(PDO::FETCH_OBJ);
