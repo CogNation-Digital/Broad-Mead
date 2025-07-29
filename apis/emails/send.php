@@ -3,7 +3,7 @@ require '../../vendor/autoload.php'; // Composer autoloader
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-use PHPMailer\PHPMailer\SMTP; // Include for SMTP::DEBUG_SERVER if needed
+use PHPMailer\PHPMailer\SMTP; 
 
 $mail = new PHPMailer(true);
 
@@ -31,7 +31,7 @@ try {
     </div>
     <br><strong>Disclaimer:</strong> This email is intended only for the use of the addressee named above and may be confidential or legally privileged. If you are not the addressee, you must not read it and must not use any information contained in nor copy it nor inform any person other than Nocturnal Recruitment or the addressee of its existence or contents. If you have received this email in error, please delete it and notify our team at <a href='mailto:info@nocturnalrecruitment.co.uk'>info@nocturnalrecruitment.co.uk</a></div>"; // Ensure the div is properly closed
 
-    // Construct the full email message by appending the signature
+  
     $message = "
         <p>Dear {$name},</p>
         <p>hey girl you almost got it girllly</p>
