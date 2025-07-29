@@ -200,16 +200,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
         $success_count = 0;
         $error_count = 0;
         $temp_error_details = []; // Use a temporary array for errors before setting session
-        $console_logs = []; // For debugging SMTP issues
+        $console_logs = []; 
 
-          $from_email = "learn@natec.icu";
+
+        $from_email = "info@nocturnalrecruitment.co.uk";
         $from_name = "Recruitment Team";
-        $smtp_host = 'smtp.titan.email';
-        $smtp_username = 'learn@natec.icu';
-        $smtp_password = '@WhiteDiamond0100';
+        $smtp_host = 'smtp.nocturnalrecruitment.co.uk';
+        $smtp_username = 'info@nocturnalrecruitment.co.uk';
+        $smtp_password = '@Bludiamond0100';
         $smtp_port = 587;
 
-        
+
 
         // Test SMTP connection once before sending emails to candidates
         try {
