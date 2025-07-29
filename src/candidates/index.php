@@ -430,8 +430,8 @@ if (isset($_GET['export'])) {
             throw new Exception('Database not connected for export.');
         }
 
-        $exportType = $_GET['export']; // 'excel' or 'csv'
-        $exportMode = $_GET['mode'] ?? 'candidates'; // 'candidates' or 'kpi'
+        $exportType = $_GET['export']; 
+        $exportMode = $_GET['mode'] ?? 'candidates';
 
         if (!in_array($exportType, ['excel', 'csv'])) {
             throw new Exception('Invalid export type.');
