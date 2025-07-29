@@ -133,10 +133,10 @@ unset($_SESSION['success_message']);
 unset($_SESSION['error_message']);
 
 
-// --- Mailshot Processing ---
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
     error_log("POST data received: " . print_r($_POST, true));
-    // Validation for mailshot form
+    
     if (empty($_POST['selected_candidates'])) {
         $_SESSION['error_message'] = "Please select at least one candidate.";
     } elseif (empty($_POST['subject'])) {
