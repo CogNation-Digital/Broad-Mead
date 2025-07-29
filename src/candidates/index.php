@@ -315,7 +315,7 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
                             error_log("ERROR: Failed to send to {$to} - " . $mail->ErrorInfo);
                         }
 
-                        // --- Start Mailshot Logging ---
+                        
                         try {
                             $log_stmt = $db_2->prepare(
                                 "INSERT INTO mailshot_logs (candidate_id, email, subject, template, body, status, error, sent_at)
