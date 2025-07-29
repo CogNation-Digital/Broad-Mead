@@ -270,9 +270,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
                             [$name, 'https://broad-mead.com/login', 'https://broad-mead.com/newsletter', 'https://broad-mead.com/events'],
                             $base_body
                         );
-// Add the email footer to every email
+
 $personalized_body_with_footer = $personalized_body . $email_footer_html;
-                        // Initialize PHPMailer for each email to ensure a clean state
+                        
                         $mail = new PHPMailer(true);
                         $mail->isSMTP();
                         $mail->Host = $smtp_host;
