@@ -194,9 +194,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
 
         $final_subject = empty($subject) ? $template_details['subject'] : $subject;
         $base_body = $template_details['body'];
-        // The sender email address (From header) will be the logged-in user's email
+    
         $from_email = $loggedInUserEmail;
-        $from_name = "Recruitment Team"; // Sender name
+        $from_name = "Recruitment Team"; 
         $success_count = 0;
         $error_count = 0;
         $temp_error_details = []; 
