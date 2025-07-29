@@ -411,7 +411,7 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
             }
         }
     }
-    // Always redirect after POST to prevent resubmission on refresh
+    
     header("Location: ?mode=mailshot");
     exit;
 }
