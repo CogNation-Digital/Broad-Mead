@@ -199,7 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
         $from_name = "Recruitment Team"; // Sender name
         $success_count = 0;
         $error_count = 0;
-        $temp_error_details = []; // Use a temporary array for errors before setting session
+        $temp_error_details = []; 
         $console_logs = []; 
 
 
