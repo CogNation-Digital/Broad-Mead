@@ -442,7 +442,7 @@ if (isset($_GET['export'])) {
         $headers = [];
 
         if ($exportMode === 'candidates') {
-            // Filters for candidate list export
+            
             $status_filter_export = $_GET['status'] ?? 'all';
             $keyword_filter_export = $_GET['keyword'] ?? '';
             $location_filter_export = $_GET['location'] ?? '';
