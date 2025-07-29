@@ -222,7 +222,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
             $test_mail->Password = $smtp_password;
             $test_mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $test_mail->Port = $smtp_port;
-            $test_mail->SMTPDebug = 0; // Set to 2 for verbose debug output during testing
+            $test_mail->SMTPDebug = 0; 
             $test_mail->Debugoutput = function($str, $level) use (&$console_logs) {
                 $console_logs[] = "SMTP DEBUG: " . trim($str);
             };
