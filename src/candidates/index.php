@@ -239,7 +239,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
             exit;
         }
 
-        // Proceed with sending emails only if SMTP test passed
+    
         if (!isset($_SESSION['error_message'])) { // Check session error message instead of local variable
             foreach ($candidate_ids as $candidate_id) {
                 $log_status = ''; // Initialize status for each candidate
