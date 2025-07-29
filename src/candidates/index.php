@@ -290,9 +290,9 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
                             )
                         );
 
-                        // Set the From address to the logged-in user's email
+                        
                         $mail->setFrom($from_email, $from_name);
-                        // Add a Reply-To header to the logged-in user's email for replies
+                        
                         $mail->addReplyTo($loggedInUserEmail, $from_name);
                         $mail->addAddress($to, $name);
                         $mail->isHTML(true); // Set email format to HTML
