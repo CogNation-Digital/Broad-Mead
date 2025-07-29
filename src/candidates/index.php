@@ -483,7 +483,7 @@ if (isset($_GET['export'])) {
             $stmt->execute($export_params);
             $raw_data_to_export = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Apply postcode distance filtering for export if enabled
+           
             if (!empty($center_postcode_export) && $distance_miles_export > 0) {
                 foreach ($raw_data_to_export as $candidate) {
                     if (!empty($candidate['Postcode'])) {
