@@ -561,9 +561,9 @@ if (isset($_GET['export'])) {
             header("Content-Type: text/csv");
             header("Content-Disposition: attachment; filename=\"$filename.csv\"");
             $output = fopen('php://output', 'w');
-            // Output headers
+            
             fputcsv($output, $headers);
-            // Output data rows
+            
             foreach ($data_to_export as $row) {
                 fputcsv($output, $row);
             }
