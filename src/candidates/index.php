@@ -16,10 +16,10 @@ if (!isset($_COOKIE['USERID'])) {
 $host = 'localhost';
 $user = 'root';
 $password = '';
-$dbname1 = 'broadmead'; // Legacy database
-$dbname2 = 'broadmead_v3'; // Primary, newer database
+$dbname1 = 'broadmead';
+$dbname2 = 'broadmead_v3'; 
 
-// Database connections
+
 try {
     $db_1 = new PDO('mysql:host=' . $host . ';dbname=' . $dbname1, $user, $password);
     $db_1->setAttribute(PDO::ATTR_DEFAULT_STR_PARAM, PDO::PARAM_STR);
