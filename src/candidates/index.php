@@ -538,12 +538,12 @@ if (isset($_GET['export'])) {
             die("No records found for export with the applied filters.");
         }
 
-        // Clear any existing output buffer to prevent header issues
+       
         if (ob_get_level()) {
             ob_end_clean();
         }
 
-        // Set appropriate headers for download
+     
         if ($exportType === 'excel') {
             header("Content-Type: application/vnd.ms-excel");
             header("Content-Disposition: attachment; filename=\"$filename.xls\"");
