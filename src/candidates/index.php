@@ -419,7 +419,7 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
 
 
 if (isset($_GET['export'])) {
-    // Check if the user is authorized to export
+    
     if (!$canExport) {
         die("Access Denied: You do not have permission to export data. Only authorized users (alex@nocturnalrecruitment.co.uk, j.dowler@nocturnalrecruitment.co.uk, chax@nocturnalrecruitment.co.uk) can export data.");
     }
