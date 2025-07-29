@@ -185,9 +185,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
                 'body' => $custom_template_content // Use the custom content from the textarea
             ];
         } else {
-            // Use predefined template, fallback to a generic if key is invalid
+            
             $template_details = $templates[$template_key] ?? [
-                'subject' => $subject, // Fallback subject
+                'subject' => $subject, 
                 'body' => "Hello [Name],\n\nThank you for being part of our network.\n\nBest regards,\nThe Recruitment Team"
             ];
         }
