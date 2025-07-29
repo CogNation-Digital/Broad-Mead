@@ -335,8 +335,8 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
                             error_log("DATABASE ERROR: Failed to log mailshot for candidate ID {$candidate_id}: " . $e->getMessage());
                            
                         }
-                        $mail->clearAddresses(); // Clear addresses for the next iteration
-                        $mail->clearAttachments(); // Clear attachments
+                        $mail->clearAddresses(); 
+                        $mail->clearAttachments(); 
                         usleep(100000); // 0.1 second delay to avoid hitting SMTP rate limits
                     } else { // Candidate not found or invalid email
                         $candidate_email = $candidate->Email ?? 'N/A';
