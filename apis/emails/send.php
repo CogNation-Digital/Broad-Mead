@@ -57,7 +57,7 @@ try {
     $mail->isHTML(true);
     $mail->Subject = $subject;
     $mail->Body = $message;
-    $mail->AltBody = strip_tags($message); // AltBody for plain text clients
+    $mail->AltBody = strip_tags($message); 
 
     $mail->send();
     echo '✅ Email sent successfully!';
