@@ -597,7 +597,7 @@ $candidates_for_display = [];
 $where_conditions = [];
 $params = [];
 
-// Apply filters from the form
+
 if (!empty($keyword_filter)) {
     $where_conditions[] = "(Name LIKE :keyword OR Email LIKE :keyword OR JobTitle LIKE :keyword)";
     $params[':keyword'] = '%' . $keyword_filter . '%';
@@ -613,7 +613,7 @@ if (!empty($position_filter)) {
     $params[':position'] = '%' . $position_filter . '%';
 }
 
-// Status filter is only applied if not 'all'
+
 if ($status_filter !== 'all') {
     $where_conditions[] = "Status = :status";
     $params[':status'] = $status_filter;
