@@ -478,7 +478,7 @@ if (isset($_GET['export'])) {
                 $export_where_clause = 'WHERE ' . implode(' AND ', $export_where_conditions);
             }
 
-            // Fetch data from _candidates table for export
+        
             $stmt = $db_2->prepare("SELECT id, Name, Email, JobTitle, Status, City, Postcode, Date, CreatedBy, ProfileImage FROM _candidates $export_where_clause ORDER BY Date DESC");
             $stmt->execute($export_params);
             $raw_data_to_export = $stmt->fetchAll(PDO::FETCH_ASSOC);
