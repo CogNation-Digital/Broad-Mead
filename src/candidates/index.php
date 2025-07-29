@@ -386,7 +386,7 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
                             ':email' => $candidate_email,
                             ':subject' => $final_subject,
                             ':template' => $template_key,
-                            ':body' => $personalized_body_with_footer ?? ($personalized_body ?? $base_body), // Use with footer if available// Use personalized if available, otherwise base
+                            ':body' => $personalized_body_with_footer ?? ($personalized_body ?? $base_body), 
                             ':status' => $log_status,
                             ':error' => $log_error
                         ]);
