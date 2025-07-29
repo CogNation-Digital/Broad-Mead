@@ -589,8 +589,8 @@ $distance_miles = isset($_GET['distance_miles']) ? (int)$_GET['distance_miles'] 
 $kpi_period = isset($_GET['kpi_period']) ? $_GET['kpi_period'] : 'current_week';
 $kpi_start_date = isset($_GET['kpi_start_date']) ? $_GET['kpi_start_date'] : '';
 $kpi_end_date = isset($_GET['kpi_end_date']) ? $_GET['kpi_end_date'] : '';
-$kpi_status_filter = isset($_GET['kpi_status_filter']) ? $_GET['kpi_status_filter'] : 'all'; // New KPI filter
-$kpi_location_filter = isset($_GET['kpi_location_filter']) ? trim($_GET['kpi_location_filter']) : ''; // New KPI filter
+$kpi_status_filter = isset($_GET['kpi_status_filter']) ? $_GET['kpi_status_filter'] : 'all'; 
+$kpi_location_filter = isset($_GET['kpi_location_filter']) ? trim($_GET['kpi_location_filter']) : ''; 
 
 
 $candidates_for_display = [];
