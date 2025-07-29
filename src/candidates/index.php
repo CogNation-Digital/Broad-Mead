@@ -425,7 +425,7 @@ if (isset($_GET['export'])) {
     }
 
     try {
-        // Use db_2 for exports as it's the primary candidate database
+    
         if (!isset($db_2)) {
             throw new Exception('Database not connected for export.');
         }
