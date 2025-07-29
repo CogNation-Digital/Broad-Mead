@@ -549,9 +549,9 @@ if (isset($_GET['export'])) {
             header("Content-Disposition: attachment; filename=\"$filename.xls\"");
             
             echo implode("\t", $headers) . "\r\n";
-            // Output data rows
+            
             foreach ($data_to_export as $row) {
-                // Ensure values are tab-separated and handle potential issues with special characters for Excel
+            
                 echo implode("\t", array_values($row)) . "\r\n";
             }
             exit;
