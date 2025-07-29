@@ -337,8 +337,8 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
                         }
                         $mail->clearAddresses(); 
                         $mail->clearAttachments(); 
-                        usleep(100000); // 0.1 second delay to avoid hitting SMTP rate limits
-                    } else { // Candidate not found or invalid email
+                        usleep(100000); 
+                    } else { 
                         $candidate_email = $candidate->Email ?? 'N/A';
                         $error_count++;
                         $log_status = 'failed';
