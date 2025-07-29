@@ -411,11 +411,13 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
             }
         }
     }
-    
+    // Always redirect after POST to prevent resubmission on refresh
     header("Location: ?mode=mailshot");
     exit;
+}
 
-
+// --- Export Handler (must come before ANY output) ---
+// This section handles both 'candidates' and 'kpi' report exports
 if (isset($_GET['export'])) {
     // Check if the user is authorized to export
     if (!$canExport) {
