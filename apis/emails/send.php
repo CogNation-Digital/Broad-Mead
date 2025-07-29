@@ -36,20 +36,23 @@ try {
         <p>Dear {$name},</p>
         <p>hey girl you almost got it girllly</p>
         <p>Replying to this will send your email to info@nocturnalrecruitment.co.uk</p>
-    " . $signature; // Append the signature here
+    " . $signature; 
 
-    // SMTP settings
+   
     $mail->isSMTP();
     $mail->Host = 'smtp.gmail.com';
     $mail->SMTPAuth = true;
     $mail->Username = 'recruitmentnocturnal@gmail.com';
-    $mail->Password = 'hbaa qcvq wxkk kmcm'; // Your 16-character app password
+    $mail->Password = 'hbaa qcvq wxkk kmcm'; 
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
     $mail->Port = 465;
 
     $mail->setFrom('recruitmentnocturnal@gmail.com', 'Nocturnal Recruitment');
     $mail->addReplyTo('info@nocturnalrecruitment.co.uk', 'Nocturnal Recruitment'); // Correct Reply-To
     $mail->addAddress($email, $name);
+
+
+
 
     $mail->isHTML(true);
     $mail->Subject = $subject;

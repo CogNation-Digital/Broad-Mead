@@ -576,6 +576,7 @@ if (isset($_GET['export'])) {
 }
 
 
+
 $keyword_filter = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
 $location_filter = isset($_GET['location']) ? trim($_GET['location']) : '';
 $position_filter = isset($_GET['position']) ? trim($_GET['position']) : '';
