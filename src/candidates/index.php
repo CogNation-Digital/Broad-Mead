@@ -126,7 +126,7 @@ $canExport = in_array($loggedInUserEmail, array_map('strtolower', $allowedExport
 
 $mode = isset($_GET['mode']) ? $_GET['mode'] : 'candidates';
 
-// --- Retrieve and Clear Session Messages (for PRG pattern) ---
+
 $success_message = $_SESSION['success_message'] ?? null;
 $error_message = $_SESSION['error_message'] ?? null;
 unset($_SESSION['success_message']);
