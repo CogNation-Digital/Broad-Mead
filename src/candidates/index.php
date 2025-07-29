@@ -522,9 +522,9 @@ if (isset($_GET['export'])) {
 
             $filename = "kpi_report_detailed_".date('Y-m-d')."_".$kpi_period_export;
             if (!empty($data_to_export)) {
-                // Define specific headers for KPI detailed candidates export
+               
                 $headers = ['ID', 'Name', 'Email', 'Job Title', 'Status', 'City', 'Postcode', 'Date Added', 'Added By', 'Profile Picture URL'];
-                // Map CreatedBy IDs to names for export
+             
                 $temp_data = [];
                 foreach ($data_to_export as $row) {
                     $row['CreatedBy'] = $createdByMapping[$row['CreatedBy']] ?? 'Unknown';
