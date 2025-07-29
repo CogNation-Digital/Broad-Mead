@@ -45,12 +45,12 @@ if ($USERID) {
             $loggedInUserEmail = strtolower($user->Email); // Apply strtolower for case-insensitive comparison
         } else {
             error_log("Logged-in user's email not found or invalid for UserID: " . $USERID);
-            // Fallback or handle error if email is not found or invalid
-            $loggedInUserEmail = "default_sender@yourdomain.com"; // Fallback email
+            
+            $loggedInUserEmail = "default_sender@yourdomain.com"; 
         }
     } catch (PDOException $e) {
         error_log("Error fetching user email: " . $e->getMessage());
-        $loggedInUserEmail = "default_sender@yourdomain.com"; // Fallback email on DB error
+        $loggedInUserEmail = "default_sender@yourdomain.com";
     }
 } else {
     $loggedInUserEmail = "default_sender@yourdomain.com"; 
