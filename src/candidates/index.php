@@ -641,7 +641,7 @@ if (!empty($center_postcode) && $distance_miles > 0) {
                 }
             } catch (Exception $e) {
                 error_log("Postcode distance calculation error for display: " . $e->getMessage());
-                // If an error occurs (e.g., invalid postcode), exclude the candidate from distance filter
+        
             }
         }
     }
@@ -649,8 +649,7 @@ if (!empty($center_postcode) && $distance_miles > 0) {
     $candidates_for_display = $raw_candidates_for_display;
 }
 
-// --- Postcode and Distance Calculation Functions ---
-// These functions are used for location-based filtering
+
 function getPostcodeCoordinates($postcode) {
     static $postcodeCache = []; // Cache to avoid repeated API calls for the same postcode
     if (isset($postcodeCache[$postcode])) {
