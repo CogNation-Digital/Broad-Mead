@@ -2,7 +2,7 @@
 session_start(); // Start the session at the very beginning to use session variables
 error_reporting(E_ALL);
 ini_set("display_errors", 1);
-require_once '../../includes/config.php'; // Ensure this includes necessary configurations like $theme, $LINK, etc.
+require_once '../../includes/config.php'; 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
