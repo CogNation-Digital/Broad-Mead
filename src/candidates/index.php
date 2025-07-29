@@ -592,7 +592,7 @@ $kpi_end_date = isset($_GET['kpi_end_date']) ? $_GET['kpi_end_date'] : '';
 $kpi_status_filter = isset($_GET['kpi_status_filter']) ? $_GET['kpi_status_filter'] : 'all'; // New KPI filter
 $kpi_location_filter = isset($_GET['kpi_location_filter']) ? trim($_GET['kpi_location_filter']) : ''; // New KPI filter
 
-// --- Candidate Data Fetching for Display (for 'candidates' and 'mailshot' modes) ---
+
 $candidates_for_display = [];
 $where_conditions = [];
 $params = [];
