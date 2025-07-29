@@ -624,13 +624,13 @@ if (!empty($where_conditions)) {
     $where_clause = 'WHERE ' . implode(' AND ', $where_conditions);
 }
 
-// Fetch candidates from the primary database (_candidates in db_2)
+
 $query_db2 = "SELECT id, Name, Email, JobTitle, Status, City, Postcode, Date, CreatedBy, ProfileImage FROM _candidates $where_clause ORDER BY Date DESC";
 $stmt_db2 = $db_2->prepare($query_db2);
 $stmt_db2->execute($params);
 $raw_candidates_for_display = $stmt_db2->fetchAll(PDO::FETCH_ASSOC);
 
-// Apply postcode distance filtering for display
+
 if (!empty($center_postcode) && $distance_miles > 0) {
     foreach ($raw_candidates_for_display as $candidate) {
         if (!empty($candidate['Postcode'])) {
