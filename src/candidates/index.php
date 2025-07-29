@@ -510,14 +510,13 @@ if (isset($_GET['export'])) {
                 $data_to_export = $temp_data;
             }
         } elseif ($exportMode === 'kpi') {
-            // Filters for KPI report export
+       
             $kpi_period_export = $_GET['kpi_period'] ?? 'current_week';
             $kpi_start_date_export = $_GET['kpi_start_date'] ?? '';
             $kpi_end_date_export = $_GET['kpi_end_date'] ?? '';
             $kpi_status_filter_export = $_GET['kpi_status_filter'] ?? 'all';
             $kpi_location_filter_export = $_GET['kpi_location_filter'] ?? '';
 
-            // Recalculate KPIs with export filters to get the detailed candidates list
             $kpi_data_for_export = calculateKPIs($db_2, $kpi_period_export, $kpi_start_date_export, $kpi_end_date_export, $kpi_status_filter_export, $kpi_location_filter_export);
             $data_to_export = $kpi_data_for_export['detailed_candidates'] ?? [];
 
