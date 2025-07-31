@@ -72,11 +72,6 @@ unset($_SESSION['error_message']);
 
 
 $email_footer_html = '
-<div style="font-family: Arial, sans-serif; font-size: 10px; color: #ffffff; line-height: 1.2; background-color: #1a1a1a; padding: 10px; max-width: 400px; margin: 0 auto;">
-    <div style="text-align: center; margin-bottom: 8px;">
-        <img src="https://i.ibb.co/L5w2t8J/nocturnal-recruitment-logo.png" alt="Nocturnal Recruitment Solutions Logo" style="max-width: 120px; height: auto; display: block; margin: 0 auto; border: 0;">
-    </div>
-    
     <div style="text-align: center; margin-bottom: 8px;">
         <p style="margin: 0; padding: 0; font-size: 10px; color: #6daffb;">
             Office 16, 321 High Road, RM6 6AX | 0208 050 2708 | 0755 357 0871
