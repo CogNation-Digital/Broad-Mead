@@ -72,6 +72,7 @@ unset($_SESSION['error_message']);
 
 
 $email_footer_html = '
+
     <div style="text-align: center; margin-bottom: 8px;">
         <p style="margin: 0; padding: 0; font-size: 10px; color: #6daffb;">
             Office 16, 321 High Road, RM6 6AX | 0208 050 2708 | 0755 357 0871
@@ -107,7 +108,6 @@ $email_footer_html = '
     </div>
 </div>
 ';
-
 
 $allowedMailshotEmails = [
     'jayden@nocturnalrecruitment.co.uk',
