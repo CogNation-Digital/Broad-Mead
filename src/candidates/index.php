@@ -6,19 +6,16 @@ require_once '../../includes/config.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-
 if (!isset($_COOKIE['USERID'])) {
     header("location: $LINK/login");
     exit; 
 }
-
 
 $host = 'localhost';
 $user = 'root';
 $password = '';
 $dbname1 = 'broadmead';
 $dbname2 = 'broadmead_v3'; 
-
 
 try {
     $db_1 = new PDO('mysql:host=' . $host . ';dbname=' . $dbname1, $user, $password);
@@ -31,7 +28,6 @@ try {
     echo "<b>Database Connection Error: </b> " . $e->getMessage();
     exit;
 }
-
 
 $loggedInUserEmail = '';
 $USERID = $_COOKIE['USERID'] ?? null;
@@ -56,13 +52,22 @@ if ($USERID) {
     $loggedInUserEmail = "default_sender@yourdomain.com"; 
 }
 
-
-
 $allowedExportEmails = [
     'alex@nocturnalrecruitment.co.uk',
     'j.dowler@nocturnalrecruitment.co.uk',
     'chax@nocturnalrecruitment.co.uk'
 ];
+
+
+$canExport = in_array($loggedInUserEmail, array_map('strtolower', $allowedExportEmails));
+
+$mode = isset($_GET['mode']) ? $_GET['mode'] : 'candidates';
+
+
+$success_message = $_SESSION['success_message'] ?? null;
+$error_message = $_SESSION['error_message'] ?? null;
+unset($_SESSION['success_message']);
+unset($_SESSION['error_message']);
 
 $email_footer_html = '
 <br><br>
@@ -122,21 +127,42 @@ $email_footer_html = '
 
 
 
-$canExport = in_array($loggedInUserEmail, array_map('strtolower', $allowedExportEmails));
+$allowedMailshotEmails = [
+    'jayden@nocturnalrecruitment.co.uk',
+    'jourdain@nocturnalrecruitment.co.uk', 
+    'junaid@nocturnalrecruitment.co.uk',
+    'casey@nocturnalrecruitment.co.uk',
+    'samantha@nocturnalrecruitment.co.uk',
+    'millie@nocturnalrecruitment.co.uk',
+    'valter@nocturnalrecruitment.co.uk',
+    'euphemiachikungulu347@gmail.com',
+    'alex@nocturnalrecruitment.co.uk',
+    'j.dowler@nocturnalrecruitment.co.uk',
+    'chax@nocturnalrecruitment.co.uk'
+];
 
-$mode = isset($_GET['mode']) ? $_GET['mode'] : 'candidates';
+$canSendMailshot = in_array($loggedInUserEmail, array_map('strtolower', $allowedMailshotEmails));
+
+error_log("Debug - Can send mailshot: " . ($canSendMailshot ? 'YES' : 'NO'));
+error_log("Debug - Logged in user email: " . $loggedInUserEmail);
 
 
-$success_message = $_SESSION['success_message'] ?? null;
-$error_message = $_SESSION['error_message'] ?? null;
-unset($_SESSION['success_message']);
-unset($_SESSION['error_message']);
-
+if ($mode === 'mailshot' && !$canSendMailshot) {
+    die("Access Denied: You do not have permission to send mailshots. Only authorized users can send mailshots.");
+}
 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
     error_log("POST data received: " . print_r($_POST, true));
+
+     if (!$canSendMailshot) {
+        $_SESSION['error_message'] = "Access Denied: You are not authorized to send mailshots. Only authorized recruitment team members can send mailshots.";
+        header("Location: ?mode=mailshot");
+        exit;
+    }
     
+    error_log("POST data received: " . print_r($_POST, true));
+     
     if (empty($_POST['selected_candidates'])) {
         $_SESSION['error_message'] = "Please select at least one candidate.";
     } elseif (empty($_POST['subject'])) {
@@ -203,16 +229,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
         $console_logs = []; 
 
 
-        $from_email = "info@nocturnalrecruitment.co.uk";
+      $from_email = "learn@natec.icu";
         $from_name = "Recruitment Team";
-        $smtp_host = 'smtp.nocturnalrecruitment.co.uk';
-        $smtp_username = 'info@nocturnalrecruitment.co.uk';
-        $smtp_password = '@Bludiamond0100';
+        $smtp_host = 'smtp.titan.email';
+        $smtp_username = 'learn@natec.icu';
+        $smtp_password = '@WhiteDiamond0100';
         $smtp_port = 587;
 
 
-
-       
         try {
             $test_mail = new PHPMailer(true);
             $test_mail->isSMTP();
@@ -414,8 +438,9 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
     
     header("Location: ?mode=mailshot");
     exit;
-}
 
+}
+  
 
 
 if (isset($_GET['export'])) {
@@ -2018,3 +2043,4 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
     <?php // include "../../includes/footer_scripts.php"; ?>
 </body>
 </html>
+
