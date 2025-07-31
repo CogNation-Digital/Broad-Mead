@@ -419,12 +419,9 @@ if (isset($_POST['send_mailshot'])) {
     }
 }
 
-// Handle search form submission (this block seems to handle an older search method)
-// The current quick filters are handled by JavaScript
+
 if (isset($_POST['Search'])) {
-    // This block seems to be for a different search mechanism, possibly for logging searches.
-    // The current filtering is done client-side via JavaScript's applyFilters().
-    // If this is still needed for server-side search logging, ensure $SearchID is correctly generated.
+
     $Name = $_POST['Name'] ?? '';
     $ClientType = $_POST['ClientType'] ?? '';
     $_client_id = $_POST['_client_id'] ?? '';
@@ -434,59 +431,38 @@ if (isset($_POST['Search'])) {
     $Postcode = $_POST['Postcode'] ?? '';
     $City = $_POST['City'] ?? '';
 
-    // Assuming $SearchID is generated elsewhere, e.g., uniqid()
-    // if (!empty($SearchID)) {
-    //     $query = $db_2->prepare("INSERT INTO `search_queries`(`SearchID`, `column`, `value`)
-    //             VALUES (:SearchID, :column, :value)");
-
-    //     foreach ($_POST as $key => $value) {
-    //         if (!empty($value) && $key !== 'Search') {
-    //             $query->bindParam(':SearchID', $SearchID);
-    //             $query->bindParam(':column', $key);
-    //             $query->bindParam(':value', $value);
-    //             $query->execute();
-    //         }
-    //     }
-
-    //     header("location: $LINK/clients/?q=$SearchID");
-    //     exit();
-    // }
 }
 
-// Handle delete operation
+
 if (isset($_POST['delete'])) {
     $ID = $_POST['ID'];
     $name = $_POST['name'];
     $reason = $_POST['reason'];
 
-    // Using $db_2 for _clients table
+   
     $stmt = $db_2->prepare("DELETE FROM `_clients` WHERE ClientID = :ID");
     $stmt->bindParam(':ID', $ID);
 
     if ($stmt->execute()) {
         $NOTIFICATION = ($NAME ?? 'A user') . " has successfully deleted the client named '$name'. Reason for deletion: $reason.";
-        // Assuming Notify function is defined in config.php
+      
         if (function_exists('Notify')) {
              Notify($USERID, $ClientKeyID, $NOTIFICATION);
         }
     } else {
         error_log("Error deleting record: " . implode(", ", $stmt->errorInfo()));
-        // Optionally set an error message for display
+      
     }
 }
 
-// Re-defining $SearchID and $isTab for page rendering
+
 $SearchID = isset($_GET['q']) ? $_GET['q'] : "";
 $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
 
-// Client Statuses (assuming these are defined in config.php or similar)
-// Example: $clients_status = ['targeted', 'not updated', 'active', 'inactive', 'archived'];
-// If not defined, uncomment and define it here:
+
 $clients_status = ['targeted', 'not updated', 'active', 'inactive', 'archived'];
 
 
-// Mapping for CreatedBy IDs to Names (for display in tables)
-// This mapping needs to be defined for the client list as well.
 $createdByMapping = [
     "1" => "Chax Shamwana",
     "10" => "Millie Brown",
@@ -497,7 +473,7 @@ $createdByMapping = [
     "9" => "Jack Dowler"
 ];
 
-// Ensure $ClientKeyID and $USERID are defined for rendering, if not already from config.php
+
 $ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1; // Example: Fetch from cookie or default
 $USERID = $USERID ?? $_COOKIE['USERID'] ?? 1; // Example: Fetch user's name
 $NAME = $NAME ?? 'Guest User'; // Example: Fetch user's name
