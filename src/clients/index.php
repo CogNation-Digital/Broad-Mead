@@ -110,6 +110,7 @@ $email_footer_html = '
         </a>.
     </div>
 </div>';
+
 $allowedMailshotEmails = [
     'jayden@nocturnalrecruitment.co.uk',
     'jourdain@nocturnalrecruitment.co.uk', 
@@ -252,7 +253,7 @@ if (isset($_POST['send_mailshot'])) {
     } elseif (empty($mailshot_message)) {
         $error_message = "Email message is required.";
     } else {
-        // SMTP Configuration
+       
         $from_email = "learn@natec.icu";
         $from_name = "Recruitment Team";
         $smtp_host = 'smtp.titan.email';
@@ -265,7 +266,7 @@ if (isset($_POST['send_mailshot'])) {
         $failed_sends = 0;
         $error_details = [];
 
-        // Test SMTP connection first
+      
         try {
             $test_mail = new PHPMailer(true);
             $test_mail->isSMTP();
@@ -285,19 +286,19 @@ if (isset($_POST['send_mailshot'])) {
             error_log("SMTP Error: " . $e->getMessage());
         }
 
-        // Proceed if SMTP test passed
+        
         if (!isset($error_message)) {
             foreach ($selected_clients as $client_id) {
                 try {
-                    // Get client details from either database
+                  
                     $client = null;
 
-                    // Try broadmead_v3 first
+                  
                     $stmt = $db_2->prepare("SELECT Name, Email FROM _clients WHERE ClientID = ?");
                     $stmt->execute([$client_id]);
                     $client = $stmt->fetch();
 
-                    // If not found, try broadmead
+                 
                     if (!$client) {
                         $stmt = $db_1->prepare("SELECT Name, Email FROM clients WHERE id = ?");
                         $stmt->execute([$client_id]);
