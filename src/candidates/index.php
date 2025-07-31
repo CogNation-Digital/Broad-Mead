@@ -69,62 +69,116 @@ $error_message = $_SESSION['error_message'] ?? null;
 unset($_SESSION['success_message']);
 unset($_SESSION['error_message']);
 
+
+
 $email_footer_html = '
-<br><br>
-<div style="font-family: Arial, sans-serif; font-size: 12px; color: #333333; line-height: 1.5; background-color: #1a1a1a; padding: 20px; color: #ffffff;">
-    <div style="text-align: center; margin-bottom: 20px;">
-        <img src="https://i.ibb.co/L5w2t8J/nocturnal-recruitment-logo.png" alt="Nocturnal Recruitment Solutions" style="max-width: 200px; height: auto; display: block; margin: 0 auto;">
+<div style="font-family: Arial, sans-serif; font-size: 10px; color: #ffffff; line-height: 1.2; background-color: #1a1a1a; padding: 10px; max-width: 400px; margin: 0 auto;">
+    <!-- Logo Section -->
+    <div style="text-align: center; margin-bottom: 8px;">
+        <img src="https://i.ibb.co/L5w2t8J/nocturnal-recruitment-logo.png" alt="Nocturnal Recruitment Solutions" style="max-width: 120px; height: auto; display: block; margin: 0 auto; border: 0;">
     </div>
-    <div style="text-align: center; margin-bottom: 15px;">
-        <p style="margin: 0; padding: 0; font-size: 12px; color: #ffffff;">
-            <img src="https://i.ibb.co/h14251P/location-icon.png" alt="Location" style="vertical-align: middle; width: 14px; height: 14px; margin-right: 5px;">
-            <span style="color: #6daffb;">Nocturnal Recruitment, Office 16, 321 High Road, RM6 6AX</span>
+    
+    <!-- Contact Information -->
+    <div style="text-align: center; margin-bottom: 8px;">
+        <p style="margin: 0; padding: 0; font-size: 10px; color: #6daffb;">
+            Office 16, 321 High Road, RM6 6AX | 0208 050 2708 | 0755 357 0871
         </p>
-        <p style="margin: 5px 0 0 0; padding: 0; font-size: 12px; color: #ffffff;">
-            <img src="https://i.ibb.co/yY1h976/phone-icon.png" alt="Phone" style="vertical-align: middle; width: 14px; height: 14px; margin-right: 5px;">
-            <span style="color: #6daffb;">0208 050 2708</span> &nbsp;
-            <img src="https://i.ibb.co/N710N5M/mobile-icon.png" alt="Mobile" style="vertical-align: middle; width: 14px; height: 14px; margin-right: 5px;">
-            <span style="color: #6daffb;">0755 357 0871</span> &nbsp;
-            <img src="https://i.ibb.co/Jk1n6rK/email-icon.png" alt="Email" style="vertical-align: middle; width: 14px; height: 14px; margin-right: 5px;">
-            <a href="mailto:chax@nocturnalrecruitment.co.uk" style="color: #6daffb; text-decoration: none;">chax@nocturnalrecruitment.co.uk</a>
-        </p>
-        <p style="margin: 5px 0 0 0; padding: 0; font-size: 12px; color: #ffffff;">
-            <img src="https://i.ibb.co/M9d5NnL/website-icon.png" alt="Website" style="vertical-align: middle; width: 14px; height: 14px; margin-right: 5px;">
+        <p style="margin: 2px 0 0 0; padding: 0; font-size: 10px;">
+            <a href="mailto:chax@nocturnalrecruitment.co.uk" style="color: #6daffb; text-decoration: none;">chax@nocturnalrecruitment.co.uk</a> | 
             <a href="https://www.nocturnalrecruitment.co.uk" target="_blank" style="color: #6daffb; text-decoration: none;">www.nocturnalrecruitment.co.uk</a>
         </p>
     </div>
 
-    <div style="text-align: center; margin-bottom: 20px;">
-        <!-- LinkedIn Icon - Already correct -->
-        <a href="https://www.linkedin.com/company/nocturnalrecruitment" target="_blank" style="margin: 0 5px; display: inline-block;">
-            <img src="https://i.ibb.co/zQJ6x0n/linkedin-icon.png" alt="LinkedIn" style="width: 30px; height: 30px;">
+    <!-- Social Media Icons and REC Logo -->
+    <div style="text-align: center; margin-bottom: 8px;">
+        <a href="https://www.linkedin.com/company/nocturnalrecruitment" target="_blank" style="display: inline-block; margin: 0 3px; text-decoration: none;">
+            <img src="https://i.ibb.co/zQJ6x0n/linkedin-icon.png" alt="LinkedIn" style="width: 20px; height: 20px; border: 0; vertical-align: middle;">
         </a>
-        <!-- Instagram Icon - Already correct -->
-        <a href="https://www.instagram.com/nocturnalrecruitment" target="_blank" style="margin: 0 5px; display: inline-block;">
-            <img src="https://i.ibb.co/gST1V5g/instagram-icon.png" alt="Instagram" style="width: 30px; height: 30px;">
+        <a href="https://www.instagram.com/nocturnalrecruitment" target="_blank" style="display: inline-block; margin: 0 3px; text-decoration: none;">
+            <img src="https://i.ibb.co/gST1V5g/instagram-icon.png" alt="Instagram" style="width: 20px; height: 20px; border: 0; vertical-align: middle;">
         </a>
-        <!-- Facebook Icon - Already correct -->
-        <a href="https://www.facebook.com/nocturnalrecruitment" target="_blank" style="margin: 0 5px; display: inline-block;">
-            <img src="https://i.ibb.co/g3139V7/facebook-icon.png" alt="Facebook" style="width: 30px; height: 30px;">
-        </a>
-        <!-- REC Corporate Member - Fixed the duplicate URL issue -->
-        <img src="https://i.ibb.co/mXp8qKJ/rec-corporate-member.png" alt="REC Corporate Member" style="vertical-align: middle; height: 30px; margin-left: 10px;">
+        <a href="https://www.facebook.com/nocturnalrecruitment" target="_blank" style="display: inline-block; margin: 0 3px; text-decoration: none;">
+            <img src="https://i.ibb.co/g3139V7/facebook-icon.png" alt="Facebook" style="width: 20px; height: 20px; border: 0; vertical-align: middle;">
     </div>
 
-    <p style="text-align: center; margin: 0 0 10px 0; font-size: 12px; font-weight: bold; color: #ffffff;">
-        Company Registration – 11817091
-    </p>
-    <p style="margin: 0; font-style: italic; color: #aaaaaa; text-align: center; font-size: 10px;">
-        Disclaimer* This email is intended only for the use of the addressee named above and may be confidential or legally privileged. If you are not the addressee, you must not read it and must not use any information contained in nor copy it nor inform any person other than Nocturnal Recruitment or the addressee of its existence or contents. If you have received this email in error, please delete it and notify our team at <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #6daffb; text-decoration: none;">info@nocturnalrecruitment.co.uk</a>
-    </p>
-    <div style="text-align: center; margin-top: 15px; font-size: 11px; color: #888888;">
-        BroadMead 3.0 &copy; 2025 - a product of
-        <a href="https://www.cog-nation.com" target="_blank" style="color: #E1AD01; text-decoration: none; font-weight: bold;">
-            CogNation Digital
-        </a>.
-    </div>
-</div>';
 
+    <!-- Company Registration & Footer -->
+    <div style="text-align: center; border-top: 1px solid #333; padding-top: 6px;">
+        <p style="margin: 0 0 4px 0; font-size: 9px; color: #ffffff;">Company Registration – 11817091</p>
+        <p style="margin: 0 0 4px 0; font-size: 8px; color: #888888; line-height: 1.3;">
+            <strong>Disclaimer:</strong> This email is confidential. If received in error, delete and notify 
+            <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #6daffb; text-decoration: none;">info@nocturnalrecruitment.co.uk</a>
+        </p>
+        <p style="margin: 0; font-size: 8px; color: #666;">
+            BroadMead 3.0 &copy; 2025 - 
+            <a href="https://www.cog-nation.com" target="_blank" style="color: #E1AD01; text-decoration: none;">CogNation Digital</a>
+        </p>
+    </div>
+</div>
+';
+
+// Example usage in an email:
+/*
+$message = '
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4;">
+    <div style="padding: 20px;">
+        <!-- Your email content goes here -->
+        <div style="background-color: #ffffff; padding: 20px; border-radius: 5px;">
+            <h1>Your Email Subject</h1>
+            <p>Your email content...</p>
+        </div>
+        
+        <!-- Email Footer -->
+        ' . $email_footer_html . '
+    </div>
+</body>
+</html>
+';
+
+// Set headers for HTML email
+$headers = "MIME-Version: 1.0" . "\r\n";
+$headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
+$headers .= 'From: chax@nocturnalrecruitment.co.uk' . "\r\n";
+
+// Send email
+// mail($to, $subject, $message, $headers);
+
+// Example usage in an email:
+/*
+$message = '
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4;">
+    <div style="padding: 20px;">
+        <!-- Your email content goes here -->
+        <div style="background-color: #ffffff; padding: 20px; border-radius: 5px;">
+            <h1>Your Email Subject</h1>
+            <p>Your email content...</p>
+        </div>
+        
+        <!-- Email Footer -->
+        ' . $email_footer_html . '
+    </div>
+</body>
+</html>
+';
+
+// Set headers for HTML email
+$headers = "MIME-Version: 1.0" . "\r\n";
+$headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
+$headers .= 'From: chax@nocturnalrecruitment.co.uk' . "\r\n";
+
+// Send email
+// mail($to, $subject, $message, $headers);
+*/
 
 
 $allowedMailshotEmails = [
@@ -178,26 +232,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
         error_log("Processing mailshot for " . count($candidate_ids) . " candidates");
 
         $templates = [
-            'job_alert' => [
-                'subject' => 'New Job Opportunities Matching Your Profile',
-                'body' => "Hello [Name],\n\nWe have new job opportunities that match your profile. Log in to your account to view them:\n\n[LoginLink]\n\nBest regards,\nThe Recruitment Team"
-            ],
-            'newsletter' => [
-                'subject' => 'Our Latest Industry Insights',
-                'body' => "Hello [Name],\n\nCheck out our latest newsletter with industry insights and job tips:\n\n[NewsletterLink]\n\nBest regards,\nThe Recruitment Team"
-            ],
-            'event_invitation' => [
-                'subject' => 'Invitation to Recruitment Event',
-                'body' => "Hello [Name],\n\nYou are invited to our upcoming recruitment event. Please RSVP here:\n\n[EventLink]\n\nBest regards,\nThe Recruitment Team"
-            ],
-            'follow_up' => [
-                'subject' => 'Following Up on Your Application',
-                'body' => "Hello [Name],\n\nFollowing up on your recent application. Any updates?\n\nBest regards,\nThe Recruitment Team"
-            ],
-            'welcome' => [
-                'subject' => 'Welcome to Our Candidate Network',
-                'body' => "Hello [Name],\n\nWelcome to our candidate database! We will contact you when we find a match.\n\nBest regards,\nThe Recruitment Team"
-            ],
+            // 'job_alert' => [
+            //     'subject' => 'New Job Opportunities Matching Your Profile',
+            //     'body' => "Hello [Name],\n\nWe have new job opportunities that match your profile. Log in to your account to view them:\n\n[LoginLink]\n\nBest regards,\nThe Recruitment Team"
+            // ],
+            // 'newsletter' => [
+            //     'subject' => 'Our Latest Industry Insights',
+            //     'body' => "Hello [Name],\n\nCheck out our latest newsletter with industry insights and job tips:\n\n[NewsletterLink]\n\nBest regards,\nThe Recruitment Team"
+            // ],
+            // 'event_invitation' => [
+            //     'subject' => 'Invitation to Recruitment Event',
+            //     'body' => "Hello [Name],\n\nYou are invited to our upcoming recruitment event. Please RSVP here:\n\n[EventLink]\n\nBest regards,\nThe Recruitment Team"
+            // ],
+            // 'follow_up' => [
+            //     'subject' => 'Following Up on Your Application',
+            //     'body' => "Hello [Name],\n\nFollowing up on your recent application. Any updates?\n\nBest regards,\nThe Recruitment Team"
+            // ],
+            // 'welcome' => [
+            //     'subject' => 'Welcome to Our Candidate Network',
+            //     'body' => "Hello [Name],\n\nWelcome to our candidate database! We will contact you when we find a match.\n\nBest regards,\nThe Recruitment Team"
+            // ],
             'custom' => [ 
                 'subject' => $subject,
                 'body' => $custom_template_content
@@ -212,10 +266,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
             ];
         } else {
             
-            $template_details = $templates[$template_key] ?? [
-                'subject' => $subject, 
-                'body' => "Hello [Name],\n\nThank you for being part of our network.\n\nBest regards,\nThe Recruitment Team"
-            ];
+            // $template_details = $templates[$template_key] ?? [
+            //     'subject' => $subject, 
+            //     'body' => "Hello [Name],\n\nThank you for being part of our network.\n\nBest regards,\nThe Recruitment Team"
+            // ];
         }
 
         $final_subject = empty($subject) ? $template_details['subject'] : $subject;
@@ -1628,11 +1682,11 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                                 <label for="template">Select Template:</label>
                                 <select id="template" name="template" class="form-control filter-select" onchange="toggleCustomTemplate()">
                                     <option value="">-- Select --</option>
-                                    <option value="job_alert">Job Alert</option>
+                                    <!-- <option value="job_alert">Job Alert</option>
                                     <option value="newsletter">Newsletter</option>
                                     <option value="event_invitation">Event Invitation</option>
                                     <option value="follow_up">Follow Up</option>
-                                    <option value="welcome">Welcome</option>
+                                    <option value="welcome">Welcome</option> -->
                                     <option value="custom">Custom Template</option>
                                 </select>
                             </div>
