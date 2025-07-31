@@ -503,10 +503,10 @@ $createdByMapping = [
 
 // Ensure $ClientKeyID and $USERID are defined for rendering, if not already from config.php
 $ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1; // Example: Fetch from cookie or default
-$USERID = $USERID ?? $_COOKIE['USERID'] ?? 1; // Example: Fetch user's name
-$NAME = $NAME ?? 'Guest User'; // Example: Fetch user's name
+$USERID = $USERID ?? $_COOKIE['USERID'] ?? 1; 
+$NAME = $NAME ?? 'Guest User'; 
 
-// Variable to control CSV export button visibility
+
 $showCsvExportButton = in_array($loggedInUserEmail, $allowedExportEmails);
 
 ?>
@@ -580,7 +580,7 @@ $showCsvExportButton = in_array($loggedInUserEmail, $allowedExportEmails);
                                     <select class="form-select" id="clientTypeFilter" onchange="applyFilters()">
                                         <option value="">All Types</option>
                                         <?php
-                                        // Fetch distinct client types from _clients table
+                                        
                                         $client_types_query = $db_2->query("SELECT DISTINCT ClientType FROM _clients WHERE ClientType IS NOT NULL AND ClientType != '' ORDER BY ClientType ASC");
                                         $client_types = $client_types_query->fetchAll(PDO::FETCH_COLUMN);
                                         foreach ($client_types as $type) { ?>
@@ -655,11 +655,11 @@ $showCsvExportButton = in_array($loggedInUserEmail, $allowedExportEmails);
                                         </thead>
                                         <tbody>
                                             <?php
-                                            // Start building the query for displaying clients
+                                           
                                             $query_display = "SELECT * FROM `_clients` WHERE ClientKeyID = :client_key_id AND isBranch IS NULL ";
                                             $params_display = [':client_key_id' => $ClientKeyID];
 
-                                            // Apply advanced search filters if SearchID is present
+                                         
                                             if (!empty($SearchID)) {
                                                 $qu = $db_2->prepare("SELECT `column`, `value` FROM `search_queries` WHERE SearchID = :search_id");
                                                 $qu->bindParam(':search_id', $SearchID);
@@ -667,7 +667,7 @@ $showCsvExportButton = in_array($loggedInUserEmail, $allowedExportEmails);
                                                 while ($r = $qu->fetchObject()) {
                                                     $column = $r->column;
                                                     $value = $r->value;
-                                                    // Ensure valid columns to prevent SQL injection
+                                                   
                                                     $allowed_columns = ['Name', 'ClientType', '_client_id', 'Email', 'Number', 'Address', 'Postcode', 'City'];
                                                     if (in_array($column, $allowed_columns)) {
                                                         $query_display .= " AND " . $column . " LIKE :" . $column;
@@ -676,7 +676,7 @@ $showCsvExportButton = in_array($loggedInUserEmail, $allowedExportEmails);
                                                 }
                                             }
 
-                                            // Apply tab filter (e.g., "active", "inactive")
+                                            
                                             if ($isTab !== "all") {
                                                 $query_display .= " AND Status = :is_tab";
                                                 $params_display[':is_tab'] = $isTab;
@@ -844,16 +844,16 @@ $showCsvExportButton = in_array($loggedInUserEmail, $allowedExportEmails);
     </div>
 </div>
 
-    <?php // include "../../includes/footer_scripts.php"; // Assuming this includes Bootstrap JS, etc. ?>
+    <?php ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Event listener for Delete Modal to populate data
+         
             var deleteModal = document.getElementById('DeleteModal');
             if (deleteModal) {
                 deleteModal.addEventListener('show.bs.modal', function (event) {
-                    var button = event.relatedTarget; // Button that triggered the modal
+                    var button = event.relatedTarget; 
                     var clientId = button.getAttribute('data-id');
                     var clientName = button.getAttribute('data-name');
 
@@ -867,7 +867,7 @@ $showCsvExportButton = in_array($loggedInUserEmail, $allowedExportEmails);
                 });
             }
 
-            // Select All / Deselect All functionality
+         
             const selectAllCheckbox = document.getElementById('selectAll');
             const mailshotBtn = document.getElementById('mailshotBtn');
             const selectedCountSpan = document.getElementById('selectedCount');
@@ -876,7 +876,7 @@ $showCsvExportButton = in_array($loggedInUserEmail, $allowedExportEmails);
             const mailshotMessageField = document.getElementById('mailshot_message');
             const mailshotTemplateDropdown = document.getElementById('mailshot_template');
 
-            // Define your templates (in a real application, these might come from a server endpoint)
+            
             const emailTemplates = {
                 'welcome': {
                     subject: 'Welcome to Our Service!',
