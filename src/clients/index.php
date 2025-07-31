@@ -136,28 +136,25 @@ if ($mode === 'mailshot' && !$canSendMailshot) {
 }
 
 
-// --- CSV Export Handler (must come before ANY output) ---
+
 if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
-    // Check if the logged-in user is allowed to export
+   
     if (!in_array($loggedInUserEmail, $allowedExportEmails)) {
         die("Access Denied: You do not have permission to export client data.");
     }
 
     try {
-        // Retrieve filter parameters from GET request
+       
         $nameFilter = $_GET['nameFilter'] ?? '';
         $emailFilter = $_GET['emailFilter'] ?? '';
         $statusFilter = $_GET['statusFilter'] ?? '';
         $clientTypeFilter = $_GET['clientTypeFilter'] ?? '';
-        $isTab = $_GET['isTab'] ?? 'all'; // Retrieve the active tab filter
+        $isTab = $_GET['isTab'] ?? 'all'; 
 
-        // Assuming $ClientKeyID is defined in config.php and represents the current user's associated client key.
-        // If it's not defined, you might need to fetch it from the session or user data.
-        // For now, assuming it's available.
+       
         $export_where_conditions = ["ClientKeyID = :client_key_id", "isBranch IS NULL"];
-        // Ensure $ClientKeyID is defined before using it. You might need to retrieve it from session or user data.
-        // For demonstration, let's assume a dummy value if not already set.
-        $ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1; // Example: Fetch from cookie or default
+       
+        $ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1; 
         $export_params = [':client_key_id' => $ClientKeyID];
 
         if (!empty($nameFilter)) {
@@ -187,7 +184,7 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
 
         $stmt = $db_2->prepare($export_query);
         $stmt->execute($export_params);
-        $clients_data = $stmt->fetchAll(PDO::FETCH_ASSOC); // Fetch as associative array for headers
+        $clients_data = $stmt->fetchAll(PDO::FETCH_ASSOC); 
 
         if (empty($clients_data)) {
             die("No clients found for export with the applied filters.");
