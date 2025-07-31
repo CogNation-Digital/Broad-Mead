@@ -111,6 +111,29 @@ $email_footer_html = '
         </a>.
     </div>
 </div>';
+$allowedMailshotEmails = [
+    'jayden@nocturnalrecruitment.co.uk',
+    'jourdain@nocturnalrecruitment.co.uk', 
+    'junaid@nocturnalrecruitment.co.uk',
+    'casey@nocturnalrecruitment.co.uk',
+    'samantha@nocturnalrecruitment.co.uk',
+    'millie@nocturnalrecruitment.co.uk',
+    'valter@nocturnalrecruitment.co.uk',
+    'euphemiachikungulu347@gmail.com',
+    'alex@nocturnalrecruitment.co.uk',
+    'j.dowler@nocturnalrecruitment.co.uk',
+    'chax@nocturnalrecruitment.co.uk'
+];
+
+$canSendMailshot = in_array($loggedInUserEmail, array_map('strtolower', $allowedMailshotEmails));
+
+error_log("Debug - Can send mailshot: " . ($canSendMailshot ? 'YES' : 'NO'));
+error_log("Debug - Logged in user email: " . $loggedInUserEmail);
+
+
+if ($mode === 'mailshot' && !$canSendMailshot) {
+    die("Access Denied: You do not have permission to send mailshots. Only authorized users can send mailshots.");
+}
 
 
 // --- CSV Export Handler (must come before ANY output) ---
