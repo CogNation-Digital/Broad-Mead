@@ -190,19 +190,15 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
             die("No clients found for export with the applied filters.");
         }
 
-        // Clear any existing output buffer to prevent header issues
         if (ob_get_level()) {
             ob_end_clean();
         }
 
-        // Set headers for CSV download
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="clients_filtered_' . date('Y-m-d') . '.csv"');
 
         $output = fopen('php://output', 'w');
 
-        // Mapping for CreatedBy IDs to Names (for display in tables)
-        // This needs to be available for the export as well.
         $createdByMapping = [
             "1" => "Chax Shamwana",
             "10" => "Millie Brown",
@@ -213,23 +209,21 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
             "9" => "Jack Dowler"
         ];
 
-        // Get headers from the first row and map CreatedBy IDs to names
         $headers = array_keys($clients_data[0]);
-        // Find 'CreatedBy' index and replace with 'Created By Name' for clarity in CSV
+        
         $createdByHeaderIndex = array_search('CreatedBy', $headers);
         if ($createdByHeaderIndex !== false) {
             $headers[$createdByHeaderIndex] = 'Created By Name';
         }
 
-        fputcsv($output, $headers); // Write headers to CSV
+        fputcsv($output, $headers);
 
-        // Write data rows to CSV
         foreach ($clients_data as $row) {
-            // Map CreatedBy ID to name for the current row
+           
             if (isset($row['CreatedBy'])) {
                 $row['CreatedBy'] = $createdByMapping[$row['CreatedBy']] ?? 'Unknown';
             }
-            // Format Date if it exists
+          
             if (isset($row['Date'])) {
                 $row['Date'] = date('Y-m-d H:i:s', strtotime($row['Date']));
             }
@@ -237,23 +231,21 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
         }
 
         fclose($output);
-        exit; // Terminate script after sending the file
+        exit; 
     } catch (Exception $e) {
         die("CSV Export Failed: " . $e->getMessage());
     }
 }
 
 
-// Process mailshot when form is submitted
 if (isset($_POST['send_mailshot'])) {
     $_SESSION['mailshot_initiated'] = true;
 
     $selected_clients = json_decode($_POST['selected_clients'], true) ?? [];
     $mailshot_subject = $_POST['mailshot_subject'] ?? '';
     $mailshot_message = $_POST['mailshot_message'] ?? '';
-    $mailshot_template_selected = $_POST['mailshot_template'] ?? 'Custom Mailshot'; // Get selected template value
+    $mailshot_template_selected = $_POST['mailshot_template'] ?? 'Custom Mailshot'; 
 
-    // Validation
     if (empty($selected_clients)) {
         $error_message = "Please select at least one client.";
     } elseif (empty($mailshot_subject)) {
