@@ -73,12 +73,10 @@ unset($_SESSION['error_message']);
 
 $email_footer_html = '
 <div style="font-family: Arial, sans-serif; font-size: 10px; color: #ffffff; line-height: 1.2; background-color: #1a1a1a; padding: 10px; max-width: 400px; margin: 0 auto;">
-    <!-- Logo Section -->
     <div style="text-align: center; margin-bottom: 8px;">
-        <img src="https://i.ibb.co/L5w2t8J/nocturnal-recruitment-logo.png" alt="Nocturnal Recruitment Solutions" style="max-width: 120px; height: auto; display: block; margin: 0 auto; border: 0;">
+        <img src="https://i.ibb.co/L5w2t8J/nocturnal-recruitment-logo.png" alt="Nocturnal Recruitment Solutions Logo" style="max-width: 120px; height: auto; display: block; margin: 0 auto; border: 0;">
     </div>
     
-    <!-- Contact Information -->
     <div style="text-align: center; margin-bottom: 8px;">
         <p style="margin: 0; padding: 0; font-size: 10px; color: #6daffb;">
             Office 16, 321 High Road, RM6 6AX | 0208 050 2708 | 0755 357 0871
@@ -89,20 +87,18 @@ $email_footer_html = '
         </p>
     </div>
 
-    <!-- Social Media Icons and REC Logo -->
     <div style="text-align: center; margin-bottom: 8px;">
         <a href="https://www.linkedin.com/company/nocturnalrecruitment" target="_blank" style="display: inline-block; margin: 0 3px; text-decoration: none;">
-            <img src="https://i.ibb.co/zQJ6x0n/linkedin-icon.png" alt="LinkedIn" style="width: 20px; height: 20px; border: 0; vertical-align: middle;">
+            <img src="https://i.ibb.co/zQJ6x0n/linkedin-icon.png" alt="LinkedIn Logo" style="width: 20px; height: 20px; border: 0; vertical-align: middle;">
         </a>
         <a href="https://www.instagram.com/nocturnalrecruitment" target="_blank" style="display: inline-block; margin: 0 3px; text-decoration: none;">
-            <img src="https://i.ibb.co/gST1V5g/instagram-icon.png" alt="Instagram" style="width: 20px; height: 20px; border: 0; vertical-align: middle;">
+            <img src="https://i.ibb.co/gST1V5g/instagram-icon.png" alt="Instagram Logo" style="width: 20px; height: 20px; border: 0; vertical-align: middle;">
         </a>
         <a href="https://www.facebook.com/nocturnalrecruitment" target="_blank" style="display: inline-block; margin: 0 3px; text-decoration: none;">
-            <img src="https://i.ibb.co/g3139V7/facebook-icon.png" alt="Facebook" style="width: 20px; height: 20px; border: 0; vertical-align: middle;">
+            <img src="https://i.ibb.co/g3139V7/facebook-icon.png" alt="Facebook Logo" style="width: 20px; height: 20px; border: 0; vertical-align: middle;">
+        </a>
     </div>
 
-
-    <!-- Company Registration & Footer -->
     <div style="text-align: center; border-top: 1px solid #333; padding-top: 6px;">
         <p style="margin: 0 0 4px 0; font-size: 9px; color: #ffffff;">Company Registration – 11817091</p>
         <p style="margin: 0 0 4px 0; font-size: 8px; color: #888888; line-height: 1.3;">
@@ -116,69 +112,6 @@ $email_footer_html = '
     </div>
 </div>
 ';
-
-// Example usage in an email:
-/*
-$message = '
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; background-color: #f4f4f4;">
-    <div style="padding: 20px;">
-        <!-- Your email content goes here -->
-        <div style="background-color: #ffffff; padding: 20px; border-radius: 5px;">
-            <h1>Your Email Subject</h1>
-            <p>Your email content...</p>
-        </div>
-        
-        <!-- Email Footer -->
-        ' . $email_footer_html . '
-    </div>
-</body>
-</html>
-';
-
-// Set headers for HTML email
-$headers = "MIME-Version: 1.0" . "\r\n";
-$headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
-$headers .= 'From: chax@nocturnalrecruitment.co.uk' . "\r\n";
-
-// Send email
-// mail($to, $subject, $message, $headers);
-
-// Example usage in an email:
-/*
-$message = '
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; background-color: #f4f4f4;">
-    <div style="padding: 20px;">
-        <!-- Your email content goes here -->
-        <div style="background-color: #ffffff; padding: 20px; border-radius: 5px;">
-            <h1>Your Email Subject</h1>
-            <p>Your email content...</p>
-        </div>
-        
-        <!-- Email Footer -->
-        ' . $email_footer_html . '
-    </div>
-</body>
-</html>
-';
-
-// Set headers for HTML email
-$headers = "MIME-Version: 1.0" . "\r\n";
-$headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
-$headers .= 'From: chax@nocturnalrecruitment.co.uk' . "\r\n";
-
-// Send email
-// mail($to, $subject, $message, $headers);
-*/
 
 
 $allowedMailshotEmails = [
@@ -765,11 +698,11 @@ function calculateDistanceBetweenPostcodes($postcode1, $postcode2) {
         $coords1 = getPostcodeCoordinates($postcode1);
         $coords2 = getPostcodeCoordinates($postcode2);
     } catch (Exception $e) {
-        // If coordinates cannot be retrieved, treat distance as infinite or very large
+       
         return PHP_FLOAT_MAX;
     }
 
-    $earthRadius = 3959; // Earth's radius in miles
+    $earthRadius = 3959;
 
     $lat1 = deg2rad($coords1['latitude']);
     $lon1 = deg2rad($coords1['longitude']);
@@ -788,7 +721,7 @@ function calculateDistanceBetweenPostcodes($postcode1, $postcode2) {
     return $distance;
 }
 
-// --- Date Range Helper for KPI ---
+
 function getDateRangeForPeriod($period) {
     $today = new DateTime();
     switch ($period) {
@@ -796,7 +729,7 @@ function getDateRangeForPeriod($period) {
             $start = clone $today;
             $start->modify('monday this week');
             $end = clone $start;
-            $end->modify('+6 days'); // End of Sunday
+            $end->modify('+6 days');
             break;
         case 'last_week':
             $start = new DateTime('monday last week');
@@ -817,7 +750,7 @@ function getDateRangeForPeriod($period) {
             $start = new DateTime($today->format('Y') . '-01-01');
             $end = new DateTime($today->format('Y') . '-12-31');
             break;
-        default: // Default to current week if an invalid period is passed
+        default: 
             $start = clone $today;
             $start->modify('monday this week');
             $end = clone $start;
@@ -830,16 +763,15 @@ function getDateRangeForPeriod($period) {
     ];
 }
 
-// --- Previous Period Range Helper for Growth Rate ---
 function getPreviousPeriodRange($period, $currentRange) {
     $start = new DateTime($currentRange['start']);
     $end = new DateTime($currentRange['end']);
-    $diff = $start->diff($end)->days + 1; // Calculate duration of the current period
+    $diff = $start->diff($end)->days + 1; 
 
     $prevStart = clone $start;
-    $prevStart->modify("-{$diff} days"); // Move start date back by the duration
+    $prevStart->modify("-{$diff} days"); 
     $prevEnd = clone $end;
-    $prevEnd->modify("-{$diff} days"); // Move end date back by the duration
+    $prevEnd->modify("-{$diff} days"); 
 
     return [
         'start' => $prevStart->format('Y-m-d'),
@@ -847,19 +779,18 @@ function getPreviousPeriodRange($period, $currentRange) {
     ];
 }
 
-// --- KPI Calculation Function (updated to include status and location filters) ---
+
 function calculateKPIs($db, $period, $start_date = null, $end_date = null, $status_filter = 'all', $location_filter = '') {
     $kpis = [];
     try {
-        // Determine the date range for the current KPI period
+     
         if ($period === 'custom' && $start_date && $end_date) {
             $start = new DateTime($start_date);
             $end = new DateTime($end_date);
             if ($start > $end) {
                 throw new Exception("Start date cannot be after end date.");
             }
-            // Optional: Add check for future start dates if you only want past data
-            // if ($start > new DateTime()) { /* handle error or warning */ }
+            
             $dateRange = [
                 'start' => $start->format('Y-m-d'),
                 'end' => $end->format('Y-m-d')
@@ -868,10 +799,9 @@ function calculateKPIs($db, $period, $start_date = null, $end_date = null, $stat
             $dateRange = getDateRangeForPeriod($period);
         }
 
-        $kpis['date_range'] = $dateRange; // Store the actual date range used
+        $kpis['date_range'] = $dateRange; 
 
-        // Build base WHERE clause and parameters for KPI queries
-        // These filters apply to the 'detailed_candidates' table and 'new_candidates' count
+      
         $base_where_conditions = ["Date BETWEEN :start_date AND :end_date"];
         $base_params = [
             ':start_date' => $dateRange['start'] . ' 00:00:00',
@@ -890,24 +820,21 @@ function calculateKPIs($db, $period, $start_date = null, $end_date = null, $stat
 
         $base_where_clause = 'WHERE ' . implode(' AND ', $base_where_conditions);
 
-        // --- Fetch Detailed Candidates for KPI Table ---
+      
         $stmt_all_candidates = $db->prepare("SELECT id, Name, Email, JobTitle, Status, City, Postcode, Date, CreatedBy, ProfileImage FROM _candidates $base_where_clause ORDER BY Date DESC");
         $stmt_all_candidates->execute($base_params);
         $kpis['detailed_candidates'] = $stmt_all_candidates->fetchAll(PDO::FETCH_ASSOC);
 
-        // --- Calculate Key Performance Indicators ---
-        // Total candidates in the period (filtered by status/location)
+      
         $stmt = $db->prepare("SELECT COUNT(*) as total FROM _candidates $base_where_clause");
         $stmt->execute($base_params);
         $kpis['total_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-        // New candidates in the period (filtered by status/location)
         $stmt = $db->prepare("SELECT COUNT(*) as new_candidates FROM _candidates $base_where_clause");
         $stmt->execute($base_params);
         $kpis['new_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['new_candidates'];
 
-        // Individual status counts (these counts are for the selected date range, but *not* filtered by the overall $status_filter or $location_filter,
-        // as they represent the distribution of ALL candidates within the date range by status)
+       
         $status_count_params = [
             ':start_date' => $base_params[':start_date'],
             ':end_date' => $base_params[':end_date']
