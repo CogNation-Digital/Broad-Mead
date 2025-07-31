@@ -363,16 +363,14 @@ if (isset($_POST['send_mailshot'])) {
                 $log_query = $db_2->prepare("INSERT INTO mailshot_log (ClientKeyID, Subject, Template, RecipientsCount, SuccessCount, FailedCount, SentBy, SentDate)
                                               VALUES (:client_key_id, :subject, :template, :recipients_count, :success_count, :failed_count, :sent_by, NOW())");
 
-                // Assuming $ClientKeyID is the identifier for the current user's associated client key.
-                // This is typically the ID of the account/entity that initiated the mailshot.
-                // Ensure $ClientKeyID and $USERID are defined from your config or session.
-                $ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1; // Example: Fetch from cookie or default
-                $USERID = $USERID ?? $_COOKIE['USERID'] ?? 1; // Example: Fetch user's name
-                $NAME = $NAME ?? 'Guest User'; // Example: Fetch user's name
+              
+                $ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1; 
+                $USERID = $USERID ?? $_COOKIE['USERID'] ?? 1; 
+                $NAME = $NAME ?? 'Guest User'; 
 
                 $log_query->bindParam(':client_key_id', $ClientKeyID);
                 $log_query->bindParam(':subject', $mailshot_subject);
-                $log_query->bindParam(':template', $log_template_name); // Log the chosen template
+                $log_query->bindParam(':template', $log_template_name);
                 $log_query->bindParam(':recipients_count', $total_recipients, PDO::PARAM_INT);
                 $log_query->bindParam(':success_count', $successful_sends, PDO::PARAM_INT);
                 $log_query->bindParam(':failed_count', $failed_sends, PDO::PARAM_INT);
@@ -380,7 +378,7 @@ if (isset($_POST['send_mailshot'])) {
 
                 if (!$log_query->execute()) {
                     error_log("Error inserting mailshot summary log: " . implode(", ", $log_query->errorInfo()));
-                    // Add a user-facing error if logging fails, but don't prevent showing email send results
+               
                     $error_message = ($error_message ?? '') . "\nError logging mailshot summary.";
                 }
             } catch (Exception $e) {
@@ -388,11 +386,11 @@ if (isset($_POST['send_mailshot'])) {
                 $error_message = ($error_message ?? '') . "\nException during mailshot summary logging: " . $e->getMessage();
             }
 
-            // Update user-facing messages based on overall success/failure
+         
             if ($successful_sends > 0 && $failed_sends === 0) {
                 $success_message = "Mailshot successfully sent to $successful_sends clients.";
                 $NOTIFICATION = ($NAME ?? 'A user') . " has successfully sent mailshot to $successful_sends clients.";
-                // Assuming Notify function is defined in config.php
+             
                 if (function_exists('Notify')) {
                      Notify($USERID, $ClientKeyID, $NOTIFICATION);
                 }
