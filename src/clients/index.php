@@ -422,13 +422,8 @@ if (isset($_POST['send_mailshot'])) {
         }
     }
 }
-
-// Handle search form submission (this block seems to handle an older search method)
-// The current quick filters are handled by JavaScript
 if (isset($_POST['Search'])) {
-    // This block seems to be for a different search mechanism, possibly for logging searches.
-    // The current filtering is done client-side via JavaScript's applyFilters().
-    // If this is still needed for server-side search logging, ensure $SearchID is correctly generated.
+  
     $Name = $_POST['Name'] ?? '';
     $ClientType = $_POST['ClientType'] ?? '';
     $_client_id = $_POST['_client_id'] ?? '';
