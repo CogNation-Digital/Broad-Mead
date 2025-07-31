@@ -290,15 +290,15 @@ if (isset($_POST['send_mailshot'])) {
         if (!isset($error_message)) {
             foreach ($selected_clients as $client_id) {
                 try {
-                  
+                    // Get client details from either database
                     $client = null;
 
-                  
+                    // Try broadmead_v3 first
                     $stmt = $db_2->prepare("SELECT Name, Email FROM _clients WHERE ClientID = ?");
                     $stmt->execute([$client_id]);
                     $client = $stmt->fetch();
 
-                 
+                    // If not found, try broadmead
                     if (!$client) {
                         $stmt = $db_1->prepare("SELECT Name, Email FROM clients WHERE id = ?");
                         $stmt->execute([$client_id]);
@@ -323,19 +323,21 @@ if (isset($_POST['send_mailshot'])) {
                             )
                         );
 
+                        // Personalize the message with the client's actual name
                         $personalized_message = str_replace('[CLIENT_NAME]', $client->Name, $mailshot_message);
 
-                      
+                        // Append the automatic footer to the personalized message
+                        // Use nl2br for the message to preserve line breaks from textarea, then append HTML footer
                         $final_email_body = nl2br(htmlspecialchars($personalized_message)) . $email_footer_html;
 
 
                         $mail->setFrom($from_email, $from_name);
                         $mail->addAddress($client->Email, $client->Name);
                         $mail->addReplyTo($from_email, $from_name);
-                        $mail->isHTML(true); 
+                        $mail->isHTML(true); // Crucial for sending HTML content
                         $mail->Subject = $mailshot_subject;
-                        $mail->Body = $final_email_body; 
-                        $mail->AltBody = strip_tags($personalized_message); 
+                        $mail->Body = $final_email_body; // Use the final HTML body
+                        $mail->AltBody = strip_tags($personalized_message); // Alt body for plain text readers
 
                         if ($mail->send()) {
                             $successful_sends++;
@@ -344,7 +346,7 @@ if (isset($_POST['send_mailshot'])) {
                             $error_details[] = "Failed to send to: {$client->Email} - " . $mail->ErrorInfo;
                         }
                         $mail->clearAddresses();
-                        usleep(100000); 
+                        usleep(100000); // Small delay between emails
                     } else {
                         $failed_sends++;
                         $error_details[] = "Invalid email for client ID: $client_id";
@@ -355,22 +357,24 @@ if (isset($_POST['send_mailshot'])) {
                 }
             }
 
-           
+            // --- Log Mailshot Summary AFTER all emails are processed ---
             try {
-              
+                // Use the selected template value for logging, or 'Custom Mailshot' if none selected
                 $log_template_name = ($mailshot_template_selected !== '') ? $mailshot_template_selected : "Custom Mailshot";
 
                 $log_query = $db_2->prepare("INSERT INTO mailshot_log (ClientKeyID, Subject, Template, RecipientsCount, SuccessCount, FailedCount, SentBy, SentDate)
                                               VALUES (:client_key_id, :subject, :template, :recipients_count, :success_count, :failed_count, :sent_by, NOW())");
 
-              
-                $ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1; 
-                $USERID = $USERID ?? $_COOKIE['USERID'] ?? 1; 
-                $NAME = $NAME ?? 'Guest User'; 
+                // Assuming $ClientKeyID is the identifier for the current user's associated client key.
+                // This is typically the ID of the account/entity that initiated the mailshot.
+                // Ensure $ClientKeyID and $USERID are defined from your config or session.
+                $ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1; // Example: Fetch from cookie or default
+                $USERID = $USERID ?? $_COOKIE['USERID'] ?? 1; // Example: Fetch user's name
+                $NAME = $NAME ?? 'Guest User'; // Example: Fetch user's name
 
                 $log_query->bindParam(':client_key_id', $ClientKeyID);
                 $log_query->bindParam(':subject', $mailshot_subject);
-                $log_query->bindParam(':template', $log_template_name);
+                $log_query->bindParam(':template', $log_template_name); // Log the chosen template
                 $log_query->bindParam(':recipients_count', $total_recipients, PDO::PARAM_INT);
                 $log_query->bindParam(':success_count', $successful_sends, PDO::PARAM_INT);
                 $log_query->bindParam(':failed_count', $failed_sends, PDO::PARAM_INT);
@@ -378,7 +382,7 @@ if (isset($_POST['send_mailshot'])) {
 
                 if (!$log_query->execute()) {
                     error_log("Error inserting mailshot summary log: " . implode(", ", $log_query->errorInfo()));
-               
+                    // Add a user-facing error if logging fails, but don't prevent showing email send results
                     $error_message = ($error_message ?? '') . "\nError logging mailshot summary.";
                 }
             } catch (Exception $e) {
@@ -386,11 +390,11 @@ if (isset($_POST['send_mailshot'])) {
                 $error_message = ($error_message ?? '') . "\nException during mailshot summary logging: " . $e->getMessage();
             }
 
-         
+            // Update user-facing messages based on overall success/failure
             if ($successful_sends > 0 && $failed_sends === 0) {
                 $success_message = "Mailshot successfully sent to $successful_sends clients.";
                 $NOTIFICATION = ($NAME ?? 'A user') . " has successfully sent mailshot to $successful_sends clients.";
-             
+                // Assuming Notify function is defined in config.php
                 if (function_exists('Notify')) {
                      Notify($USERID, $ClientKeyID, $NOTIFICATION);
                 }
@@ -419,9 +423,12 @@ if (isset($_POST['send_mailshot'])) {
     }
 }
 
-
+// Handle search form submission (this block seems to handle an older search method)
+// The current quick filters are handled by JavaScript
 if (isset($_POST['Search'])) {
-
+    // This block seems to be for a different search mechanism, possibly for logging searches.
+    // The current filtering is done client-side via JavaScript's applyFilters().
+    // If this is still needed for server-side search logging, ensure $SearchID is correctly generated.
     $Name = $_POST['Name'] ?? '';
     $ClientType = $_POST['ClientType'] ?? '';
     $_client_id = $_POST['_client_id'] ?? '';
@@ -431,38 +438,59 @@ if (isset($_POST['Search'])) {
     $Postcode = $_POST['Postcode'] ?? '';
     $City = $_POST['City'] ?? '';
 
+    // Assuming $SearchID is generated elsewhere, e.g., uniqid()
+    // if (!empty($SearchID)) {
+    //     $query = $db_2->prepare("INSERT INTO `search_queries`(`SearchID`, `column`, `value`)
+    //             VALUES (:SearchID, :column, :value)");
+
+    //     foreach ($_POST as $key => $value) {
+    //         if (!empty($value) && $key !== 'Search') {
+    //             $query->bindParam(':SearchID', $SearchID);
+    //             $query->bindParam(':column', $key);
+    //             $query->bindParam(':value', $value);
+    //             $query->execute();
+    //         }
+    //     }
+
+    //     header("location: $LINK/clients/?q=$SearchID");
+    //     exit();
+    // }
 }
 
-
+// Handle delete operation
 if (isset($_POST['delete'])) {
     $ID = $_POST['ID'];
     $name = $_POST['name'];
     $reason = $_POST['reason'];
 
-   
+    // Using $db_2 for _clients table
     $stmt = $db_2->prepare("DELETE FROM `_clients` WHERE ClientID = :ID");
     $stmt->bindParam(':ID', $ID);
 
     if ($stmt->execute()) {
         $NOTIFICATION = ($NAME ?? 'A user') . " has successfully deleted the client named '$name'. Reason for deletion: $reason.";
-      
+        // Assuming Notify function is defined in config.php
         if (function_exists('Notify')) {
              Notify($USERID, $ClientKeyID, $NOTIFICATION);
         }
     } else {
         error_log("Error deleting record: " . implode(", ", $stmt->errorInfo()));
-      
+        // Optionally set an error message for display
     }
 }
 
-
+// Re-defining $SearchID and $isTab for page rendering
 $SearchID = isset($_GET['q']) ? $_GET['q'] : "";
 $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
 
-
+// Client Statuses (assuming these are defined in config.php or similar)
+// Example: $clients_status = ['targeted', 'not updated', 'active', 'inactive', 'archived'];
+// If not defined, uncomment and define it here:
 $clients_status = ['targeted', 'not updated', 'active', 'inactive', 'archived'];
 
 
+// Mapping for CreatedBy IDs to Names (for display in tables)
+// This mapping needs to be defined for the client list as well.
 $createdByMapping = [
     "1" => "Chax Shamwana",
     "10" => "Millie Brown",
@@ -473,7 +501,7 @@ $createdByMapping = [
     "9" => "Jack Dowler"
 ];
 
-
+// Ensure $ClientKeyID and $USERID are defined for rendering, if not already from config.php
 $ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1; // Example: Fetch from cookie or default
 $USERID = $USERID ?? $_COOKIE['USERID'] ?? 1; // Example: Fetch user's name
 $NAME = $NAME ?? 'Guest User'; // Example: Fetch user's name
@@ -973,17 +1001,14 @@ $showCsvExportButton = in_array($loggedInUserEmail, $allowedExportEmails);
                 document.getElementById('emailFilter').value = '';
                 document.getElementById('statusFilter').value = '';
                 document.getElementById('clientTypeFilter').value = '';
-                applyFilters(); // Re-apply filters to show all
+                applyFilters(); 
             };
 
-            // Function to update the CSV export link dynamically
             window.updateCsvExportLink = function() {
                 const nameFilter = document.getElementById('nameFilter').value;
                 const emailFilter = document.getElementById('emailFilter').value;
                 const statusFilter = document.getElementById('statusFilter').value;
                 const clientTypeFilter = document.getElementById('clientTypeFilter').value;
-
-                // Get the current active tab status from the URL
                 const urlParams = new URLSearchParams(window.location.search);
                 const isTab = urlParams.get('isTab') || 'all';
 
@@ -992,15 +1017,15 @@ $showCsvExportButton = in_array($loggedInUserEmail, $allowedExportEmails);
                 exportUrl += `&emailFilter=${encodeURIComponent(emailFilter)}`;
                 exportUrl += `&statusFilter=${encodeURIComponent(statusFilter)}`;
                 exportUrl += `&clientTypeFilter=${encodeURIComponent(clientTypeFilter)}`;
-                exportUrl += `&isTab=${encodeURIComponent(isTab)}`; // Include the active tab filter
+                exportUrl += `&isTab=${encodeURIComponent(isTab)}`; 
 
                 document.getElementById('exportCsvBtn').href = exportUrl;
             };
 
-            // Initial calls on page load
-            applyFilters(); // Apply initial filters based on URL parameters or defaults
-            updateSelectedCount(); // Initialize selected count
-            updateCsvExportLink(); // Set the initial CSV export link
+          
+            applyFilters(); 
+            updateSelectedCount(); 
+            updateCsvExportLink(); 
         });
     </script>
 </body>
