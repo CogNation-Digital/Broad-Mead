@@ -230,7 +230,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
 
 
       $from_email = "learn@natec.icu";
-        $from_name = "Recruitment Team";
+        $from_name = "Nocturnal Recruitment Team";
         $smtp_host = 'smtp.titan.email';
         $smtp_username = 'learn@natec.icu';
         $smtp_password = '@WhiteDiamond0100';
