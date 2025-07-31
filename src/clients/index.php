@@ -3,24 +3,23 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-require_once '../../includes/config.php'; // Ensure this includes necessary configurations like $theme, $LINK, etc.
+require_once '../../includes/config.php'; 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Redirect if user is not logged in
 if (!isset($_COOKIE['USERID'])) {
     header("location: $LINK/login");
-    exit; // Always exit after a header redirect
+    exit; 
 }
 
-// Database configuration
+
 $host = 'localhost';
 $user = 'root';
 $password = '';
-$dbname1 = 'broadmead'; // Legacy database
-$dbname2 = 'broadmead_v3'; // Primary, newer database
+$dbname1 = 'broadmead'; 
+$dbname2 = 'broadmead_v3'; 
 
-// Database connections
+
 try {
     $db_1 = new PDO('mysql:host=' . $host . ';dbname=' . $dbname1, $user, $password);
     $db_1->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
@@ -34,12 +33,12 @@ try {
     exit;
 }
 
-// --- Fetch Logged-in User's Email ---
+
 $loggedInUserEmail = '';
 $USERID = $_COOKIE['USERID'] ?? null;
 if ($USERID) {
     try {
-        $stmt = $db_2->prepare("SELECT Email FROM users WHERE UserID = :userid"); // Assuming 'users' table and 'Email' column
+        $stmt = $db_2->prepare("SELECT Email FROM users WHERE UserID = :userid"); 
         $stmt->bindParam(':userid', $USERID);
         $stmt->execute();
         $user = $stmt->fetch(PDO::FETCH_OBJ);
@@ -48,18 +47,18 @@ if ($USERID) {
         }
     } catch (PDOException $e) {
         error_log("Error fetching user email: " . $e->getMessage());
-        // Handle error, e.g., set a default or deny access
+       
     }
 }
 
-// Define allowed emails for CSV export
+
 $allowedExportEmails = [
     'alex@nocturnalrecruitment.co.uk',
     'j.dowler@nocturnalrecruitment.co.uk',
     'chax@nocturnalrecruitment.co.uk'
 ];
 
-// --- Define the AUTOMATIC EMAIL FOOTER ---
+
 $email_footer_html = '
 <br><br>
 <div style="font-family: Arial, sans-serif; font-size: 12px; color: #333333; line-height: 1.5; background-color: #1a1a1a; padding: 20px; color: #ffffff;">
