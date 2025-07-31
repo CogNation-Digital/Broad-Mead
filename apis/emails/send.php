@@ -8,15 +8,12 @@ use PHPMailer\PHPMailer\SMTP;
 $mail = new PHPMailer(true);
 
 try {
-    // Email details
+
     $email = "euphemiachikungulu347@gmail.com";
     $name = "Euphemia Chikungulu";
     $subject = "Test Email from Nocturnal Recruitment";
 
-    // Define the signature HTML
-    // IMPORTANT: Local image paths (e.g., 'broadmead\logos\FCSA.png') will NOT work in emails.
-    // They must be absolute URLs (e.g., 'https://yourdomain.com/path/to/FCSA.png').
-    // I'm using placeholder URLs here. You MUST replace them with your actual public image URLs.
+  
     $signature = "
     <br><br>Best regards,<br>Nocturnal Recruitment<br>Office 16, 321 High Road,<br>RM6 6AX<br>Tel: 0208 050 2708<br>
     Mobile: 0755 357 0871<br>
