@@ -438,26 +438,9 @@ if (isset($_POST['Search'])) {
     $Postcode = $_POST['Postcode'] ?? '';
     $City = $_POST['City'] ?? '';
 
-    // Assuming $SearchID is generated elsewhere, e.g., uniqid()
-    // if (!empty($SearchID)) {
-    //     $query = $db_2->prepare("INSERT INTO `search_queries`(`SearchID`, `column`, `value`)
-    //             VALUES (:SearchID, :column, :value)");
-
-    //     foreach ($_POST as $key => $value) {
-    //         if (!empty($value) && $key !== 'Search') {
-    //             $query->bindParam(':SearchID', $SearchID);
-    //             $query->bindParam(':column', $key);
-    //             $query->bindParam(':value', $value);
-    //             $query->execute();
-    //         }
-    //     }
-
-    //     header("location: $LINK/clients/?q=$SearchID");
-    //     exit();
-    // }
 }
 
-// Handle delete operation
+
 if (isset($_POST['delete'])) {
     $ID = $_POST['ID'];
     $name = $_POST['name'];
