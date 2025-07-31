@@ -61,10 +61,7 @@ $allowedExportEmails = [
 
 $email_footer_html = '
 <br><br>
-<div style="font-family: Arial, sans-serif; font-size: 12px; color: #333333; line-height: 1.5; background-color: #1a1a1a; padding: 20px; color: #ffffff;">
-    <div style="text-align: center; margin-bottom: 20px;">
-        <img src="https://i.ibb.co/L5w2t8J/nocturnal-recruitment-logo.png" alt="Nocturnal Recruitment Solutions" style="max-width: 200px; height: auto; display: block; margin: 0 auto;">
-    </div>
+
     <div style="text-align: center; margin-bottom: 15px;">
         <p style="margin: 0; padding: 0; font-size: 12px; color: #ffffff;">
             <img src="https://i.ibb.co/h14251P/location-icon.png" alt="Location" style="vertical-align: middle; width: 14px; height: 14px; margin-right: 5px;">
