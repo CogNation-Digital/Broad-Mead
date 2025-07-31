@@ -890,10 +890,9 @@ $showCsvExportButton = in_array($loggedInUserEmail, $allowedExportEmails);
                     subject: 'Quick Follow-up Regarding Our Last Conversation',
                     message: 'Hello [CLIENT_NAME],\n\nHope you\'re doing well. I wanted to follow up on our recent discussion about [Topic]. Please let me know if you have any further questions or if there\'s anything else I can assist you with.\n\nLooking forward to hearing from you,\n[Your Company Name]'
                 }
-                // Add more templates here with unique values matching the <option> values
+               
             };
 
-            // Event listener for template selection
             if (mailshotTemplateDropdown) {
                 mailshotTemplateDropdown.addEventListener('change', function() {
                     const selectedTemplateId = this.value;
@@ -902,20 +901,19 @@ $showCsvExportButton = in_array($loggedInUserEmail, $allowedExportEmails);
                         mailshotSubjectField.value = template.subject;
                         mailshotMessageField.value = template.message;
                     } else {
-                        // Clear fields if "Select a Template" or an invalid option is chosen
+                        
                         mailshotSubjectField.value = '';
                         mailshotMessageField.value = '';
                     }
                 });
             }
 
-            // Optional: Clear mailshot modal fields when it is hidden
             var mailshotModal = document.getElementById('mailshotModal');
             if (mailshotModal) {
                 mailshotModal.addEventListener('hidden.bs.modal', function () {
-                    mailshotTemplateDropdown.value = ''; // Reset template dropdown
-                    mailshotSubjectField.value = ''; // Clear subject
-                    mailshotMessageField.value = ''; // Clear message
+                    mailshotTemplateDropdown.value = ''; 
+                    mailshotSubjectField.value = ''; 
+                    mailshotMessageField.value = ''; 
                 });
             }
 
@@ -923,7 +921,7 @@ $showCsvExportButton = in_array($loggedInUserEmail, $allowedExportEmails);
                 selectAllCheckbox.addEventListener('change', function() {
                     const checkboxes = document.querySelectorAll('.checkbox-item');
                     checkboxes.forEach(checkbox => {
-                        // Only toggle checkboxes for visible rows
+                       
                         if (checkbox.closest('tr').style.display !== 'none') {
                             checkbox.checked = this.checked;
                         }
@@ -931,8 +929,6 @@ $showCsvExportButton = in_array($loggedInUserEmail, $allowedExportEmails);
                     updateSelectedCount();
                 });
             }
-
-            // Update selected count and mailshot button visibility
             window.updateSelectedCount = function() {
                 const checkedCheckboxes = document.querySelectorAll('.checkbox-item:checked');
                 selectedCountSpan.textContent = checkedCheckboxes.length;
@@ -942,8 +938,6 @@ $showCsvExportButton = in_array($loggedInUserEmail, $allowedExportEmails);
                     mailshotBtn.style.display = 'none';
                 }
             };
-
-            // Open Mailshot Modal and populate selected clients
             window.openMailshotModal = function() {
                 const checkedCheckboxes = document.querySelectorAll('.checkbox-item:checked');
                 const selectedClientIds = [];
@@ -961,7 +955,6 @@ $showCsvExportButton = in_array($loggedInUserEmail, $allowedExportEmails);
                 mailshotBootstrapModal.show();
             };
 
-            // Apply Filters function
             window.applyFilters = function() {
                 const nameFilter = document.getElementById('nameFilter').value.toLowerCase();
                 const emailFilter = document.getElementById('emailFilter').value.toLowerCase();
@@ -991,11 +984,11 @@ $showCsvExportButton = in_array($loggedInUserEmail, $allowedExportEmails);
                 });
 
                 filterResultsSpan.textContent = `Showing ${visibleRowCount} results.`;
-                updateSelectedCount(); // Update mailshot button visibility based on new filtered list
-                updateCsvExportLink(); // Update the CSV export link
+                updateSelectedCount(); 
+                updateCsvExportLink(); 
             };
 
-            // Clear All Filters function
+           
             window.clearAllFilters = function() {
                 document.getElementById('nameFilter').value = '';
                 document.getElementById('emailFilter').value = '';
