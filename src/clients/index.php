@@ -463,34 +463,30 @@ if (isset($_POST['delete'])) {
     $name = $_POST['name'];
     $reason = $_POST['reason'];
 
-    // Using $db_2 for _clients table
+  
     $stmt = $db_2->prepare("DELETE FROM `_clients` WHERE ClientID = :ID");
     $stmt->bindParam(':ID', $ID);
 
     if ($stmt->execute()) {
         $NOTIFICATION = ($NAME ?? 'A user') . " has successfully deleted the client named '$name'. Reason for deletion: $reason.";
-        // Assuming Notify function is defined in config.php
+      
         if (function_exists('Notify')) {
              Notify($USERID, $ClientKeyID, $NOTIFICATION);
         }
     } else {
         error_log("Error deleting record: " . implode(", ", $stmt->errorInfo()));
-        // Optionally set an error message for display
+      
     }
 }
 
-// Re-defining $SearchID and $isTab for page rendering
 $SearchID = isset($_GET['q']) ? $_GET['q'] : "";
 $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
 
-// Client Statuses (assuming these are defined in config.php or similar)
-// Example: $clients_status = ['targeted', 'not updated', 'active', 'inactive', 'archived'];
-// If not defined, uncomment and define it here:
+
 $clients_status = ['targeted', 'not updated', 'active', 'inactive', 'archived'];
 
 
-// Mapping for CreatedBy IDs to Names (for display in tables)
-// This mapping needs to be defined for the client list as well.
+
 $createdByMapping = [
     "1" => "Chax Shamwana",
     "10" => "Millie Brown",
@@ -501,8 +497,8 @@ $createdByMapping = [
     "9" => "Jack Dowler"
 ];
 
-// Ensure $ClientKeyID and $USERID are defined for rendering, if not already from config.php
-$ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1; // Example: Fetch from cookie or default
+
+$ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1; 
 $USERID = $USERID ?? $_COOKIE['USERID'] ?? 1; 
 $NAME = $NAME ?? 'Guest User'; 
 
