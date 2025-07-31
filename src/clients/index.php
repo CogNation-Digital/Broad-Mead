@@ -323,21 +323,19 @@ if (isset($_POST['send_mailshot'])) {
                             )
                         );
 
-                        // Personalize the message with the client's actual name
                         $personalized_message = str_replace('[CLIENT_NAME]', $client->Name, $mailshot_message);
 
-                        // Append the automatic footer to the personalized message
-                        // Use nl2br for the message to preserve line breaks from textarea, then append HTML footer
+                      
                         $final_email_body = nl2br(htmlspecialchars($personalized_message)) . $email_footer_html;
 
 
                         $mail->setFrom($from_email, $from_name);
                         $mail->addAddress($client->Email, $client->Name);
                         $mail->addReplyTo($from_email, $from_name);
-                        $mail->isHTML(true); // Crucial for sending HTML content
+                        $mail->isHTML(true); 
                         $mail->Subject = $mailshot_subject;
-                        $mail->Body = $final_email_body; // Use the final HTML body
-                        $mail->AltBody = strip_tags($personalized_message); // Alt body for plain text readers
+                        $mail->Body = $final_email_body; 
+                        $mail->AltBody = strip_tags($personalized_message); 
 
                         if ($mail->send()) {
                             $successful_sends++;
@@ -346,7 +344,7 @@ if (isset($_POST['send_mailshot'])) {
                             $error_details[] = "Failed to send to: {$client->Email} - " . $mail->ErrorInfo;
                         }
                         $mail->clearAddresses();
-                        usleep(100000); // Small delay between emails
+                        usleep(100000); 
                     } else {
                         $failed_sends++;
                         $error_details[] = "Invalid email for client ID: $client_id";
@@ -357,9 +355,9 @@ if (isset($_POST['send_mailshot'])) {
                 }
             }
 
-            // --- Log Mailshot Summary AFTER all emails are processed ---
+           
             try {
-                // Use the selected template value for logging, or 'Custom Mailshot' if none selected
+              
                 $log_template_name = ($mailshot_template_selected !== '') ? $mailshot_template_selected : "Custom Mailshot";
 
                 $log_query = $db_2->prepare("INSERT INTO mailshot_log (ClientKeyID, Subject, Template, RecipientsCount, SuccessCount, FailedCount, SentBy, SentDate)
