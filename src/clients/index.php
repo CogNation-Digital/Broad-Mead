@@ -397,7 +397,7 @@ if (isset($_POST['send_mailshot']) && $_POST['send_mailshot'] === '1' && !isset(
                
                 foreach ($selected_clients as $client_id) {
                     try {
-                        // Get client details
+                        
                         $client = null;
                         $stmt = $db_2->prepare("SELECT Name, Email FROM _clients WHERE ClientID = ?");
                         $stmt->execute([$client_id]);
@@ -410,10 +410,10 @@ if (isset($_POST['send_mailshot']) && $_POST['send_mailshot'] === '1' && !isset(
                         }
                        
                         if ($client && filter_var($client->Email, FILTER_VALIDATE_EMAIL)) {
-                            // Personalize message
+                         
                             $personalized_message = str_replace('[CLIENT_NAME]', $client->Name, $mailshot_message);
                            
-                            // Create HTML and text versions
+                          
                             $html_body = '
                             <!DOCTYPE html>
                             <html lang="en">
@@ -440,7 +440,6 @@ if (isset($_POST['send_mailshot']) && $_POST['send_mailshot'] === '1' && !isset(
                                 "Email: " . $loggedInUserEmail . "\n" .
                                 "Phone: 0208 050 2708";
                            
-                            // Send email using optimized function
                             $result = sendOptimizedEmail(
                                 $client->Email,
                                 $client->Name,
