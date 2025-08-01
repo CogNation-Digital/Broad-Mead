@@ -458,7 +458,7 @@ if (isset($_POST['send_mailshot']) && $_POST['send_mailshot'] === '1' && !isset(
                                 try {
                                     $tracking_stmt = $db_2->prepare("
                                         INSERT INTO email_tracking
-                                        (id, client_id, consultant_email, consultant_name, subject, sent_date, delivery_status, read_status)
+                                        (id, client_id, consultant_email, consultant_name, subject, sent_date, status, read_status)
                                         VALUES (?, ?, ?, ?, ?, NOW(), 'sent', 'unread')
                                     ");
                                     $tracking_stmt->execute([$id, $client_id, $loggedInUserEmail, $consultant_name, $mailshot_subject]);
@@ -1339,7 +1339,7 @@ $currentConsultantName = $consultantMapping[$loggedInUserEmail] ?? $loggedInUser
                 updateCsvExportLink();
             };
            
-            // Clear filters
+          
             window.clearAllFilters = function() {
                 document.getElementById('nameFilter').value = '';
                 document.getElementById('emailFilter').value = '';
@@ -1348,7 +1348,7 @@ $currentConsultantName = $consultantMapping[$loggedInUserEmail] ?? $loggedInUser
                 applyFilters();
             };
            
-            // Update CSV export link
+           
             window.updateCsvExportLink = function() {
                 const nameFilter = document.getElementById('nameFilter').value;
                 const emailFilter = document.getElementById('emailFilter').value;
@@ -1367,8 +1367,7 @@ $currentConsultantName = $consultantMapping[$loggedInUserEmail] ?? $loggedInUser
                 const exportBtn = document.getElementById('exportCsvBtn');
                 if (exportBtn) exportBtn.href = exportUrl;
             };
-           
-            // Initialize
+        
             applyFilters();
             updateSelectedCount();
             updateCsvExportLink();
