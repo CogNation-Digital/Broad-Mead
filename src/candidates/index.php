@@ -109,9 +109,18 @@ $email_footer_html = '
 </div>
 ';
 
+
+// Assuming these variables are defined elsewhere in your application.
+// $loggedInUserEmail: The email of the consultant who is logged in and sending the mailshot.
+// $allowedMailshotEmails: The array of authorized email addresses.
+// $mode: The current mode, which is 'mailshot'.
+// $db_1, $db_2: Database connection objects.
+// PHPMailer classes are included.
+// $email_footer_html: The HTML footer for the email.
+
 $allowedMailshotEmails = [
     'jayden@nocturnalrecruitment.co.uk',
-    'jourdain@nocturnalrecruitment.co.uk', 
+    'jourdain@nocturnalrecruitment.co.uk',
     'junaid@nocturnalrecruitment.co.uk',
     'casey@nocturnalrecruitment.co.uk',
     'samantha@nocturnalrecruitment.co.uk',
@@ -137,14 +146,14 @@ if ($mode === 'mailshot' && !$canSendMailshot) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
     error_log("POST data received: " . print_r($_POST, true));
 
-     if (!$canSendMailshot) {
+    if (!$canSendMailshot) {
         $_SESSION['error_message'] = "Access Denied: You are not authorized to send mailshots. Only authorized recruitment team members can send mailshots.";
         header("Location: ?mode=mailshot");
         exit;
     }
-    
+
     error_log("POST data received: " . print_r($_POST, true));
-     
+
     if (empty($_POST['selected_candidates'])) {
         $_SESSION['error_message'] = "Please select at least one candidate.";
     } elseif (empty($_POST['subject'])) {
@@ -160,64 +169,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
         error_log("Processing mailshot for " . count($candidate_ids) . " candidates");
 
         $templates = [
-            // 'job_alert' => [
-            //     'subject' => 'New Job Opportunities Matching Your Profile',
-            //     'body' => "Hello [Name],\n\nWe have new job opportunities that match your profile. Log in to your account to view them:\n\n[LoginLink]\n\nBest regards,\nThe Recruitment Team"
-            // ],
-            // 'newsletter' => [
-            //     'subject' => 'Our Latest Industry Insights',
-            //     'body' => "Hello [Name],\n\nCheck out our latest newsletter with industry insights and job tips:\n\n[NewsletterLink]\n\nBest regards,\nThe Recruitment Team"
-            // ],
-            // 'event_invitation' => [
-            //     'subject' => 'Invitation to Recruitment Event',
-            //     'body' => "Hello [Name],\n\nYou are invited to our upcoming recruitment event. Please RSVP here:\n\n[EventLink]\n\nBest regards,\nThe Recruitment Team"
-            // ],
-            // 'follow_up' => [
-            //     'subject' => 'Following Up on Your Application',
-            //     'body' => "Hello [Name],\n\nFollowing up on your recent application. Any updates?\n\nBest regards,\nThe Recruitment Team"
-            // ],
-            // 'welcome' => [
-            //     'subject' => 'Welcome to Our Candidate Network',
-            //     'body' => "Hello [Name],\n\nWelcome to our candidate database! We will contact you when we find a match.\n\nBest regards,\nThe Recruitment Team"
-            // ],
-            'custom' => [ 
+            'custom' => [
                 'subject' => $subject,
                 'body' => $custom_template_content
             ]
         ];
 
-    
         if ($template_key === 'custom') {
             $template_details = [
-                'subject' => $subject, 
-                'body' => $custom_template_content 
+                'subject' => $subject,
+                'body' => $custom_template_content
             ];
         } else {
-            
+            // Assuming this section is commented out or not used based on your provided code
             // $template_details = $templates[$template_key] ?? [
-            //     'subject' => $subject, 
+            //     'subject' => $subject,
             //     'body' => "Hello [Name],\n\nThank you for being part of our network.\n\nBest regards,\nThe Recruitment Team"
             // ];
         }
 
         $final_subject = empty($subject) ? $template_details['subject'] : $subject;
         $base_body = $template_details['body'];
-    
-        $from_email = $loggedInUserEmail;
-        $from_name = "Recruitment Team"; 
-        $success_count = 0;
-        $error_count = 0;
-        $temp_error_details = []; 
-        $console_logs = []; 
 
-
-      $from_email = "learn@natec.icu";
+        // From and SMTP details
+        $from_email = "learn@natec.icu";
         $from_name = "Nocturnal Recruitment Team";
         $smtp_host = 'smtp.titan.email';
         $smtp_username = 'learn@natec.icu';
         $smtp_password = '@WhiteDiamond0100';
         $smtp_port = 587;
-
 
         try {
             $test_mail = new PHPMailer(true);
@@ -228,7 +208,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
             $test_mail->Password = $smtp_password;
             $test_mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $test_mail->Port = $smtp_port;
-            $test_mail->SMTPDebug = 0; 
+            $test_mail->SMTPDebug = 0;
             $test_mail->Debugoutput = function($str, $level) use (&$console_logs) {
                 $console_logs[] = "SMTP DEBUG: " . trim($str);
             };
@@ -241,44 +221,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
             $_SESSION['error_message'] = "SMTP Configuration Error: " . $e->getMessage();
             $console_logs[] = "ERROR: SMTP Configuration failed - " . $e->getMessage();
             error_log("SMTP Error: " . $e->getMessage());
-            header("Location: ?mode=mailshot"); 
+            header("Location: ?mode=mailshot");
             exit;
         }
 
-    
-        if (!isset($_SESSION['error_message'])) { 
+        $success_count = 0;
+        $error_count = 0;
+        $temp_error_details = [];
+        $console_logs = [];
+
+        if (!isset($_SESSION['error_message'])) {
             foreach ($candidate_ids as $candidate_id) {
-                $log_status = ''; 
-                $log_error = ''; 
+                $log_status = '';
+                $log_error = '';
                 try {
                     error_log("Processing candidate ID: " . $candidate_id);
-                    
+
                     $stmt = $db_2->prepare("SELECT id, Name, Email, ProfileImage FROM _candidates WHERE id = ?");
                     $stmt->execute([$candidate_id]);
                     $candidate = $stmt->fetch(PDO::FETCH_OBJ);
-                    
+
                     if (!$candidate) {
-                        
                         $stmt = $db_1->prepare("SELECT id, first_name as Name, email as Email FROM candidates WHERE id = ?");
                         $stmt->execute([$candidate_id]);
                         $candidate = $stmt->fetch(PDO::FETCH_OBJ);
                     }
 
-                    
+
                     if ($candidate && filter_var($candidate->Email, FILTER_VALIDATE_EMAIL)) {
                         $to = $candidate->Email;
-                        $name = $candidate->Name ?: 'Candidate'; 
+                        $name = $candidate->Name ?: 'Candidate';
                         error_log("Sending email to: " . $to . " (" . $name . ")");
 
-                        
+
                         $personalized_body = str_replace(
                             ['[Name]', '[LoginLink]', '[NewsletterLink]', '[EventLink]'],
                             [$name, 'https://broad-mead.com/login', 'https://broad-mead.com/newsletter', 'https://broad-mead.com/events'],
                             $base_body
                         );
 
-$personalized_body_with_footer = $personalized_body . $email_footer_html;
-                        
+                        $personalized_body_with_footer = $personalized_body . $email_footer_html;
+
                         $mail = new PHPMailer(true);
                         $mail->isSMTP();
                         $mail->Host = $smtp_host;
@@ -287,8 +270,8 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
                         $mail->Password = $smtp_password;
                         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
                         $mail->Port = $smtp_port;
-                        $mail->Timeout = 30; 
-                        $mail->SMTPOptions = array( 
+                        $mail->Timeout = 30;
+                        $mail->SMTPOptions = array(
                             'ssl' => array(
                                 'verify_peer' => false,
                                 'verify_peer_name' => false,
@@ -296,15 +279,17 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
                             )
                         );
 
-                        
+
                         $mail->setFrom($from_email, $from_name);
-                        
+
+                        // This is the key line. It sets the reply-to address to the consultant's email.
                         $mail->addReplyTo($loggedInUserEmail, $from_name);
+
                         $mail->addAddress($to, $name);
-                        $mail->isHTML(true); 
+                        $mail->isHTML(true);
                         $mail->Subject = $final_subject;
-                      $mail->Body = $personalized_body_with_footer; 
-                        $mail->AltBody = $personalized_body; 
+                        $mail->Body = $personalized_body_with_footer;
+                        $mail->AltBody = $personalized_body;
 
                         if ($mail->send()) {
                             $success_count++;
@@ -321,7 +306,7 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
                             error_log("ERROR: Failed to send to {$to} - " . $mail->ErrorInfo);
                         }
 
-                        
+
                         try {
                             $log_stmt = $db_2->prepare(
                                 "INSERT INTO mailshot_logs (candidate_id, email, subject, template, body, status, error, sent_at)
@@ -339,12 +324,12 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
                             error_log("Mailshot log saved for candidate ID: {$candidate_id}, Status: {$log_status}");
                         } catch (PDOException $e) {
                             error_log("DATABASE ERROR: Failed to log mailshot for candidate ID {$candidate_id}: " . $e->getMessage());
-                           
+
                         }
-                        $mail->clearAddresses(); 
-                        $mail->clearAttachments(); 
-                        usleep(100000); 
-                    } else { 
+                        $mail->clearAddresses();
+                        $mail->clearAttachments();
+                        usleep(100000);
+                    } else {
                         $candidate_email = $candidate->Email ?? 'N/A';
                         $error_count++;
                         $log_status = 'failed';
@@ -353,7 +338,7 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
                         $console_logs[] = "ERROR: Invalid email or candidate not found for ID {$candidate_id} (Email: {$candidate_email})";
                         error_log("ERROR: Invalid email or candidate not found for ID {$candidate_id}");
 
-                        
+
                         try {
                             $log_stmt = $db_2->prepare(
                                 "INSERT INTO mailshot_logs (candidate_id, email, subject, template, body, status, error, sent_at)
@@ -364,7 +349,7 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
                                 ':email' => $candidate_email,
                                 ':subject' => $final_subject,
                                 ':template' => $template_key,
-                                ':body' => $personalized_body ?? $base_body, 
+                                ':body' => $personalized_body ?? $base_body,
                                 ':status' => $log_status,
                                 ':error' => $log_error
                             ]);
@@ -373,7 +358,7 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
                             error_log("DATABASE ERROR: Failed to log mailshot (invalid candidate/email) for ID {$candidate_id}: " . $e->getMessage());
                         }
                     }
-                } catch (Exception $e) { 
+                } catch (Exception $e) {
                     $candidate_email = isset($candidate) && isset($candidate->Email) ? $candidate->Email : 'N/A';
                     $error_count++;
                     $log_status = 'failed';
@@ -381,7 +366,8 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
                     $temp_error_details[] = $log_error;
                     $console_logs[] = "ERROR: Exception for candidate ID {$candidate_id} - " . $e->getMessage();
                     error_log("ERROR: Exception for candidate ID {$candidate_id} - " . $e->getMessage());
-                    
+
+
                     try {
                         $log_stmt = $db_2->prepare(
                             "INSERT INTO mailshot_logs (candidate_id, email, subject, template, body, status, error, sent_at)
@@ -392,7 +378,7 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
                             ':email' => $candidate_email,
                             ':subject' => $final_subject,
                             ':template' => $template_key,
-                            ':body' => $personalized_body_with_footer ?? ($personalized_body ?? $base_body), 
+                            ':body' => $personalized_body_with_footer ?? ($personalized_body ?? $base_body),
                             ':status' => $log_status,
                             ':error' => $log_error
                         ]);
@@ -401,7 +387,7 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
                         error_log("DATABASE ERROR: Failed to log mailshot (exception) for ID {$candidate_id}: " . $e->getMessage());
                     }
                 }
-            } 
+            }
 
             if ($error_count === 0) {
                 $_SESSION['success_message'] = "Mailshot processing completed. Successfully sent to $success_count candidates.";
@@ -417,11 +403,12 @@ $personalized_body_with_footer = $personalized_body . $email_footer_html;
             }
         }
     }
-    
+
     header("Location: ?mode=mailshot");
     exit;
-
 }
+
+
   
 
 
