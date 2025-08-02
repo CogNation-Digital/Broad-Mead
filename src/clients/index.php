@@ -2,7 +2,6 @@
 session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-
 require_once '../../includes/config.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -24,7 +23,7 @@ try {
     $db_1 = new PDO('mysql:host=' . $host . ';dbname=' . $dbname1, $user, $password);
     $db_1->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
     $db_1->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-   
+    
     $db_2 = new PDO('mysql:host=' . $host . ';dbname=' . $dbname2, $user, $password);
     $db_2->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
     $db_2->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -33,8 +32,9 @@ try {
     exit;
 }
 
+
 try {
-    // Create email_tracking table with mailshot_id reference
+   
     $db_2->exec("
         CREATE TABLE IF NOT EXISTS `email_tracking` (
           `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -60,13 +60,13 @@ try {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
 
-    // Update mailshot_log table with consultant columns
+  
     $columns_check = $db_2->query("SHOW COLUMNS FROM mailshot_log");
     $existing_columns = [];
     while ($col = $columns_check->fetch(PDO::FETCH_OBJ)) {
         $existing_columns[] = $col->Field;
     }
-   
+    
     if (!in_array('SentByEmail', $existing_columns)) {
         $db_2->exec("ALTER TABLE `mailshot_log` ADD COLUMN `SentByEmail` varchar(255) DEFAULT NULL AFTER `SentBy`");
     }
@@ -76,6 +76,7 @@ try {
     if (!in_array('is_completed', $existing_columns)) {
         $db_2->exec("ALTER TABLE `mailshot_log` ADD COLUMN `is_completed` tinyint(1) DEFAULT 0 AFTER `ConsultantName`");
     }
+    
 } catch (Exception $e) {
     error_log("Database setup error: " . $e->getMessage());
 }
@@ -99,7 +100,7 @@ if ($USERID) {
     }
 }
 
-// Consultant mapping with names
+
 $consultantMapping = [
     'jayden@nocturnalrecruitment.co.uk' => 'Jayden',
     'jourdain@nocturnalrecruitment.co.uk' => 'Jourdain',
@@ -120,7 +121,7 @@ $allowedExportEmails = [
     'chax@nocturnalrecruitment.co.uk'
 ];
 
-// ENHANCED SMTP Configuration - Anti-Spam Optimized
+
 function getSMTPConfig() {
     return [
         'host' => 'smtp.titan.email',
@@ -136,13 +137,13 @@ function getSMTPConfig() {
                 'verify_peer' => true,
                 'verify_peer_name' => true,
                 'allow_self_signed' => false,
-                // 'cafile' => '/etc/ssl/certs/ca-certificates.crt'
+                'cafile' => '/etc/ssl/certs/ca-certificates.crt'
             ]
         ]
     ];
 }
 
-// Enhanced email footer with proper HTML structure
+
 function getEmailFooter($consultantEmail, $consultantName) {
     return '
     <div style="margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: #ffffff; font-family: Arial, sans-serif; border-radius: 8px; max-width: 600px;">
@@ -150,7 +151,7 @@ function getEmailFooter($consultantEmail, $consultantName) {
             <h3 style="margin: 0; color: #ffffff; font-size: 18px; font-weight: bold;">Nocturnal Recruitment</h3>
             <p style="margin: 5px 0 0 0; color: #b8d4ff; font-size: 14px;">Your Trusted Recruitment Partner</p>
         </div>
-       
+        
         <table style="width: 100%; margin-bottom: 20px;" cellpadding="5" cellspacing="0">
             <tr>
                 <td style="text-align: center; vertical-align: top; width: 33%;">
@@ -167,7 +168,7 @@ function getEmailFooter($consultantEmail, $consultantName) {
                 </td>
             </tr>
         </table>
-       
+        
         <div style="text-align: center; margin-bottom: 20px;">
             <div style="color: #6daffb; font-size: 12px; margin-bottom: 3px;">✉️ Your Consultant</div>
             <div style="color: #ffffff; font-size: 13px; font-weight: bold;">' . htmlspecialchars($consultantName) . '</div>
@@ -175,7 +176,7 @@ function getEmailFooter($consultantEmail, $consultantName) {
                 <a href="mailto:' . htmlspecialchars($consultantEmail) . '" style="color: #6daffb; text-decoration: none;">' . htmlspecialchars($consultantEmail) . '</a>
             </div>
         </div>
-       
+        
         <div style="text-align: center; margin-bottom: 20px;">
             <div style="color: #6daffb; font-size: 12px; margin-bottom: 8px;">🌐 Connect With Us</div>
             <div>
@@ -185,35 +186,35 @@ function getEmailFooter($consultantEmail, $consultantName) {
                 <a href="https://www.facebook.com/nocturnalrecruitment" target="_blank" style="color: #6daffb; text-decoration: none; margin: 0 5px; font-size: 11px;">Facebook</a>
             </div>
         </div>
-       
+        
         <div style="text-align: center; border-top: 1px solid #4a6fa5; padding-top: 15px;">
             <div style="color: #b8d4ff; font-size: 10px; margin-bottom: 5px;">Company Registration: 11817091 | REC Corporate Member</div>
             <div style="color: #8bb3e8; font-size: 9px; line-height: 1.3;">
-                This email is confidential and intended only for the addressee. If you are not the intended recipient,
+                This email is confidential and intended only for the addressee. If you are not the intended recipient, 
                 please delete this email and notify us at <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #6daffb;">info@nocturnalrecruitment.co.uk</a>
             </div>
         </div>
-       
+        
         <div style="text-align: center; margin-top: 10px; font-size: 9px; color: #8bb3e8;">
             BroadMead 3.0 © 2025 - Powered by <a href="https://www.cog-nation.com" target="_blank" style="color: #E1AD01; text-decoration: none; font-weight: bold;">CogNation Digital</a>
         </div>
     </div>';
 }
 
-// Enhanced file upload handler with better security
+
 function handleFileUploads() {
     $uploadedFiles = [];
     $uploadDir = '../../uploads/mailshot_attachments/';
-   
+    
     if (!is_dir($uploadDir)) {
         mkdir($uploadDir, 0755, true);
     }
-   
-    if (isset($_FILES['mailshot_attachments']) && is_array($_FILES['mailshot_attachments']['name'])) {
+    
+    if (isset($_FILES['mailshot_attachments'])) {
         $files = $_FILES['mailshot_attachments'];
         $fileCount = count($files['name']);
-       
-        // Allowed MIME types and extensions
+        
+      
         $allowedMimeTypes = [
             'image/jpeg', 'image/jpg', 'image/png', 'image/gif',
             'application/pdf',
@@ -221,28 +222,28 @@ function handleFileUploads() {
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             'text/plain'
         ];
-       
+        
         $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt'];
-       
+        
         for ($i = 0; $i < $fileCount; $i++) {
             if ($files['error'][$i] === UPLOAD_ERR_OK) {
                 $fileName = $files['name'][$i];
                 $fileTmpName = $files['tmp_name'][$i];
                 $fileSize = $files['size'][$i];
                 $fileType = $files['type'][$i];
-               
-                // Get file extension
+                
+             
                 $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-               
+                
                 // Validate file
-                if (in_array($fileType, $allowedMimeTypes) &&
-                    in_array($fileExtension, $allowedExtensions) &&
+                if (in_array($fileType, $allowedMimeTypes) && 
+                    in_array($fileExtension, $allowedExtensions) && 
                     $fileSize <= 10485760) { // 10MB limit
-                   
+                    
                     // Generate secure filename
                     $uniqueFileName = uniqid('mailshot_', true) . '.' . $fileExtension;
                     $uploadPath = $uploadDir . $uniqueFileName;
-                   
+                    
                     if (move_uploaded_file($fileTmpName, $uploadPath)) {
                         $uploadedFiles[] = [
                             'name' => $fileName,
@@ -257,17 +258,17 @@ function handleFileUploads() {
             }
         }
     }
-   
+    
     return $uploadedFiles;
 }
 
 // Enhanced email sending function with anti-spam measures
 function sendOptimizedEmail($recipientEmail, $recipientName, $subject, $htmlBody, $textBody, $consultantEmail, $consultantName, $attachments = []) {
     $config = getSMTPConfig();
-   
+    
     try {
         $mail = new PHPMailer(true);
-       
+        
         // SMTP Configuration
         $mail->isSMTP();
         $mail->Host = $config['host'];
@@ -278,21 +279,21 @@ function sendOptimizedEmail($recipientEmail, $recipientName, $subject, $htmlBody
         $mail->Port = $config['port'];
         $mail->Timeout = $config['timeout'];
         $mail->SMTPKeepAlive = $config['keepalive'];
-       
+        
         // Enhanced SMTP options for deliverability
         $mail->SMTPOptions = $config['options'];
-       
+        
         // Set encoding to prevent spam issues
         $mail->CharSet = 'UTF-8';
         $mail->Encoding = 'base64';
-       
+        
         // Sender configuration - ANTI-SPAM CRITICAL
         $mail->setFrom($config['username'], $consultantName . ' - Nocturnal Recruitment');
         $mail->addReplyTo($consultantEmail, $consultantName);
-       
+        
         // Recipient
         $mail->addAddress($recipientEmail, $recipientName);
-       
+        
         // ANTI-SPAM HEADERS
         $mail->addCustomHeader('Return-Path', $config['username']);
         $mail->addCustomHeader('X-Mailer', 'BroadMead CRM v3.0');
@@ -303,27 +304,25 @@ function sendOptimizedEmail($recipientEmail, $recipientName, $subject, $htmlBody
         $mail->addCustomHeader('X-Consultant-Name', $consultantName);
         $mail->addCustomHeader('List-Unsubscribe', '<mailto:unsubscribe@nocturnalrecruitment.co.uk>');
         $mail->addCustomHeader('List-Id', 'Nocturnal Recruitment Updates <updates.nocturnalrecruitment.co.uk>');
-       
+        
         // Message configuration
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body = $htmlBody;
         $mail->AltBody = $textBody;
-       
+        
         // Add attachments
         foreach ($attachments as $attachment) {
-            if (file_exists($attachment['path'])) {
-                $mail->addAttachment($attachment['path'], $attachment['name']);
-            }
+            $mail->addAttachment($attachment['path'], $attachment['name']);
         }
-       
+        
         // Send email
         $result = $mail->send();
         $mail->clearAddresses();
         $mail->clearAttachments();
-       
+        
         return ['success' => true, 'message' => 'Email sent successfully'];
-       
+        
     } catch (Exception $e) {
         error_log("Email sending failed: " . $e->getMessage());
         return ['success' => false, 'message' => $e->getMessage()];
@@ -331,21 +330,21 @@ function sendOptimizedEmail($recipientEmail, $recipientName, $subject, $htmlBody
 }
 
 // Enhanced mailshot functionality - ONLY WHEN MANUALLY TRIGGERED
-if (isset($_POST['send_mailshot']) && $_POST['send_mailshot'] === '1' && !isset($_SESSION['mailshot_processing'])) {
+if (isset($_POST['send_mailshot']) && !isset($_SESSION['mailshot_processing'])) {
     $_SESSION['mailshot_processing'] = true;
-   
+    
     $allowedMailshotEmails = array_keys($consultantMapping);
     $canSendMailshot = in_array($loggedInUserEmail, array_map('strtolower', $allowedMailshotEmails));
-   
+    
     if (!$canSendMailshot) {
         $error_message = "Access Denied: You are not authorized to send mailshots.";
         unset($_SESSION['mailshot_processing']);
     } else {
-        $selected_clients = json_decode($_POST['selected_clients'] ?? '[]', true);
+        $selected_clients = json_decode($_POST['selected_clients'], true) ?? [];
         $mailshot_subject = trim($_POST['mailshot_subject'] ?? '');
         $mailshot_message = trim($_POST['mailshot_message'] ?? '');
         $mailshot_template_selected = $_POST['mailshot_template'] ?? 'Custom Mailshot';
-       
+
         // Validation
         if (empty($selected_clients)) {
             $error_message = "Please select at least one client.";
@@ -360,18 +359,19 @@ if (isset($_POST['send_mailshot']) && $_POST['send_mailshot'] === '1' && !isset(
             // Handle file uploads
             $uploadedFiles = handleFileUploads();
             $consultant_name = $consultantMapping[$loggedInUserEmail] ?? $loggedInUserName;
-           
+            
+            // Create mailshot log entry FIRST
             try {
                 $ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1;
                 $USERID = $USERID ?? $_COOKIE['USERID'] ?? 1;
                 $total_recipients = count($selected_clients);
-               
+                
                 $log_query = $db_2->prepare("
-                    INSERT INTO mailshot_log
-                    (ClientKeyID, Subject, Template, RecipientsCount, SuccessCount, FailedCount, SentBy, SentByEmail, ConsultantName, is_completed, SentDate)
+                    INSERT INTO mailshot_log 
+                    (ClientKeyID, Subject, Template, RecipientsCount, SuccessCount, FailedCount, SentBy, SentByEmail, ConsultantName, is_completed, SentDate) 
                     VALUES (:client_key_id, :subject, :template, :recipients_count, 0, 0, :sent_by, :sent_by_email, :consultant_name, 0, NOW())
                 ");
-               
+                
                 $log_query->execute([
                     ':client_key_id' => $ClientKeyID,
                     ':subject' => $mailshot_subject,
@@ -381,39 +381,39 @@ if (isset($_POST['send_mailshot']) && $_POST['send_mailshot'] === '1' && !isset(
                     ':sent_by_email' => $loggedInUserEmail,
                     ':consultant_name' => $consultant_name
                 ]);
-               
+                
                 $mailshot_id = $db_2->lastInsertId();
-               
+                
             } catch (Exception $e) {
                 error_log("Error creating mailshot log: " . $e->getMessage());
                 $error_message = "Failed to initialize mailshot. Please try again.";
                 unset($_SESSION['mailshot_processing']);
             }
-           
+
             if (!isset($error_message)) {
                 $successful_sends = 0;
                 $failed_sends = 0;
                 $error_details = [];
-               
+
                 foreach ($selected_clients as $client_id) {
                     try {
-                        
+                        // Get client details
                         $client = null;
                         $stmt = $db_2->prepare("SELECT Name, Email FROM _clients WHERE ClientID = ?");
                         $stmt->execute([$client_id]);
                         $client = $stmt->fetch();
-                       
+                        
                         if (!$client) {
                             $stmt = $db_1->prepare("SELECT Name, Email FROM clients WHERE id = ?");
                             $stmt->execute([$client_id]);
                             $client = $stmt->fetch();
                         }
-                       
+
                         if ($client && filter_var($client->Email, FILTER_VALIDATE_EMAIL)) {
-                         
+                            // Personalize message
                             $personalized_message = str_replace('[CLIENT_NAME]', $client->Name, $mailshot_message);
-                           
-                          
+                            
+                            // Create HTML and text versions
                             $html_body = '
                             <!DOCTYPE html>
                             <html lang="en">
@@ -431,15 +431,16 @@ if (isset($_POST['send_mailshot']) && $_POST['send_mailshot'] === '1' && !isset(
                                 ' . getEmailFooter($loggedInUserEmail, $consultant_name) . '
                             </body>
                             </html>';
-                           
-                            $text_body = $personalized_message . "\n\n" .
-                                "---\n" .
-                                "Best regards,\n" .
-                                $consultant_name . "\n" .
-                                "Nocturnal Recruitment\n" .
-                                "Email: " . $loggedInUserEmail . "\n" .
-                                "Phone: 0208 050 2708";
-                           
+                            
+                            $text_body = $personalized_message . "\n\n" . 
+                                        "---\n" .
+                                        "Best regards,\n" . 
+                                        $consultant_name . "\n" .
+                                        "Nocturnal Recruitment\n" .
+                                        "Email: " . $loggedInUserEmail . "\n" .
+                                        "Phone: 0208 050 2708";
+
+                            // Send email using optimized function
                             $result = sendOptimizedEmail(
                                 $client->Email,
                                 $client->Name,
@@ -450,18 +451,18 @@ if (isset($_POST['send_mailshot']) && $_POST['send_mailshot'] === '1' && !isset(
                                 $consultant_name,
                                 $uploadedFiles
                             );
-                           
+
                             if ($result['success']) {
                                 $successful_sends++;
-                               
+                                
                                 // Log individual email tracking
                                 try {
                                     $tracking_stmt = $db_2->prepare("
-                                        INSERT INTO email_tracking
-                                        (id, client_id, consultant_email, consultant_name, subject, sent_date, status, read_status)
+                                        INSERT INTO email_tracking 
+                                        (mailshot_id, client_id, consultant_email, consultant_name, subject, sent_date, delivery_status, read_status) 
                                         VALUES (?, ?, ?, ?, ?, NOW(), 'sent', 'unread')
                                     ");
-                                    $tracking_stmt->execute([$id, $client_id, $loggedInUserEmail, $consultant_name, $mailshot_subject]);
+                                    $tracking_stmt->execute([$mailshot_id, $client_id, $loggedInUserEmail, $consultant_name, $mailshot_subject]);
                                 } catch (Exception $log_e) {
                                     error_log("Error logging email tracking: " . $log_e->getMessage());
                                 }
@@ -469,10 +470,10 @@ if (isset($_POST['send_mailshot']) && $_POST['send_mailshot'] === '1' && !isset(
                                 $failed_sends++;
                                 $error_details[] = "Failed to send to: {$client->Email} - " . $result['message'];
                             }
-                           
-                            // Small delay to prevent overwhelming the SMTP server
-                            usleep(250000); // 0.25 seconds
-                           
+                            
+                            // Rate limiting - prevent being flagged as spam
+                            usleep(250000); // 250ms delay between emails
+                            
                         } else {
                             $failed_sends++;
                             $error_details[] = "Invalid email for client ID: $client_id";
@@ -482,31 +483,31 @@ if (isset($_POST['send_mailshot']) && $_POST['send_mailshot'] === '1' && !isset(
                         $error_details[] = "Error processing client ID: $client_id - " . $e->getMessage();
                     }
                 }
-               
+
                 // Update mailshot log with final results and mark as completed
                 try {
                     $update_log = $db_2->prepare("
-                        UPDATE mailshot_log
-                        SET SuccessCount = ?, FailedCount = ?, is_completed = 1
+                        UPDATE mailshot_log 
+                        SET SuccessCount = ?, FailedCount = ?, is_completed = 1 
                         WHERE id = ?
                     ");
                     $update_log->execute([$successful_sends, $failed_sends, $mailshot_id]);
                 } catch (Exception $e) {
                     error_log("Error updating mailshot log: " . $e->getMessage());
                 }
-               
-                // Clean up uploaded files after sending
+
+                // Clean up uploaded files
                 foreach ($uploadedFiles as $file) {
                     if (file_exists($file['path'])) {
                         unlink($file['path']);
                     }
                 }
-               
+
                 // Set result messages
                 if ($successful_sends > 0 && $failed_sends === 0) {
                     $success_message = "Mailshot successfully sent to $successful_sends clients from $consultant_name ($loggedInUserEmail).";
                     $NOTIFICATION = "$consultant_name successfully sent mailshot to $successful_sends clients.";
-                   
+                    
                     if (function_exists('Notify')) {
                         Notify($USERID, $ClientKeyID, $NOTIFICATION);
                     }
@@ -524,12 +525,15 @@ if (isset($_POST['send_mailshot']) && $_POST['send_mailshot'] === '1' && !isset(
                         $error_message .= "\n\nFirst 5 errors:\n" . implode("\n", array_slice($error_details, 0, 5));
                     }
                 }
-               
+                
                 unset($_SESSION['mailshot_processing']);
             }
         }
     }
 }
+
+// [REST OF THE CODE REMAINS THE SAME - Search functionality, delete functionality, etc.]
+// ... (keeping the existing search, delete, and display logic unchanged)
 
 $SearchID = isset($_GET['q']) ? $_GET['q'] : "";
 $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
@@ -537,7 +541,7 @@ $clients_status = ['targeted', 'not updated', 'active', 'inactive', 'archived'];
 
 $createdByMapping = [
     "1" => "Chax Shamwana",
-    "10" => "Millie Brown",
+    "10" => "Millie Brown", 
     "11" => "Jay Fuller",
     "13" => "Jack Dowler",
     "15" => "Alex Lapompe",
@@ -548,7 +552,6 @@ $createdByMapping = [
 $ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1;
 $USERID = $USERID ?? $_COOKIE['USERID'] ?? 1;
 $NAME = $NAME ?? 'Guest User';
-
 $showCsvExportButton = in_array($loggedInUserEmail, $allowedExportEmails);
 $allowedMailshotEmails = array_keys($consultantMapping);
 $canSendMailshot = in_array($loggedInUserEmail, array_map('strtolower', $allowedMailshotEmails));
@@ -570,13 +573,12 @@ if (isset($_POST['delete'])) {
     $ID = $_POST['ID'];
     $name = $_POST['name'];
     $reason = $_POST['reason'];
-   
+
     $stmt = $db_2->prepare("DELETE FROM `_clients` WHERE ClientID = :ID");
     $stmt->bindParam(':ID', $ID);
-   
     if ($stmt->execute()) {
         $NOTIFICATION = ($NAME ?? 'A user') . " has successfully deleted the client named '$name'. Reason for deletion: $reason.";
-       
+        
         if (function_exists('Notify')) {
             Notify($USERID, $ClientKeyID, $NOTIFICATION);
         }
@@ -585,23 +587,23 @@ if (isset($_POST['delete'])) {
     }
 }
 
-// CSV Export functionality
+// CSV Export functionality (unchanged)
 if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
     if (!in_array($loggedInUserEmail, $allowedExportEmails)) {
         die("Access Denied: You do not have permission to export client data.");
     }
-   
+    
     try {
         $nameFilter = $_GET['nameFilter'] ?? '';
         $emailFilter = $_GET['emailFilter'] ?? '';
         $statusFilter = $_GET['statusFilter'] ?? '';
         $clientTypeFilter = $_GET['clientTypeFilter'] ?? '';
         $isTab = $_GET['isTab'] ?? 'all';
-       
+        
         $export_where_conditions = ["ClientKeyID = :client_key_id", "isBranch IS NULL"];
         $ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1;
         $export_params = [':client_key_id' => $ClientKeyID];
-       
+
         if (!empty($nameFilter)) {
             $export_where_conditions[] = "Name LIKE :name";
             $export_params[':name'] = '%' . $nameFilter . '%';
@@ -622,34 +624,32 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
             $export_where_conditions[] = "Status = :is_tab_status";
             $export_params[':is_tab_status'] = $isTab;
         }
-       
+
         $export_where_clause = 'WHERE ' . implode(' AND ', $export_where_conditions);
         $export_query = "SELECT ClientID, Name, Email, Number, Address, Postcode, City, ClientType, Status, CreatedBy, Date FROM `_clients` $export_where_clause ORDER BY Name ASC";
-       
         $stmt = $db_2->prepare($export_query);
         $stmt->execute($export_params);
         $clients_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-       
+
         if (empty($clients_data)) {
             die("No clients found for export with the applied filters.");
         }
-       
+
         if (ob_get_level()) {
             ob_end_clean();
         }
-       
+
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="clients_filtered_' . date('Y-m-d') . '.csv"');
-       
         $output = fopen('php://output', 'w');
+
         $headers = array_keys($clients_data[0]);
         $createdByHeaderIndex = array_search('CreatedBy', $headers);
         if ($createdByHeaderIndex !== false) {
             $headers[$createdByHeaderIndex] = 'Created By Name';
         }
-       
         fputcsv($output, $headers);
-       
+
         foreach ($clients_data as $row) {
             if (isset($row['CreatedBy'])) {
                 $row['CreatedBy'] = $createdByMapping[$row['CreatedBy']] ?? 'Unknown';
@@ -659,7 +659,7 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
             }
             fputcsv($output, $row);
         }
-       
+
         fclose($output);
         exit;
     } catch (Exception $e) {
@@ -667,21 +667,21 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
     }
 }
 
-// Get consultant name for JavaScript templates
-$currentConsultantName = $consultantMapping[$loggedInUserEmail] ?? $loggedInUserName;
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <?php include "../../includes/head.php"; ?>
+
 <body data-pc-preset="preset-1" data-pc-sidebar-caption="true" data-pc-layout="vertical" data-pc-direction="ltr" data-pc-theme_contrast="" data-pc-theme="<?php echo $theme; ?>">
     <?php include "../../includes/sidebar.php"; ?>
     <?php include "../../includes/header.php"; ?>
     <?php include "../../includes/toast.php"; ?>
-   
+
     <div class="pc-container" style="margin-left: 280px;">
         <div class="pc-content">
             <?php include "../../includes/breadcrumb.php"; ?>
-           
+
             <!-- Success/Error Messages -->
             <?php if (isset($success_message)): ?>
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -690,7 +690,7 @@ $currentConsultantName = $consultantMapping[$loggedInUserEmail] ?? $loggedInUser
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             <?php endif; ?>
-           
+
             <?php if (isset($error_message)): ?>
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <i class="ti ti-alert-circle"></i>
@@ -698,19 +698,19 @@ $currentConsultantName = $consultantMapping[$loggedInUserEmail] ?? $loggedInUser
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             <?php endif; ?>
-           
+
             <!-- Processing Indicator -->
             <?php if (isset($_SESSION['mailshot_processing'])): ?>
-                <div class="alert alert-info" role="alert">
+                <!-- <div class="alert alert-info" role="alert">
                     <div class="d-flex align-items-center">
                         <div class="spinner-border spinner-border-sm me-2" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
                         <strong>Processing mailshot...</strong> Please wait while we send your emails. Do not refresh the page.
                     </div>
-                </div>
+                </div> -->
             <?php endif; ?>
-           
+
             <div class="row">
                 <div class="col-sm-12">
                     <div class="card">
@@ -747,7 +747,7 @@ $currentConsultantName = $consultantMapping[$loggedInUserEmail] ?? $loggedInUser
                                 </div>
                             </div>
                         </div>
-                       
+
                         <div class="card-body" style="padding-bottom: 0;">
                             <!-- Filter Section -->
                             <div class="row mb-3">
@@ -783,7 +783,7 @@ $currentConsultantName = $consultantMapping[$loggedInUserEmail] ?? $loggedInUser
                                     </select>
                                 </div>
                             </div>
-                           
+
                             <!-- Action Buttons -->
                             <div class="row mb-3">
                                 <div class="col-md-6">
@@ -805,14 +805,11 @@ $currentConsultantName = $consultantMapping[$loggedInUserEmail] ?? $loggedInUser
                                         <button type="button" style="background-color: #0d6efd; color: white; border: 1px solid #0d6efd; padding: 0.25rem 0.5rem; border-radius: 0.25rem; display: none;" id="mailshotBtn" onclick="openMailshotModal()">
                                             <i class="ti ti-mail"></i> Send Mailshot (<span id="selectedCount">0</span>)
                                         </button>
-                                    <?php elseif (isset($_SESSION['mailshot_processing'])): ?>
-                                        <button type="button" style="background-color: #6c757d; color: white; border: 1px solid #6c757d; padding: 0.25rem 0.5rem; border-radius: 0.25rem;" disabled>
-                                            <i class="ti ti-loader"></i> Processing...
-                                        </button>
                                     <?php endif; ?>
+                                  
                                 </div>
                             </div>
-                           
+
                             <!-- Enhanced Mailshot Modal -->
                             <?php if ($canSendMailshot): ?>
                                 <div class="modal fade" id="mailshotModal" tabindex="-1" role="dialog" aria-labelledby="mailshotModalLabel" aria-hidden="true">
@@ -828,14 +825,13 @@ $currentConsultantName = $consultantMapping[$loggedInUserEmail] ?? $loggedInUser
                                             <form method="POST" action="" enctype="multipart/form-data" id="mailshotForm">
                                                 <div class="modal-body">
                                                     <input type="hidden" name="selected_clients" id="mailshotSelectedClients">
-                                                    <input type="hidden" name="send_mailshot" value="1">
-                                                   
+                                                    
                                                     <!-- Anti-Spam Notice -->
                                                     <div class="alert alert-info">
                                                         <i class="ti ti-shield-check"></i>
                                                         <strong>Professional Email Delivery:</strong> This system uses anti-spam measures to ensure your emails reach clients' inboxes. All replies will be forwarded to your email (<?php echo htmlspecialchars($loggedInUserEmail); ?>).
                                                     </div>
-                                                   
+                                                    
                                                     <div class="row">
                                                         <div class="col-md-8">
                                                             <div class="form-group mb-3">
@@ -847,12 +843,12 @@ $currentConsultantName = $consultantMapping[$loggedInUserEmail] ?? $loggedInUser
                                                                     <option value="followup">Follow-up Reminder</option>
                                                                 </select>
                                                             </div>
-                                                           
+                                                            
                                                             <div class="form-group mb-3">
                                                                 <label for="mailshot_subject"><i class="ti ti-message"></i> Subject Line:</label>
                                                                 <input type="text" class="form-control" id="mailshot_subject" name="mailshot_subject" required placeholder="Enter compelling subject line...">
                                                             </div>
-                                                           
+                                                            
                                                             <div class="form-group mb-3">
                                                                 <label for="mailshot_message"><i class="ti ti-edit"></i> Email Message:</label>
                                                                 <textarea class="form-control" id="mailshot_message" name="mailshot_message" rows="12" placeholder="Enter your professional email message here. Use [CLIENT_NAME] for personalization." required></textarea>
@@ -861,7 +857,7 @@ $currentConsultantName = $consultantMapping[$loggedInUserEmail] ?? $loggedInUser
                                                                 </small>
                                                             </div>
                                                         </div>
-                                                       
+                                                        
                                                         <div class="col-md-4">
                                                             <div class="card">
                                                                 <div class="card-header">
@@ -876,11 +872,11 @@ $currentConsultantName = $consultantMapping[$loggedInUserEmail] ?? $loggedInUser
                                                                             Max: 10MB per file
                                                                         </small>
                                                                     </div>
-                                                                   
+                                                                    
                                                                     <div id="filePreview" class="mt-3"></div>
                                                                 </div>
                                                             </div>
-                                                           
+                                                            
                                                             <div class="card mt-3">
                                                                 <div class="card-header">
                                                                     <h6 class="mb-0"><i class="ti ti-users"></i> Recipients</h6>
@@ -897,7 +893,7 @@ $currentConsultantName = $consultantMapping[$loggedInUserEmail] ?? $loggedInUser
                                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                                                         <i class="ti ti-x"></i> Cancel
                                                     </button>
-                                                    <button type="submit" class="btn btn-primary" id="sendMailshotBtn">
+                                                    <button type="submit" name="send_mailshot" class="btn btn-primary" id="sendMailshotBtn">
                                                         <i class="ti ti-send"></i> Send Professional Mailshot
                                                     </button>
                                                 </div>
@@ -906,7 +902,7 @@ $currentConsultantName = $consultantMapping[$loggedInUserEmail] ?? $loggedInUser
                                     </div>
                                 </div>
                             <?php endif; ?>
-                           
+
                             <!-- Tabs -->
                             <ul class="nav nav-tabs analytics-tab" id="myTab" role="tablist" style="margin-left:30px;">
                                 <li class="nav-item" role="presentation">
@@ -926,7 +922,7 @@ $currentConsultantName = $consultantMapping[$loggedInUserEmail] ?? $loggedInUser
                                     <?php endforeach; ?>
                                 </ul>
                             </ul>
-                           
+
                             <!-- Clients Table -->
                             <div class="card-body">
                                 <div class="table-responsive dt-responsive">
@@ -957,7 +953,7 @@ $currentConsultantName = $consultantMapping[$loggedInUserEmail] ?? $loggedInUser
                                                 <?php
                                                 $query_display = "SELECT * FROM `_clients` WHERE ClientKeyID = :client_key_id AND isBranch IS NULL ";
                                                 $params_display = [':client_key_id' => $ClientKeyID];
-                                               
+
                                                 if (!empty($SearchID)) {
                                                     $qu = $db_2->prepare("SELECT `column`, `value` FROM `search_queries` WHERE SearchID = :search_id");
                                                     $qu->bindParam(':search_id', $SearchID);
@@ -965,6 +961,7 @@ $currentConsultantName = $consultantMapping[$loggedInUserEmail] ?? $loggedInUser
                                                     while ($r = $qu->fetchObject()) {
                                                         $column = $r->column;
                                                         $value = $r->value;
+
                                                         $allowed_columns = ['Name', 'ClientType', '_client_id', 'Email', 'Number', 'Address', 'Postcode', 'City'];
                                                         if (in_array($column, $allowed_columns)) {
                                                             $query_display .= " AND " . $column . " LIKE :" . $column;
@@ -972,17 +969,16 @@ $currentConsultantName = $consultantMapping[$loggedInUserEmail] ?? $loggedInUser
                                                         }
                                                     }
                                                 }
-                                               
+
                                                 if ($isTab !== "all") {
                                                     $query_display .= " AND Status = :is_tab";
                                                     $params_display[':is_tab'] = $isTab;
                                                 }
-                                               
+
                                                 $query_display .= " ORDER BY Name ASC";
                                                 $stmt_display = $db_2->prepare($query_display);
                                                 $stmt_display->execute($params_display);
                                                 $n = 1;
-                                               
                                                 while ($row = $stmt_display->fetchObject()) { ?>
                                                     <?php
                                                     $CreatedBy = $createdByMapping[$row->CreatedBy] ?? 'Unknown';
@@ -1072,7 +1068,7 @@ $currentConsultantName = $consultantMapping[$loggedInUserEmail] ?? $loggedInUser
             </div>
         </div>
     </div>
-   
+
     <!-- Delete Modal -->
     <div class="modal fade" id="DeleteModal" tabindex="-1" role="dialog" aria-labelledby="DeleteModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
@@ -1099,279 +1095,596 @@ $currentConsultantName = $consultantMapping[$loggedInUserEmail] ?? $loggedInUser
             </div>
         </div>
     </div>
-   
+
+    <!-- Enhanced Mailshot Modal with Media Upload -->
+    <?php if ($canSendMailshot): ?>
+        <div class="modal fade" id="mailshotModal" tabindex="-1" role="dialog" aria-labelledby="mailshotModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="mailshotModalLabel">
+                            Send Mailshot to Selected Clients
+                            <small class="text-muted d-block">From: <?php echo htmlspecialchars($consultantMapping[$loggedInUserEmail] ?? $loggedInUserName); ?> (<?php echo htmlspecialchars($loggedInUserEmail); ?>)</small>
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form method="POST" action="" enctype="multipart/form-data">
+                        <div class="modal-body">
+                            <input type="hidden" name="selected_clients" id="mailshotSelectedClients">
+                            
+                            <div class="alert alert-info">
+                                <i class="ti ti-info-circle"></i>
+                                <strong>Reply Handling:</strong> When clients reply to this email, their responses will be automatically redirected to your email address (<?php echo htmlspecialchars($loggedInUserEmail); ?>).
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="form-group mb-3">
+                                        <label for="mailshot_template">Choose Template:</label>
+                                        <select class="form-control" id="mailshot_template" name="mailshot_template">
+                                            <option value="">-- Select a Template --</option>
+                                            <option value="welcome">Welcome Email</option>
+                                            <option value="promotion">New Promotion</option>
+                                            <option value="followup">Follow-up Reminder</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group mb-3">
+                                        <label for="mailshot_subject">Subject:</label>
+                                        <input type="text" class="form-control" id="mailshot_subject" name="mailshot_subject" required>
+                                    </div>
+                                    
+                                    <div class="form-group mb-3">
+                                        <label for="mailshot_message">Message:</label>
+                                        <textarea class="form-control" id="mailshot_message" name="mailshot_message" rows="10" placeholder="Enter your email message here. Use [CLIENT_NAME] for the client's name." required></textarea>
+                                        <small class="form-text text-muted">
+                                            Use [CLIENT_NAME] to personalize emails with client names. Your signature and contact details will be automatically added.
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0"><i class="ti ti-paperclip"></i> Media Attachments</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="form-group mb-3">
+                                                <label for="mailshot_attachments">Add Files:</label>
+                                                <input type="file" class="form-control" id="mailshot_attachments" name="mailshot_attachments[]" multiple accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx">
+                                                <small class="form-text text-muted">
+                                                    Supported: Images (JPG, PNG, GIF), PDF, Word documents<br>
+                                                    Max size: 10MB per file
+                                                </small>
+                                            </div>
+                                            
+                                            <div id="filePreview" class="mt-3"></div>
+                                            
+                                            <div class="alert alert-warning alert-sm mt-3">
+                                                <small><strong>Note:</strong> Large attachments may slow down email delivery. Consider using links to cloud storage for very large files.</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mt-3">
+                                        <div class="card-header">
+                                            <h6 class="mb-0"><i class="ti ti-users"></i> Selected Clients</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="text-muted mb-2">Recipients: <span id="mailshotClientCount">0</span></p>
+                                            <div id="mailshotClientList" style="max-height: 150px; overflow-y: auto; font-size: 12px;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" name="send_mailshot" class="btn btn-primary" id="sendMailshotBtn">
+                                <i class="ti ti-send"></i> Send Mailshot
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Delete modal functionality
-            var deleteModal = document.getElementById('DeleteModal');
-            if (deleteModal) {
-                deleteModal.addEventListener('show.bs.modal', function (event) {
-                    var button = event.relatedTarget;
-                    var clientId = button.getAttribute('data-id');
-                    var clientName = button.getAttribute('data-name');
-                   
-                    var modalClientIdInput = deleteModal.querySelector('#deleteClientId');
-                    var modalClientNameInput = deleteModal.querySelector('#deleteClientName');
-                    var modalClientNameDisplay = deleteModal.querySelector('#modalClientName');
-                   
-                    modalClientIdInput.value = clientId;
-                    modalClientNameInput.value = clientName;
-                    modalClientNameDisplay.textContent = clientName;
-                });
-            }
-           
-            // File upload preview functionality
-            const fileInput = document.getElementById('mailshot_attachments');
-            const filePreview = document.getElementById('filePreview');
-           
-            if (fileInput) {
-                fileInput.addEventListener('change', function() {
-                    filePreview.innerHTML = '';
-                    const files = this.files;
-                   
-                    for (let i = 0; i < files.length; i++) {
-                        const file = files[i];
-                        const fileSize = (file.size / 1024 / 1024).toFixed(2);
-                       
-                        const fileItem = document.createElement('div');
-                        fileItem.className = 'alert alert-light p-2 mb-2';
-                        fileItem.innerHTML = `
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <small><strong>${file.name}</strong></small><br>
-                                    <small class="text-muted">${fileSize} MB</small>
-                                </div>
-                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile(${i})">
-                                    <i class="ti ti-x"></i>
-                                </button>
-                            </div>
-                        `;
-                        filePreview.appendChild(fileItem);
-                    }
-                });
-            }
-           
-            // Mailshot functionality
-            const selectAllCheckbox = document.getElementById('selectAll');
-            const mailshotBtn = document.getElementById('mailshotBtn');
-            const selectedCountSpan = document.getElementById('selectedCount');
-            const filterResultsSpan = document.getElementById('filterResults');
-            const mailshotSubjectField = document.getElementById('mailshot_subject');
-            const mailshotMessageField = document.getElementById('mailshot_message');
-            const mailshotTemplateDropdown = document.getElementById('mailshot_template');
-           
-            // Email templates with consultant-specific content (fixed for JavaScript)
-            const emailTemplates = {
-                'welcome': {
-                    subject: 'Welcome to Nocturnal Recruitment!',
-                    message: 'Dear [CLIENT_NAME],\n\nWelcome to Nocturnal Recruitment! We are thrilled to have you as part of our community.\n\nAs your dedicated consultant, I am here to help you with all your recruitment needs. Please don\'t hesitate to reach out if you have any questions or if there\'s anything I can assist you with.\n\nI look forward to working with you and helping you achieve your recruitment goals.\n\nBest regards,\n<?php echo htmlspecialchars($currentConsultantName); ?>'
-                },
-                'promotion': {
-                    subject: 'Exclusive Recruitment Opportunities - Just for You!',
-                    message: 'Hi [CLIENT_NAME],\n\nI hope this email finds you well. I wanted to reach out personally to share some exciting recruitment opportunities that I believe would be perfect for your organization.\n\nWe have access to top-tier candidates in various sectors, and I would love to discuss how we can help you find the right talent for your team.\n\nWould you be available for a brief call this week to explore these opportunities?\n\nLooking forward to hearing from you.\n\nBest regards,\n<?php echo htmlspecialchars($currentConsultantName); ?>'
-                },
-                'followup': {
-                    subject: 'Following Up on Our Recent Conversation',
-                    message: 'Hello [CLIENT_NAME],\n\nI hope you\'re doing well. I wanted to follow up on our recent discussion about your recruitment needs.\n\nI\'ve been working on finding the perfect candidates for your requirements and have some exciting profiles to share with you.\n\nWould you be available for a quick call to discuss these opportunities? I believe we have some excellent matches that could be exactly what you\'re looking for.\n\nPlease let me know a convenient time for you, and I\'ll be happy to arrange a call.\n\nLooking forward to hearing from you soon.\n\nBest regards,\n<?php echo htmlspecialchars($currentConsultantName); ?>'
-                }
-            };
-           
-            // Fix the templates by replacing PHP with actual consultant name
-            const consultantName = '<?php echo htmlspecialchars($currentConsultantName); ?>';
-            Object.keys(emailTemplates).forEach(key => {
-              emailTemplates[key].message = emailTemplates[key].message.replace(/<?php echo htmlspecialchars($currentConsultantName); ?>/g, consultantName);
-            });
-           
-            if (mailshotTemplateDropdown) {
-                mailshotTemplateDropdown.addEventListener('change', function() {
-                    const selectedTemplateId = this.value;
-                    if (selectedTemplateId && emailTemplates[selectedTemplateId]) {
-                        const template = emailTemplates[selectedTemplateId];
-                        mailshotSubjectField.value = template.subject;
-                        mailshotMessageField.value = template.message;
-                    } else {
-                        mailshotSubjectField.value = '';
-                        mailshotMessageField.value = '';
-                    }
-                });
-            }
-           
-            // Reset modal when closed
-            var mailshotModal = document.getElementById('mailshotModal');
-            if (mailshotModal) {
-                mailshotModal.addEventListener('hidden.bs.modal', function () {
-                    if (mailshotTemplateDropdown) mailshotTemplateDropdown.value = '';
-                    if (mailshotSubjectField) mailshotSubjectField.value = '';
-                    if (mailshotMessageField) mailshotMessageField.value = '';
-                    if (fileInput) fileInput.value = '';
-                    if (filePreview) filePreview.innerHTML = '';
-                });
-            }
-           
-            // Prevent form submission during processing
-            const sendMailshotBtn = document.getElementById('sendMailshotBtn');
-            if (sendMailshotBtn) {
-                sendMailshotBtn.addEventListener('click', function(e) {
-                    const isProcessing = document.querySelector('.alert-info .spinner-border');
-                    if (isProcessing) {
-                        e.preventDefault();
-                        alert('Mailshot is currently being processed. Please wait...');
-                        return false;
-                    }
-                   
-                    // Validate form before submission
-                    const form = this.closest('form');
-                    if (!form.checkValidity()) {
-                        return;
-                    }
-                   
-                    // Disable button and show loading state
-                    this.disabled = true;
-                    this.innerHTML = '<i class="ti ti-loader"></i> Sending...';
-                   
-                    // Submit the form
-                    form.submit();
-                });
-            }
-           
-            // Select all functionality
-            if (selectAllCheckbox) {
-                selectAllCheckbox.addEventListener('change', function() {
-                    const checkboxes = document.querySelectorAll('.checkbox-item');
-                    checkboxes.forEach(checkbox => {
-                        if (checkbox.closest('tr').style.display !== 'none') {
-                            checkbox.checked = this.checked;
-                        }
-                    });
-                    updateSelectedCount();
-                });
-            }
-           
-            // Update selected count
-            window.updateSelectedCount = function() {
-                const checkedCheckboxes = document.querySelectorAll('.checkbox-item:checked');
-                if (selectedCountSpan) selectedCountSpan.textContent = checkedCheckboxes.length;
-               
-                if (mailshotBtn) {
-                    if (checkedCheckboxes.length > 0) {
-                        mailshotBtn.style.display = 'inline-block';
-                    } else {
-                        mailshotBtn.style.display = 'none';
-                    }
-                }
-            };
-           
-            // Open mailshot modal
-            window.openMailshotModal = function() {
-                const checkedCheckboxes = document.querySelectorAll('.checkbox-item:checked');
-                const selectedClientIds = [];
-                const selectedClientNames = [];
-               
-                checkedCheckboxes.forEach(checkbox => {
-                    selectedClientIds.push(checkbox.value);
-                    selectedClientNames.push(checkbox.dataset.name);
-                });
-               
-                document.getElementById('mailshotSelectedClients').value = JSON.stringify(selectedClientIds);
-                document.getElementById('mailshotClientCount').textContent = selectedClientIds.length;
-               
-                // Display client names in a more organized way
-                const clientListDiv = document.getElementById('mailshotClientList');
-                clientListDiv.innerHTML = '';
-                selectedClientNames.forEach(name => {
-                    const clientItem = document.createElement('div');
-                    clientItem.className = 'badge bg-light text-dark me-1 mb-1';
-                    clientItem.textContent = name;
-                    clientListDiv.appendChild(clientItem);
-                });
-               
-                var mailshotBootstrapModal = new bootstrap.Modal(document.getElementById('mailshotModal'));
-                mailshotBootstrapModal.show();
-            };
-           
-            // Remove file function
-            window.removeFile = function(index) {
-                const fileInput = document.getElementById('mailshot_attachments');
-                const dt = new DataTransfer();
-                const files = fileInput.files;
-               
-                for (let i = 0; i < files.length; i++) {
-                    if (i !== index) {
-                        dt.items.add(files[i]);
-                    }
-                }
-               
-                fileInput.files = dt.files;
-                fileInput.dispatchEvent(new Event('change'));
-            };
-           
-            // Filter functionality
-            window.applyFilters = function() {
-                const nameFilter = document.getElementById('nameFilter').value.toLowerCase();
-                const emailFilter = document.getElementById('emailFilter').value.toLowerCase();
-                const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
-                const clientTypeFilter = document.getElementById('clientTypeFilter').value.toLowerCase();
-                const rows = document.querySelectorAll('#clientsTable tbody tr');
-                let visibleRowCount = 0;
-               
-                rows.forEach(row => {
-                    const name = row.dataset.name;
-                    const email = row.dataset.email;
-                    const status = row.dataset.status;
-                    const clientType = row.dataset.clienttype;
-                   
-                    const nameMatch = name.includes(nameFilter);
-                    const emailMatch = email.includes(emailFilter);
-                    const statusMatch = statusFilter === '' || status === statusFilter;
-                    const clientTypeMatch = clientTypeFilter === '' || clientType === clientTypeFilter;
-                   
-                    if (nameMatch && emailMatch && statusMatch && clientTypeMatch) {
-                        row.style.display = '';
-                        visibleRowCount++;
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-               
-                if (filterResultsSpan) filterResultsSpan.textContent = `Showing ${visibleRowCount} results.`;
-                updateSelectedCount();
-                updateCsvExportLink();
-            };
-           
-          
-            window.clearAllFilters = function() {
-                document.getElementById('nameFilter').value = '';
-                document.getElementById('emailFilter').value = '';
-                document.getElementById('statusFilter').value = '';
-                document.getElementById('clientTypeFilter').value = '';
-                applyFilters();
-            };
-           
-           
-            window.updateCsvExportLink = function() {
-                const nameFilter = document.getElementById('nameFilter').value;
-                const emailFilter = document.getElementById('emailFilter').value;
-                const statusFilter = document.getElementById('statusFilter').value;
-                const clientTypeFilter = document.getElementById('clientTypeFilter').value;
-                const urlParams = new URLSearchParams(window.location.search);
-                const isTab = urlParams.get('isTab') || 'all';
-               
-                let exportUrl = `?export_csv=true`;
-                exportUrl += `&nameFilter=${encodeURIComponent(nameFilter)}`;
-                exportUrl += `&emailFilter=${encodeURIComponent(emailFilter)}`;
-                exportUrl += `&statusFilter=${encodeURIComponent(statusFilter)}`;
-                exportUrl += `&clientTypeFilter=${encodeURIComponent(clientTypeFilter)}`;
-                exportUrl += `&isTab=${encodeURIComponent(isTab)}`;
-               
-                const exportBtn = document.getElementById('exportCsvBtn');
-                if (exportBtn) exportBtn.href = exportUrl;
-            };
-        
-            applyFilters();
-            updateSelectedCount();
-            updateCsvExportLink();
+       document.addEventListener('DOMContentLoaded', function() {
+    // DEBUGGING - Add this temporarily to troubleshoot the mailshot button issue
+    console.log('=== MAILSHOT DEBUGGING ===');
+    
+    // Delete modal functionality
+    var deleteModal = document.getElementById('DeleteModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var clientId = button.getAttribute('data-id');
+            var clientName = button.getAttribute('data-name');
+            
+            var modalClientIdInput = deleteModal.querySelector('#deleteClientId');
+            var modalClientNameInput = deleteModal.querySelector('#deleteClientName');
+            var modalClientNameDisplay = deleteModal.querySelector('#modalClientName');
+            
+            modalClientIdInput.value = clientId;
+            modalClientNameInput.value = clientName;
+            modalClientNameDisplay.textContent = clientName;
         });
+    }
+
+    // File upload preview functionality
+    const fileInput = document.getElementById('mailshot_attachments');
+    const filePreview = document.getElementById('filePreview');
+    
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            filePreview.innerHTML = '';
+            const files = this.files;
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                
+                const fileItem = document.createElement('div');
+                fileItem.className = 'alert alert-light p-2 mb-2';
+                fileItem.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small><strong>${file.name}</strong></small><br>
+                            <small class="text-muted">${fileSize} MB</small>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile(${i})">
+                            <i class="ti ti-x"></i>
+                        </button>
+                    </div>
+                `;
+                filePreview.appendChild(fileItem);
+            }
+        });
+    }
+
+    // Mailshot functionality - Get all required elements
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const mailshotBtn = document.getElementById('mailshotBtn');
+    const selectedCountSpan = document.getElementById('selectedCount');
+    const filterResultsSpan = document.getElementById('filterResults');
+    const mailshotSubjectField = document.getElementById('mailshot_subject');
+    const mailshotMessageField = document.getElementById('mailshot_message');
+    const mailshotTemplateDropdown = document.getElementById('mailshot_template');
+
+    // DEBUG: Check if all required elements exist
+    console.log('Mailshot Button found:', !!mailshotBtn);
+    console.log('Selected Count Span found:', !!selectedCountSpan);
+    console.log('Select All Checkbox found:', !!selectAllCheckbox);
+    
+    if (mailshotBtn) {
+        console.log('Button initial display:', mailshotBtn.style.display);
+        console.log('Button computed display:', window.getComputedStyle(mailshotBtn).display);
+    }
+
+    // Email templates with consultant-specific content
+    const emailTemplates = {
+        'welcome': {
+            subject: 'Welcome to Nocturnal Recruitment!',
+            message: 'Dear [CLIENT_NAME],\n\nWelcome to Nocturnal Recruitment! We are thrilled to have you as part of our community.\n\nAs your dedicated consultant, I am here to help you with all your recruitment needs. Please don\'t hesitate to reach out if you have any questions or if there\'s anything I can assist you with.\n\nI look forward to working with you and helping you achieve your recruitment goals.\n\nBest regards,\n<?php echo htmlspecialchars($consultantMapping[$loggedInUserEmail] ?? $loggedInUserName); ?>'
+        },
+        'promotion': {
+            subject: 'Exclusive Recruitment Opportunities - Just for You!',
+            message: 'Hi [CLIENT_NAME],\n\nI hope this email finds you well. I wanted to reach out personally to share some exciting recruitment opportunities that I believe would be perfect for your organization.\n\nWe have access to top-tier candidates in various sectors, and I would love to discuss how we can help you find the right talent for your team.\n\nWould you be available for a brief call this week to explore these opportunities?\n\nLooking forward to hearing from you.\n\nBest regards,\n<?php echo htmlspecialchars($consultantMapping[$loggedInUserEmail] ?? $loggedInUserName); ?>'
+        },
+        'followup': {
+            subject: 'Following Up on Our Recent Conversation',
+            message: 'Hello [CLIENT_NAME],\n\nI hope you\'re doing well. I wanted to follow up on our recent discussion about your recruitment needs.\n\nI\'ve been working on finding the perfect candidates for your requirements and have some exciting profiles to share with you.\n\nWould you be available for a quick call to discuss these opportunities? I believe we have some excellent matches that could be exactly what you\'re looking for.\n\nPlease let me know a convenient time for you, and I\'ll be happy to arrange a call.\n\nLooking forward to hearing from you soon.\n\nBest regards,\n<?php echo htmlspecialchars($consultantMapping[$loggedInUserEmail] ?? $loggedInUserName); ?>'
+        }
+    };
+
+    if (mailshotTemplateDropdown) {
+        mailshotTemplateDropdown.addEventListener('change', function() {
+            const selectedTemplateId = this.value;
+            if (selectedTemplateId && emailTemplates[selectedTemplateId]) {
+                const template = emailTemplates[selectedTemplateId];
+                if (mailshotSubjectField) mailshotSubjectField.value = template.subject;
+                if (mailshotMessageField) mailshotMessageField.value = template.message;
+            } else {
+                if (mailshotSubjectField) mailshotSubjectField.value = '';
+                if (mailshotMessageField) mailshotMessageField.value = '';
+            }
+        });
+    }
+
+    // Reset modal when closed
+    var mailshotModal = document.getElementById('mailshotModal');
+    if (mailshotModal) {
+        mailshotModal.addEventListener('hidden.bs.modal', function () {
+            if (mailshotTemplateDropdown) mailshotTemplateDropdown.value = '';
+            if (mailshotSubjectField) mailshotSubjectField.value = '';
+            if (mailshotMessageField) mailshotMessageField.value = '';
+            if (fileInput) fileInput.value = '';
+            if (filePreview) filePreview.innerHTML = '';
+        });
+    }
+
+    // Prevent form submission during processing
+    const sendMailshotBtn = document.getElementById('sendMailshotBtn');
+    if (sendMailshotBtn) {
+        sendMailshotBtn.addEventListener('click', function(e) {
+            const isProcessing = document.querySelector('.alert-info .spinner-border');
+            if (isProcessing) {
+                e.preventDefault();
+                alert('Mailshot is currently being processed. Please wait...');
+                return false;
+            }
+            
+            // Disable button and show loading state
+            this.disabled = true;
+            this.innerHTML = '<i class="ti ti-loader"></i> Sending...';
+            
+            // Re-enable after a delay if form doesn't submit
+            setTimeout(() => {
+                if (!this.closest('form').checkValidity()) {
+                    this.disabled = false;
+                    this.innerHTML = '<i class="ti ti-send"></i> Send Mailshot';
+                }
+            }, 1000);
+        });
+    }
+
+    // ENHANCED: Update selected count function with debugging
+    window.updateSelectedCount = function() {
+        console.log('=== updateSelectedCount called ===');
+        
+        // Get all checked checkboxes that are visible (not filtered out)
+        const checkedCheckboxes = document.querySelectorAll('.checkbox-item:checked');
+        const visibleCheckedCheckboxes = Array.from(checkedCheckboxes).filter(checkbox => {
+            const row = checkbox.closest('tr');
+            return row && row.style.display !== 'none';
+        });
+        
+        const count = visibleCheckedCheckboxes.length;
+        console.log('Total checked checkboxes:', checkedCheckboxes.length);
+        console.log('Visible checked checkboxes:', count);
+        
+        // Update the count in the button
+        if (selectedCountSpan) {
+            selectedCountSpan.textContent = count;
+            console.log('Updated count to:', count);
+        } else {
+            console.log('selectedCountSpan not found!');
+        }
+        
+        // ENHANCED: Show or hide the mailshot button properly with debugging
+        if (mailshotBtn) {
+            if (count > 0) {
+                console.log('Should show button - setting display to inline-block');
+                mailshotBtn.style.display = 'inline-block';
+                mailshotBtn.style.visibility = 'visible';
+                console.log('Button display after update:', mailshotBtn.style.display);
+            } else {
+                console.log('Should hide button - setting display to none');
+                mailshotBtn.style.display = 'none';
+            }
+        } else {
+            console.log('mailshotBtn not found!');
+        }
+        
+        // Update "Select All" checkbox state
+        updateSelectAllState();
+    };
+
+    // Test function for manual debugging
+    window.testUpdateSelectedCount = function() {
+        console.log('=== MANUAL TEST UPDATE SELECTED COUNT ===');
+        const checkedCheckboxes = document.querySelectorAll('.checkbox-item:checked');
+        console.log('Checked checkboxes:', checkedCheckboxes.length);
+        
+        checkedCheckboxes.forEach((checkbox, index) => {
+            console.log(`Checkbox ${index}:`, checkbox.value, checkbox.dataset.name);
+        });
+        
+        updateSelectedCount();
+    };
+
+    // ENHANCED: Update "Select All" checkbox state function
+    function updateSelectAllState() {
+        if (!selectAllCheckbox) return;
+        
+        const visibleCheckboxes = document.querySelectorAll('.checkbox-item');
+        const visibleCheckboxesArray = Array.from(visibleCheckboxes).filter(checkbox => {
+            const row = checkbox.closest('tr');
+            return row && row.style.display !== 'none';
+        });
+        
+        const checkedVisibleCheckboxes = visibleCheckboxesArray.filter(checkbox => checkbox.checked);
+        
+        if (visibleCheckboxesArray.length === 0) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = false;
+        } else if (checkedVisibleCheckboxes.length === visibleCheckboxesArray.length) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = true;
+        } else if (checkedVisibleCheckboxes.length > 0) {
+            selectAllCheckbox.indeterminate = true;
+            selectAllCheckbox.checked = false;
+        } else {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = false;
+        }
+    }
+
+    // ENHANCED: Select all functionality with debugging
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            console.log('Select All clicked:', this.checked);
+            const checkboxes = document.querySelectorAll('.checkbox-item');
+            checkboxes.forEach(checkbox => {
+                const row = checkbox.closest('tr');
+                // Only check/uncheck visible rows
+                if (row && row.style.display !== 'none') {
+                    checkbox.checked = this.checked;
+                }
+            });
+            updateSelectedCount();
+        });
+    }
+
+    // ENHANCED: Add event listeners to all existing checkboxes with debugging
+    const existingCheckboxes = document.querySelectorAll('.checkbox-item');
+    console.log('Found', existingCheckboxes.length, 'client checkboxes');
+    
+    existingCheckboxes.forEach((checkbox, index) => {
+        checkbox.addEventListener('change', function() {
+            console.log(`Checkbox ${index} changed:`, this.checked, this.value);
+            updateSelectedCount();
+        });
+    });
+
+    // ENHANCED: Open mailshot modal function
+    window.openMailshotModal = function() {
+        console.log('openMailshotModal called');
+        const checkedCheckboxes = document.querySelectorAll('.checkbox-item:checked');
+        const selectedClientIds = [];
+        const selectedClientNames = [];
+        const selectedClientEmails = [];
+
+        checkedCheckboxes.forEach(checkbox => {
+            // Only include visible (not filtered out) checkboxes
+            const row = checkbox.closest('tr');
+            if (row && row.style.display !== 'none') {
+                selectedClientIds.push(checkbox.value);
+                selectedClientNames.push(checkbox.dataset.name || checkbox.getAttribute('data-name') || 'Unknown');
+                selectedClientEmails.push(checkbox.dataset.email || checkbox.getAttribute('data-email') || '');
+            }
+        });
+
+        console.log('Selected clients:', selectedClientIds.length);
+
+        // Update the hidden form field with selected client IDs
+        const mailshotSelectedClients = document.getElementById('mailshotSelectedClients');
+        if (mailshotSelectedClients) {
+            mailshotSelectedClients.value = JSON.stringify(selectedClientIds);
+        }
+        
+        // Update the client count display in modal
+        const mailshotClientCount = document.getElementById('mailshotClientCount');
+        if (mailshotClientCount) {
+            mailshotClientCount.textContent = selectedClientIds.length;
+        }
+        
+        // Display client names in the modal
+        const clientListDiv = document.getElementById('mailshotClientList');
+        if (clientListDiv) {
+            clientListDiv.innerHTML = '';
+            selectedClientNames.forEach((name, index) => {
+                const clientItem = document.createElement('div');
+                clientItem.className = 'badge bg-light text-dark me-1 mb-1';
+                clientItem.style.fontSize = '11px';
+                const email = selectedClientEmails[index];
+                clientItem.textContent = email ? `${name} (${email})` : name;
+                clientListDiv.appendChild(clientItem);
+            });
+        }
+
+        // Show the modal
+        if (mailshotModal) {
+            var mailshotBootstrapModal = new bootstrap.Modal(mailshotModal);
+            mailshotBootstrapModal.show();
+        }
+    };
+
+    // Remove file function
+    window.removeFile = function(index) {
+        const fileInput = document.getElementById('mailshot_attachments');
+        if (!fileInput) return;
+        
+        const dt = new DataTransfer();
+        const files = fileInput.files;
+        
+        for (let i = 0; i < files.length; i++) {
+            if (i !== index) {
+                dt.items.add(files[i]);
+            }
+        }
+        
+        fileInput.files = dt.files;
+        fileInput.dispatchEvent(new Event('change'));
+    };
+
+    // ENHANCED: Filter functionality
+    window.applyFilters = function() {
+        const nameFilter = document.getElementById('nameFilter')?.value.toLowerCase() || '';
+        const emailFilter = document.getElementById('emailFilter')?.value.toLowerCase() || '';
+        const statusFilter = document.getElementById('statusFilter')?.value.toLowerCase() || '';
+        const clientTypeFilter = document.getElementById('clientTypeFilter')?.value.toLowerCase() || '';
+        const rows = document.querySelectorAll('#clientsTable tbody tr');
+        let visibleRowCount = 0;
+
+        rows.forEach(row => {
+            const name = row.dataset.name || '';
+            const email = row.dataset.email || '';
+            const status = row.dataset.status || '';
+            const clientType = row.dataset.clienttype || '';
+
+            const nameMatch = !nameFilter || name.includes(nameFilter);
+            const emailMatch = !emailFilter || email.includes(emailFilter);
+            const statusMatch = !statusFilter || status === statusFilter;
+            const clientTypeMatch = !clientTypeFilter || clientType === clientTypeFilter;
+
+            if (nameMatch && emailMatch && statusMatch && clientTypeMatch) {
+                row.style.display = '';
+                visibleRowCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        console.log('Filter applied, visible rows:', visibleRowCount);
+        if (filterResultsSpan) filterResultsSpan.textContent = `Showing ${visibleRowCount} results.`;
+        updateSelectedCount(); // Call this after filtering
+        updateCsvExportLink();
+    };
+
+    // Clear filters
+    window.clearAllFilters = function() {
+        const nameFilter = document.getElementById('nameFilter');
+        const emailFilter = document.getElementById('emailFilter');
+        const statusFilter = document.getElementById('statusFilter');
+        const clientTypeFilter = document.getElementById('clientTypeFilter');
+        
+        if (nameFilter) nameFilter.value = '';
+        if (emailFilter) emailFilter.value = '';
+        if (statusFilter) statusFilter.value = '';
+        if (clientTypeFilter) clientTypeFilter.value = '';
+        
+        applyFilters();
+    };
+
+    // Update CSV export link
+    window.updateCsvExportLink = function() {
+        const nameFilter = document.getElementById('nameFilter')?.value || '';
+        const emailFilter = document.getElementById('emailFilter')?.value || '';
+        const statusFilter = document.getElementById('statusFilter')?.value || '';
+        const clientTypeFilter = document.getElementById('clientTypeFilter')?.value || '';
+        const urlParams = new URLSearchParams(window.location.search);
+        const isTab = urlParams.get('isTab') || 'all';
+
+        let exportUrl = `?export_csv=true`;
+        exportUrl += `&nameFilter=${encodeURIComponent(nameFilter)}`;
+        exportUrl += `&emailFilter=${encodeURIComponent(emailFilter)}`;
+        exportUrl += `&statusFilter=${encodeURIComponent(statusFilter)}`;
+        exportUrl += `&clientTypeFilter=${encodeURIComponent(clientTypeFilter)}`;
+        exportUrl += `&isTab=${encodeURIComponent(isTab)}`;
+
+        const exportBtn = document.getElementById('exportCsvBtn');
+        if (exportBtn) exportBtn.href = exportUrl;
+    };
+
+    // Manual button show function (for testing)
+    window.showMailshotButton = function() {
+        if (mailshotBtn) {
+            mailshotBtn.style.display = 'inline-block';
+            mailshotBtn.style.visibility = 'visible';
+            console.log('Manually showed mailshot button');
+            return true;
+        }
+        console.log('Could not find mailshot button');
+        return false;
+    };
+
+    // Force show function for testing
+    window.forceShowMailshotButton = function() {
+        const mailshotBtn = document.getElementById('mailshotBtn');
+        if (mailshotBtn) {
+            // Remove all possible hiding styles
+            mailshotBtn.style.display = 'inline-block';
+            mailshotBtn.style.visibility = 'visible';
+            mailshotBtn.style.opacity = '1';
+            mailshotBtn.style.position = 'relative';
+            
+            // Update count
+            const selectedCountSpan = document.getElementById('selectedCount');
+            if (selectedCountSpan) {
+                selectedCountSpan.textContent = '1';
+            }
+            
+            console.log('Force showed mailshot button');
+            return true;
+        }
+        console.log('Could not find mailshot button to force show');
+        return false;
+    };
+
+    // Check parent visibility function
+    window.checkParentVisibility = function() {
+        const mailshotBtn = document.getElementById('mailshotBtn');
+        if (mailshotBtn) {
+            let element = mailshotBtn;
+            console.log('=== CHECKING PARENT VISIBILITY ===');
+            while (element && element !== document.body) {
+                const style = window.getComputedStyle(element);
+                console.log(`Element ${element.tagName}${element.id ? '#' + element.id : ''}${element.className ? '.' + element.className.split(' ').join('.') : ''}:`);
+                console.log('- display:', style.display);
+                console.log('- visibility:', style.visibility);
+                console.log('- opacity:', style.opacity);
+                
+                if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+                    console.log('^^^ This element is hiding the button!');
+                }
+                
+                element = element.parentElement;
+            }
+        }
+    };
+
+    // Enhanced debug function
+    window.debugMailshotElements = function() {
+        console.log('=== ENHANCED MAILSHOT DEBUG INFO ===');
+        console.log('Mailshot Button:', document.getElementById('mailshotBtn'));
+        console.log('Selected Count Span:', document.getElementById('selectedCount'));
+        console.log('Select All Checkbox:', document.getElementById('selectAll'));
+        console.log('Client Checkboxes Count:', document.querySelectorAll('.checkbox-item').length);
+        console.log('Checked Checkboxes Count:', document.querySelectorAll('.checkbox-item:checked').length);
+        
+        const mailshotBtn = document.getElementById('mailshotBtn');
+        if (mailshotBtn) {
+            console.log('Button Display:', mailshotBtn.style.display);
+            console.log('Button Visibility:', mailshotBtn.style.visibility);
+            const computedStyle = window.getComputedStyle(mailshotBtn);
+            console.log('Button computed display:', computedStyle.display);
+            console.log('Button computed visibility:', computedStyle.visibility);
+            console.log('Button computed opacity:', computedStyle.opacity);
+        }
+        
+        checkParentVisibility();
+    };
+
+    // ENHANCED: Initialize everything properly with debugging
+    console.log('Initializing...');
+    
+    // First apply filters to set initial state
+    if (typeof applyFilters === 'function') {
+        console.log('Applying initial filters...');
+        applyFilters();
+    }
+    
+    // Then update selected count to show/hide mailshot button
+    console.log('Running initial updateSelectedCount...');
+    updateSelectedCount();
+    
+    // Update CSV export link
+    if (typeof updateCsvExportLink === 'function') {
+        updateCsvExportLink();
+    }
+
+    console.log('=== DEBUG FUNCTIONS AVAILABLE ===');
+    console.log('- testUpdateSelectedCount()');
+    console.log('- showMailshotButton()');
+    console.log('- forceShowMailshotButton()');
+    console.log('- checkParentVisibility()');
+    console.log('- debugMailshotElements()');
+    console.log('=== END DEBUG INFO ===');
+});
     </script>
 </body>
 </html>

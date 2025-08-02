@@ -1439,7 +1439,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
             </div>
 
             <?php if (($mode ?? '') === 'candidates'): ?>
-           
+            <!-- Status Filter Buttons for Candidates View -->
             <div class="status-filter-buttons">
                 <a href="?mode=candidates&status=all"
                    class="<?= ($status_filter ?? 'all') === 'all' ? 'active' : '' ?>">
@@ -1463,8 +1463,8 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                 </a>
             </div>
 
-          
-            <?php if ($canExport):  ?>
+            <!-- Export Buttons for Candidates List -->
+            <?php if ($canExport): // Only show export buttons if user is authorized ?>
             <div class="export-buttons">
                 <a href="?mode=candidates&export=excel&status=<?= htmlspecialchars($status_filter) ?>&keyword=<?= htmlspecialchars($keyword_filter) ?>&location=<?= htmlspecialchars($location_filter) ?>&position=<?= htmlspecialchars($position_filter) ?>&center_postcode=<?= htmlspecialchars($center_postcode) ?>&distance_miles=<?= htmlspecialchars($distance_miles) ?>"
                    class="export-btn excel"
@@ -1478,7 +1478,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                 </a>
             </div>
             <?php else: ?>
-          
+            <!-- Debug message for unauthorized users (remove in production) -->
             <div class="alert alert-info">
                 <small>Export functionality is restricted to authorized users only. Current user: <?= htmlspecialchars($loggedInUserEmail) ?></small>
             </div>
@@ -1486,7 +1486,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
             <?php endif; ?>
 
             <?php if ($mode === 'kpi'): ?>
-              
+                <!-- KPI Information Box -->
                 <div class="kpi-info">
                     <h5><i class="fa fa-bar-chart"></i> KPI Reporting Dashboard</h5>
                     <p><strong>Track and analyze your candidate metrics:</strong></p>
@@ -1500,6 +1500,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                 </div>
             <?php endif; ?>
 
+            <!-- Success/Error Messages -->
             <?php if (isset($success_message)): ?>
                 <div class="success-message">
                     <i class="fa fa-check-circle"></i> <?php echo nl2br(htmlspecialchars($success_message)); ?>
@@ -1513,7 +1514,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
             <?php endif; ?>
 
             <?php if ($mode !== 'kpi'): ?>
-              
+                <!-- Candidate Filtering Section (for 'candidates' and 'mailshot' modes) -->
                 <div class="filter-section">
                     <h5>
                         <?php echo $mode === 'mailshot' ? 'Filter Candidates for Mailshot' : 'Candidate Filtering System'; ?>
@@ -1573,14 +1574,14 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
             <?php endif; ?>
 
             <?php if ($mode === 'candidates' || $mode === 'mailshot'): ?>
-              
+                <!-- Candidate List Table Section -->
                 <div class="card p-4">
                     <h4 class="mb-4">
                         <?php echo $mode === 'mailshot' ? 'Select Candidates for Mailshot' : 'Candidate List'; ?>
                     </h4>
 
                     <?php if ($mode === 'mailshot'): ?>
-                     
+                        <!-- Mailshot Form -->
                         <form method="POST" action="?mode=mailshot" class="mailshot-form">
                             <div class="form-group">
                                 <label for="subject">Email Subject:</label>
@@ -1590,7 +1591,11 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                                 <label for="template">Select Template:</label>
                                 <select id="template" name="template" class="form-control filter-select" onchange="toggleCustomTemplate()">
                                     <option value="">-- Select --</option>
-                                   
+                                    <!-- <option value="job_alert">Job Alert</option>
+                                    <option value="newsletter">Newsletter</option>
+                                    <option value="event_invitation">Event Invitation</option>
+                                    <option value="follow_up">Follow Up</option>
+                                    <option value="welcome">Welcome</option> -->
                                     <option value="custom">Custom Template</option>
                                 </select>
                             </div>
@@ -1632,7 +1637,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                                             <?php endif; ?>
                                             <td>
                                                 <?php
-                                                
+                                                // Use ProfilePictureURL if available, otherwise fallback to a generic placeholder
                                                 $profile_pic_url = !empty($candidate['ProfileImage']) ? htmlspecialchars($candidate['ProfileImage']) : 'https://placehold.co/40x40/cccccc/333333?text=N/A';
                                                 ?>
                                                 <img src="<?= $profile_pic_url ?>" alt="Profile" class="profile-pic" onerror="this.onerror=null;this.src='https://placehold.co/40x40/cccccc/333333?text=N/A';">
@@ -1646,7 +1651,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                                             <td><?= htmlspecialchars($createdByMapping[$candidate['CreatedBy']] ?? 'Unknown') ?></td>
                                             <?php if ($mode === 'candidates'): ?>
                                                 <td>
-                                                
+                                                    <!-- Action buttons (placeholders for now) -->
                                                     <a href="#" class="btn btn-sm btn-info" title="View Details" style="background-color: #17a2b8; color: white; padding: 5px 8px; border-radius: 4px; text-decoration: none;"><i class="fa fa-eye"></i></a>
                                                     <a href="#" class="btn btn-sm btn-warning" title="Edit" style="background-color: #ffc107; color: white; padding: 5px 8px; border-radius: 4px; text-decoration: none;"><i class="fa fa-edit"></i></a>
                                                     <a href="#" class="btn btn-sm btn-danger" title="Delete" style="background-color: #dc3545; color: white; padding: 5px 8px; border-radius: 4px; text-decoration: none;"><i class="fa fa-trash"></i></a>
@@ -1675,7 +1680,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
             <?php endif; ?>
 
             <?php if ($mode === 'kpi'): ?>
-              
+                <!-- KPI Report Filtering Section -->
                 <div class="kpi-filter-section">
                     <h5>Filter KPI Report</h5>
                     <form method="GET" action="">
@@ -1729,8 +1734,8 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                     </form>
                 </div>
 
-               
-                <?php if ($canExport):  ?>
+                <!-- Export Buttons for KPI Report -->
+                <?php if ($canExport): // Only show export buttons if user is authorized ?>
                 <div class="export-buttons">
                     <a href="?mode=kpi&export=excel&kpi_period=<?= htmlspecialchars($kpi_period) ?>&kpi_start_date=<?= htmlspecialchars($kpi_start_date) ?>&kpi_end_date=<?= htmlspecialchars($kpi_end_date) ?>&kpi_status_filter=<?= htmlspecialchars($kpi_status_filter) ?>&kpi_location_filter=<?= htmlspecialchars($kpi_location_filter) ?>"
                        class="export-btn excel"
@@ -1750,7 +1755,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                         <i class="fa fa-exclamation-triangle"></i> KPI Calculation Error: <?= htmlspecialchars($kpi_data['error']) ?>
                     </div>
                 <?php else: ?>
-                  
+                    <!-- KPI Summary Cards -->
                     <div class="kpi-summary-cards">
                         <div class="kpi-card">
                             <div class="value"><?= $kpi_data['total_candidates'] ?? 0 ?></div>
@@ -1782,7 +1787,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                         </div>
                     </div>
 
-                   
+                    <!-- KPI Detail Tables -->
                     <h5 class="mt-4 mb-3">Candidate Status Distribution (Current Period)</h5>
                     <div class="table-responsive mb-4">
                         <table class="kpi-detail-table">
@@ -1947,7 +1952,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
     </div>
 
     <script>
-        
+        // JavaScript for Mailshot: Toggle Custom Template Textarea visibility
         function toggleCustomTemplate() {
             const templateSelect = document.getElementById('template');
             const customContentDiv = document.getElementById('customTemplateContentDiv');
@@ -1955,11 +1960,12 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                 customContentDiv.style.display = 'block';
             } else {
                 customContentDiv.style.display = 'none';
-              
+                // Clear custom content if template is changed from custom
                 document.getElementById('custom_template_content').value = '';
             }
         }
 
+        // JavaScript for KPI Report: Toggle Custom Date Inputs enabled/disabled state
         function toggleCustomDateInputs() {
             const periodSelect = document.getElementById('kpi_period');
             const startDateInput = document.getElementById('kpi_start_date');
@@ -1970,16 +1976,20 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
             } else {
                 startDateInput.setAttribute('disabled', 'disabled');
                 endDateInput.setAttribute('disabled', 'disabled');
-                
+                // Optionally clear values when disabled to avoid confusion
+                // startDateInput.value = '';
+                // endDateInput.value = '';
             }
         }
 
+        // JavaScript for "Select All" checkbox in Mailshot mode
         document.addEventListener('DOMContentLoaded', function() {
-           
+            // Initialize Mailshot custom template state on page load
             toggleCustomTemplate();
-           
+            // Initialize KPI custom date inputs state on page load
             toggleCustomDateInputs();
 
+            // Event listener for "Select All Candidates" checkbox
             const selectAllCheckbox = document.getElementById('selectAllCandidates');
             if (selectAllCheckbox) {
                 selectAllCheckbox.addEventListener('change', function() {
@@ -1992,8 +2002,8 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
         });
     </script>
 
- 
-    <?php  ?>
+    <!-- Include other JS files from your includes folder if necessary -->
+    <?php // include "../../includes/footer_scripts.php"; ?>
 </body>
 </html>
 
