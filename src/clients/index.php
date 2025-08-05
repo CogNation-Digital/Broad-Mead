@@ -1,31 +1,29 @@
 <?php
-
+session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-require_once '../../includes/config.php'; // Ensure this includes necessary configurations like $theme, $LINK, etc.
+require_once '../../includes/config.php';
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Redirect if user is not logged in
 if (!isset($_COOKIE['USERID'])) {
-    header("location: $LINK/login");
-    exit; // Always exit after a header redirect
+    header("location: $LINK/landing/login.php");
+    exit; 
 }
 
-// Database configuration
 $host = 'localhost';
 $user = 'root';
 $password = '';
-$dbname1 = 'broadmead'; // Legacy database
-$dbname2 = 'broadmead_v3'; // Primary, newer database
+$dbname1 = 'broadmead';
+$dbname2 = 'broadmead_v3';
 
-// Database connections
 try {
     $db_1 = new PDO('mysql:host=' . $host . ';dbname=' . $dbname1, $user, $password);
     $db_1->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
     $db_1->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
+   
     $db_2 = new PDO('mysql:host=' . $host . ';dbname=' . $dbname2, $user, $password);
     $db_2->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
     $db_2->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -34,21 +32,378 @@ try {
     exit;
 }
 
-// --- CSV Export Handler (must come before ANY output) ---
-if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
+$consultantMapping = [
+    'jayden@nocturnalrecruitment.co.uk' => 'Jayden',
+    'jourdain@nocturnalrecruitment.co.uk' => 'Jourdain',
+    'junaid@nocturnalrecruitment.co.uk' => 'Junaid',
+    'casey@nocturnalrecruitment.co.uk' => 'Casey',
+    'samantha@nocturnalrecruitment.co.uk' => 'Samantha',
+    'millie@nocturnalrecruitment.co.uk' => 'Millie Brown',
+    'valter@nocturnalrecruitment.co.uk' => 'Valter',
+    'euphemiachikungulu347@gmail.com' => 'Euphemia',
+    'alex@nocturnalrecruitment.co.uk' => 'Alex Lapompe',
+    'j.dowler@nocturnalrecruitment.co.uk' => 'Jack Dowler',
+    'chax@nocturnalrecruitment.co.uk' => 'Chax Shamwana'
+];
+
+$allowedExportEmails = [
+    'alex@nocturnalrecruitment.co.uk',
+    'j.dowler@nocturnalrecruitment.co.uk',
+    'chax@nocturnalrecruitment.co.uk'
+];
+
+function getSMTPConfig() {
+    return [
+        'host' => 'smtp.titan.email',
+        'username' => 'learn@natec.icu',
+        'password' => '@WhiteDiamond0100',
+        'port' => 587,
+        'encryption' => PHPMailer::ENCRYPTION_STARTTLS,
+        'auth' => true,
+        'timeout' => 60,
+        'keepalive' => true,
+        'options' => [
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            ]
+        ]
+    ];
+}
+
+function getEmailFooter($consultantEmail, $consultantName) {
+    // ... [same as your original, omitted for brevity] ...
+    return '...'; // Use your full HTML signature from the original
+}
+
+// Secure file upload handler
+function handleFileUploads() {
+    $uploadedFiles = [];
+    $uploadDir = '../../uploads/mailshot_attachments/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+    if (isset($_FILES['mailshot_attachments'])) {
+        $files = $_FILES['mailshot_attachments'];
+        $allowedMimeTypes = [
+            'image/jpeg', 'image/jpg', 'image/png', 'image/gif',
+            'application/pdf', 'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'
+        ];
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt'];
+        for ($i = 0; $i < count($files['name']); $i++) {
+            if ($files['error'][$i] === UPLOAD_ERR_OK) {
+                $fileName = $files['name'][$i];
+                $fileTmpName = $files['tmp_name'][$i];
+                $fileSize = $files['size'][$i];
+                $fileType = $files['type'][$i];
+                $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+                if (in_array($fileType, $allowedMimeTypes) &&
+                    in_array($fileExtension, $allowedExtensions) &&
+                    $fileSize <= 10485760) {
+                    $uniqueFileName = uniqid('mailshot_', true) . '.' . $fileExtension;
+                    $uploadPath = $uploadDir . $uniqueFileName;
+                    if (move_uploaded_file($fileTmpName, $uploadPath)) {
+                        $uploadedFiles[] = [
+                            'name' => $fileName,
+                            'path' => $uploadPath,
+                            'type' => $fileType,
+                            'size' => $fileSize
+                        ];
+                    }
+                }
+            }
+        }
+    }
+    return $uploadedFiles;
+}
+
+// The ONLY email sending function used
+function sendOptimizedEmail($recipientEmail, $recipientName, $subject, $htmlBody, $textBody, $consultantEmail, $consultantName, $attachments = []) {
+    $config = getSMTPConfig();
+    $mail = new PHPMailer(true);
     try {
-        // Retrieve filter parameters from GET request
+        $mail->isSMTP();
+        $mail->Host = $config['host'];
+        $mail->SMTPAuth = $config['auth'];
+        $mail->Username = $config['username'];
+        $mail->Password = $config['password'];
+        $mail->SMTPSecure = $config['encryption'];
+        $mail->Port = $config['port'];
+        $mail->Timeout = $config['timeout'];
+        $mail->SMTPKeepAlive = $config['keepalive'];
+        $mail->SMTPOptions = $config['options'];
+        $mail->CharSet = 'UTF-8';
+        $mail->Encoding = 'base64';
+        $mail->SMTPDebug = 0;
+        
+        $mail->setFrom($config['username'], $consultantName . ' - Nocturnal Recruitment');
+        $mail->addReplyTo($consultantEmail, $consultantName);
+        $mail->addAddress($recipientEmail, $recipientName);
+        
+        // Add headers
+        $mail->addCustomHeader('Return-Path', $config['username']);
+        $mail->addCustomHeader('X-Mailer', 'BroadMead CRM v3.0');
+        $mail->addCustomHeader('X-Priority', '3');
+        $mail->addCustomHeader('X-MSMail-Priority', 'Normal');
+        $mail->addCustomHeader('Importance', 'Normal');
+        $mail->addCustomHeader('X-Consultant-Email', $consultantEmail);
+        $mail->addCustomHeader('X-Consultant-Name', $consultantName);
+        
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body = $htmlBody;
+        $mail->AltBody = $textBody;
+
+        // Add attachments
+        foreach ($attachments as $attachment) {
+            $mail->addAttachment($attachment['path'], $attachment['name']);
+        }
+
+        // Send with retry mechanism
+        $maxRetries = 3;
+        $retryDelay = 2;
+        
+        for ($i = 0; $i < $maxRetries; $i++) {
+            try {
+                if ($mail->send()) {
+                    return ['success' => true, 'message' => 'Email sent successfully'];
+                }
+            } catch (Exception $e) {
+                if ($i === $maxRetries - 1) throw $e;
+                sleep($retryDelay);
+            }
+        }
+        
+        return ['success' => false, 'message' => 'Failed after retries'];
+    } catch (Exception $e) {
+        error_log("Email error: " . $e->getMessage());
+        return ['success' => false, 'message' => $e->getMessage()];
+    }
+}
+// Get logged-in consultant info
+$loggedInUserEmail = '';
+$loggedInUserName = '';
+$USERID = $_COOKIE['USERID'] ?? null;
+if ($USERID) {
+    $stmt = $db_2->prepare("SELECT Email, Name FROM users WHERE UserID = :userid");
+    $stmt->bindParam(':userid', $USERID);
+    $stmt->execute();
+    $user = $stmt->fetch(PDO::FETCH_OBJ);
+    if ($user) {
+        $loggedInUserEmail = strtolower($user->Email);
+        $loggedInUserName = $user->Name ?? 'Consultant';
+    }
+}
+
+// Only allow authorized consultants to send mailshots
+$allowedMailshotEmails = array_keys($consultantMapping);
+$canSendMailshot = in_array($loggedInUserEmail, array_map('strtolower', $allowedMailshotEmails));
+
+if (isset($_POST['send_mailshot']) && !isset($_SESSION['mailshot_processing'])) {
+    $_SESSION['mailshot_processing'] = true;
+    if (!$canSendMailshot) {
+        $error_message = "Access Denied: You are not authorized to send mailshots.";
+        unset($_SESSION['mailshot_processing']);
+    } else {
+        $selected_clients = json_decode($_POST['selected_clients'], true) ?? [];
+        $mailshot_subject = trim($_POST['mailshot_subject'] ?? '');
+        $mailshot_message = trim($_POST['mailshot_message'] ?? '');
+        $mailshot_template_selected = $_POST['mailshot_template'] ?? 'Custom Mailshot';
+        if (empty($selected_clients)) {
+            $error_message = "Please select at least one client.";
+            unset($_SESSION['mailshot_processing']);
+        } elseif (empty($mailshot_subject)) {
+            $error_message = "Email subject is required.";
+            unset($_SESSION['mailshot_processing']);
+        } elseif (empty($mailshot_message)) {
+            $error_message = "Email message is required.";
+            unset($_SESSION['mailshot_processing']);
+        } else {
+            $uploadedFiles = handleFileUploads();
+            $consultant_name = $consultantMapping[$loggedInUserEmail] ?? $loggedInUserName;
+            // Create mailshot log
+            $ClientKeyID = $_COOKIE['ClientKeyID'] ?? 1;
+            $USERID = $_COOKIE['USERID'] ?? 1;
+            $total_recipients = count($selected_clients);
+            $log_query = $db_2->prepare("
+                INSERT INTO mailshot_log
+                (ClientKeyID, Subject, Template, RecipientsCount, SuccessCount, FailedCount, SentBy, SentByEmail, ConsultantName, is_completed, SentDate)
+                VALUES (:client_key_id, :subject, :template, :recipients_count, 0, 0, :sent_by, :sent_by_email, :consultant_name, 0, NOW())
+            ");
+            $log_query->execute([
+                ':client_key_id' => $ClientKeyID,
+                ':subject' => $mailshot_subject,
+                ':template' => $mailshot_template_selected,
+                ':recipients_count' => $total_recipients,
+                ':sent_by' => $USERID,
+                ':sent_by_email' => $loggedInUserEmail,
+                ':consultant_name' => $consultant_name
+            ]);
+            $mailshot_id = $db_2->lastInsertId();
+
+            $successful_sends = 0;
+            $failed_sends = 0;
+            $error_details = [];
+            foreach ($selected_clients as $client_id) {
+                try {
+                    // Get client details (try v3, fallback v1)
+                    $stmt = $db_2->prepare("SELECT Name, Email FROM _clients WHERE ClientID = ?");
+                    $stmt->execute([$client_id]);
+                    $client = $stmt->fetch(PDO::FETCH_OBJ);
+                    if (!$client && $db_1) {
+                        $stmt = $db_1->prepare("SELECT Name, Email FROM clients WHERE id = ?");
+                        $stmt->execute([$client_id]);
+                        $client = $stmt->fetch(PDO::FETCH_OBJ);
+                    }
+                    if ($client && filter_var($client->Email, FILTER_VALIDATE_EMAIL)) {
+                        $personalized_message = str_replace('[CLIENT_NAME]', $client->Name, $mailshot_message);
+                        $html_body = '<!DOCTYPE html>
+                        <html lang="en"><head><meta charset="UTF-8"><title>' . htmlspecialchars($mailshot_subject) . '</title></head>
+                        <body style="font-family: Arial, sans-serif;">' .
+                        '<div style="background: #f9f9f9; padding: 20px; border-radius: 10px;">' .
+                        '<div style="background: white; padding: 30px; border-radius: 8px;">' .
+                        nl2br(htmlspecialchars($personalized_message)) .
+                        '</div></div>' .
+                        getEmailFooter($loggedInUserEmail, $consultant_name) .
+                        '</body></html>';
+                        $text_body = $personalized_message . "\n\n---\nBest regards,\n" .
+                                     $consultant_name . "\nNocturnal Recruitment\nEmail: " . $loggedInUserEmail;
+                        // Send email via the ONLY function
+                        $result = sendOptimizedEmail(
+                            $client->Email, $client->Name, $mailshot_subject, $html_body, $text_body,
+                            $loggedInUserEmail, $consultant_name, $uploadedFiles
+                        );
+                        if ($result['success']) {
+                            $successful_sends++;
+                            // Log email tracking
+                            $tracking_stmt = $db_2->prepare("
+                                INSERT INTO email_tracking (mailshot_id, client_id, consultant_email, consultant_name, subject, sent_date, delivery_status)
+                                VALUES (?, ?, ?, ?, ?, NOW(), 'sent')
+                            ");
+                            $tracking_stmt->execute([
+                                $mailshot_id, $client_id, $loggedInUserEmail, $consultant_name, $mailshot_subject
+                            ]);
+                        } else {
+                            $failed_sends++;
+                            $error_details[] = "Failed for {$client->Email}: " . $result['message'];
+                        }
+                    } else {
+                        $failed_sends++;
+                        $error_details[] = "Invalid email for client ID: $client_id";
+                    }
+                } catch (Exception $e) {
+                    $failed_sends++;
+                    $error_details[] = "Error for client ID $client_id: " . $e->getMessage();
+                }
+            }
+            // Update mailshot log
+            $update_log = $db_2->prepare("
+                UPDATE mailshot_log SET SuccessCount = ?, FailedCount = ?, is_completed = 1 WHERE id = ?
+            ");
+            $update_log->execute([$successful_sends, $failed_sends, $mailshot_id]);
+            // Clean up uploaded files
+            foreach ($uploadedFiles as $file) {
+                if (file_exists($file['path'])) unlink($file['path']);
+            }
+            // Result message
+            if ($successful_sends > 0 && $failed_sends === 0) {
+                $success_message = "Mailshot successfully sent to $successful_sends clients.";
+            } elseif ($successful_sends > 0 && $failed_sends > 0) {
+                $error_message = "Mailshot completed with issues: $successful_sends succeeded, $failed_sends failed.\nFirst errors: " . implode("\n", array_slice($error_details, 0, 5));
+            } else {
+                $error_message = "Mailshot failed for all clients. First errors: " . implode("\n", array_slice($error_details, 0, 5));
+            }
+            unset($_SESSION['mailshot_processing']);
+            $_SESSION['mailshot_completed'] = true;
+            $_SESSION['mailshot_result'] = $success_message ?? $error_message ?? 'Mailshot completed.';
+        }
+    }
+}
+
+// Show result message after mailshot
+if (isset($_SESSION['mailshot_completed'])) {
+    if (isset($_SESSION['mailshot_result'])) {
+        if (strpos($_SESSION['mailshot_result'], 'successfully') !== false) {
+            $success_message = $_SESSION['mailshot_result'];
+        } else {
+            $error_message = $_SESSION['mailshot_result'];
+        }
+    }
+    unset($_SESSION['mailshot_completed'], $_SESSION['mailshot_result']);
+}
+
+// [rest of your page logic, HTML, JS can stay mostly as-is]
+
+
+$SearchID = isset($_GET['q']) ? $_GET['q'] : "";
+$isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
+$clients_status = ['targeted', 'not updated', 'active', 'inactive', 'archived'];
+
+$createdByMapping = [
+    "1" => "Chax Shamwana",
+    "10" => "Millie Brown",
+    "11" => "Jay Fuller",
+    "13" => "Jack Dowler",
+    "15" => "Alex Lapompe",
+    "2" => "Alex Lapompe",
+    "9" => "Jack Dowler"
+];
+
+$ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1;
+$USERID = $USERID ?? $_COOKIE['USERID'] ?? 1;
+$NAME = $NAME ?? 'Guest User';
+$showCsvExportButton = in_array($loggedInUserEmail, $allowedExportEmails);
+$allowedMailshotEmails = array_keys($consultantMapping);
+$canSendMailshot = in_array($loggedInUserEmail, array_map('strtolower', $allowedMailshotEmails));
+
+// Search functionality
+if (isset($_POST['Search'])) {
+    $Name = $_POST['Name'] ?? '';
+    $ClientType = $_POST['ClientType'] ?? '';
+    $_client_id = $_POST['_client_id'] ?? '';
+    $EmailAddress = $_POST['Email'] ?? '';
+    $PhoneNumber = $_POST['Number'] ?? '';
+    $Address = $_POST['Address'] ?? '';
+    $Postcode = $_POST['Postcode'] ?? '';
+    $City = $_POST['City'] ?? '';
+}
+
+// Delete functionality
+if (isset($_POST['delete'])) {
+    $ID = $_POST['ID'];
+    $name = $_POST['name'];
+    $reason = $_POST['reason'];
+
+    $stmt = $db_2->prepare("DELETE FROM `_clients` WHERE ClientID = :ID");
+    $stmt->bindParam(':ID', $ID);
+    if ($stmt->execute()) {
+        $NOTIFICATION = ($NAME ?? 'A user') . " has successfully deleted the client named '$name'. Reason for deletion: $reason.";
+       
+        if (function_exists('Notify')) {
+            Notify($USERID, $ClientKeyID, $NOTIFICATION);
+        }
+    } else {
+        error_log("Error deleting record: " . implode(", ", $stmt->errorInfo()));
+    }
+}
+
+if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
+    if (!in_array($loggedInUserEmail, $allowedExportEmails)) {
+        die("Access Denied: You do not have permission to export client data.");
+    }
+   
+    try {
         $nameFilter = $_GET['nameFilter'] ?? '';
         $emailFilter = $_GET['emailFilter'] ?? '';
         $statusFilter = $_GET['statusFilter'] ?? '';
         $clientTypeFilter = $_GET['clientTypeFilter'] ?? '';
-        $isTab = $_GET['isTab'] ?? 'all'; // Retrieve the active tab filter
-
-        // Assuming $ClientKeyID is defined in config.php and represents the current user's associated client key.
-        // If it's not defined, you might need to fetch it from the session or user data.
-        // For now, assuming it's available.
+        $isTab = $_GET['isTab'] ?? 'all';
+       
         $export_where_conditions = ["ClientKeyID = :client_key_id", "isBranch IS NULL"];
-        $export_params = [':client_key_id' => $ClientKeyID]; 
+        $ClientKeyID = $ClientKeyID ?? $_COOKIE['ClientKeyID'] ?? 1;
+        $export_params = [':client_key_id' => $ClientKeyID];
 
         if (!empty($nameFilter)) {
             $export_where_conditions[] = "Name LIKE :name";
@@ -66,7 +421,6 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
             $export_where_conditions[] = "ClientType = :client_type";
             $export_params[':client_type'] = $clientTypeFilter;
         }
-
         if ($isTab !== "all") {
             $export_where_conditions[] = "Status = :is_tab_status";
             $export_params[':is_tab_status'] = $isTab;
@@ -74,55 +428,33 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
 
         $export_where_clause = 'WHERE ' . implode(' AND ', $export_where_conditions);
         $export_query = "SELECT ClientID, Name, Email, Number, Address, Postcode, City, ClientType, Status, CreatedBy, Date FROM `_clients` $export_where_clause ORDER BY Name ASC";
-
         $stmt = $db_2->prepare($export_query);
         $stmt->execute($export_params);
-        $clients_data = $stmt->fetchAll(PDO::FETCH_ASSOC); // Fetch as associative array for headers
+        $clients_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         if (empty($clients_data)) {
             die("No clients found for export with the applied filters.");
         }
 
-        // Clear any existing output buffer to prevent header issues
         if (ob_get_level()) {
             ob_end_clean();
         }
 
-        // Set headers for CSV download
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="clients_filtered_' . date('Y-m-d') . '.csv"');
-
         $output = fopen('php://output', 'w');
 
-        // Mapping for CreatedBy IDs to Names (for display in tables)
-        // This needs to be available for the export as well.
-        $createdByMapping = [
-            "1" => "Chax Shamwana",
-            "10" => "Millie Brown",
-            "11" => "Jay Fuller",
-            "13" => "Jack Dowler",
-            "15" => "Alex Lapompe",
-            "2" => "Alex Lapompe",
-            "9" => "Jack Dowler"
-        ];
-
-        // Get headers from the first row and map CreatedBy IDs to names
         $headers = array_keys($clients_data[0]);
-        // Find 'CreatedBy' index and replace with 'Created By Name' for clarity in CSV
         $createdByHeaderIndex = array_search('CreatedBy', $headers);
         if ($createdByHeaderIndex !== false) {
             $headers[$createdByHeaderIndex] = 'Created By Name';
         }
+        fputcsv($output, $headers);
 
-        fputcsv($output, $headers); // Write headers to CSV
-
-        // Write data rows to CSV
         foreach ($clients_data as $row) {
-            // Map CreatedBy ID to name for the current row
             if (isset($row['CreatedBy'])) {
                 $row['CreatedBy'] = $createdByMapping[$row['CreatedBy']] ?? 'Unknown';
             }
-            // Format Date if it exists
             if (isset($row['Date'])) {
                 $row['Date'] = date('Y-m-d H:i:s', strtotime($row['Date']));
             }
@@ -130,256 +462,23 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
         }
 
         fclose($output);
-        exit; // Terminate script after sending the file
+        exit;
     } catch (Exception $e) {
         die("CSV Export Failed: " . $e->getMessage());
     }
 }
 
 
-// Process mailshot when form is submitted
-if (isset($_POST['send_mailshot'])) {
-    $_SESSION['mailshot_initiated'] = true;
 
-    $selected_clients = json_decode($_POST['selected_clients'], true) ?? [];
-    $mailshot_subject = $_POST['mailshot_subject'] ?? '';
-    $mailshot_message = $_POST['mailshot_message'] ?? '';
-    
-    // Validation
-    if (empty($selected_clients)) {
-        $error_message = "Please select at least one client.";
-    } elseif (empty($mailshot_subject)) {
-        $error_message = "Email subject is required.";
-    } elseif (empty($mailshot_message)) {
-        $error_message = "Email message is required.";
-    } else {
-        // SMTP Configuration
-        $from_email = "learn@natec.icu";
-        $from_name = "Recruitment Team";
-        $smtp_host = 'smtp.titan.email';
-        $smtp_username = 'learn@natec.icu';
-        $smtp_password = '@WhiteDiamond0100';
-        $smtp_port = 587;
-
-        $total_recipients = count($selected_clients);
-        $successful_sends = 0;
-        $failed_sends = 0;
-        $error_details = [];
-
-        // Test SMTP connection first
-        try {
-            $test_mail = new PHPMailer(true);
-            $test_mail->isSMTP();
-            $test_mail->Host = $smtp_host;
-            $test_mail->SMTPAuth = true;
-            $test_mail->Username = $smtp_username;
-            $test_mail->Password = $smtp_password;
-            $test_mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            $test_mail->Port = $smtp_port;
-            
-            if (!$test_mail->smtpConnect()) {
-                throw new Exception("SMTP connection failed");
-            }
-            $test_mail->smtpClose();
-        } catch (Exception $e) {
-            $error_message = "SMTP Configuration Error: " . $e->getMessage();
-            error_log("SMTP Error: " . $e->getMessage());
-        }
-
-        // Proceed if SMTP test passed
-        if (!isset($error_message)) {
-            foreach ($selected_clients as $client_id) {
-                try {
-                    // Get client details from either database
-                    $client = null;
-                    
-                    // Try broadmead_v3 first
-                    $stmt = $db_2->prepare("SELECT Name, Email FROM _clients WHERE ClientID = ?");
-                    $stmt->execute([$client_id]);
-                    $client = $stmt->fetch();
-                    
-                    // If not found, try broadmead
-                    if (!$client) {
-                        $stmt = $db_1->prepare("SELECT Name, Email FROM clients WHERE id = ?");
-                        $stmt->execute([$client_id]);
-                        $client = $stmt->fetch();
-                    }
-
-                    if ($client && filter_var($client->Email, FILTER_VALIDATE_EMAIL)) {
-                        $mail = new PHPMailer(true);
-                        $mail->isSMTP();
-                        $mail->Host = $smtp_host;
-                        $mail->SMTPAuth = true;
-                        $mail->Username = $smtp_username;
-                        $mail->Password = $smtp_password;
-                        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                        $mail->Port = $smtp_port;
-                        $mail->Timeout = 30;
-                        $mail->SMTPOptions = array(
-                            'ssl' => array(
-                                'verify_peer' => false,
-                                'verify_peer_name' => false,
-                                'allow_self_signed' => true
-                            )
-                        );
-
-                        $personalized_message = str_replace('[CLIENT_NAME]', $client->Name, $mailshot_message);
-                        
-                        $mail->setFrom($from_email, $from_name);
-                        $mail->addAddress($client->Email, $client->Name);
-                        $mail->addReplyTo($from_email, $from_name);
-                        $mail->isHTML(true);
-                        $mail->Subject = $mailshot_subject;
-                        $mail->Body = nl2br(htmlspecialchars($personalized_message));
-                        $mail->AltBody = strip_tags($personalized_message);
-
-                        if ($mail->send()) {
-                            $successful_sends++;
-                        } else {
-                            $failed_sends++;
-                            $error_details[] = "Failed to send to: {$client->Email} - " . $mail->ErrorInfo;
-                        }
-                        $mail->clearAddresses();
-                        usleep(100000); // Small delay between emails
-                    } else {
-                        $failed_sends++;
-                        $error_details[] = "Invalid email for client ID: $client_id";
-                    }
-                } catch (Exception $e) {
-                    $failed_sends++;
-                    $error_details[] = "Error processing client ID: $client_id - " . $e->getMessage();
-                }
-            }
-
-            // --- Log Mailshot Summary AFTER all emails are processed ---
-            try {
-                $mailshot_template_log = "Custom Mailshot"; // Template name for logging this type of mailshot
-                
-                $log_query = $db_2->prepare("INSERT INTO mailshot_log (ClientKeyID, Subject, Template, RecipientsCount, SuccessCount, FailedCount, SentBy, SentDate) 
-                                              VALUES (:client_key_id, :subject, :template, :recipients_count, :success_count, :failed_count, :sent_by, NOW())");
-                
-                // Assuming $ClientKeyID is the identifier for the current user's associated client key.
-                // This is typically the ID of the account/entity that initiated the mailshot.
-                $log_query->bindParam(':client_key_id', $ClientKeyID); 
-                $log_query->bindParam(':subject', $mailshot_subject);
-                $log_query->bindParam(':template', $mailshot_template_log);
-                $log_query->bindParam(':recipients_count', $total_recipients, PDO::PARAM_INT);
-                $log_query->bindParam(':success_count', $successful_sends, PDO::PARAM_INT);
-                $log_query->bindParam(':failed_count', $failed_sends, PDO::PARAM_INT);
-                $log_query->bindParam(':sent_by', $USERID); 
-                
-                if (!$log_query->execute()) {
-                    error_log("Error inserting mailshot summary log: " . implode(", ", $log_query->errorInfo()));
-                    // Add a user-facing error if logging fails, but don't prevent showing email send results
-                    $error_message = ($error_message ?? '') . "\nError logging mailshot summary.";
-                }
-            } catch (Exception $e) {
-                error_log("Exception during mailshot summary logging: " . $e->getMessage());
-                $error_message = ($error_message ?? '') . "\nException during mailshot summary logging: " . $e->getMessage();
-            }
-
-            // Update user-facing messages based on overall success/failure
-            if ($successful_sends > 0 && $failed_sends === 0) {
-                $success_message = "Mailshot successfully sent to $successful_sends clients.";
-                $NOTIFICATION = "$NAME has successfully sent mailshot to $successful_sends clients.";
-                Notify($USERID, $ClientKeyID, $NOTIFICATION); 
-            } elseif ($successful_sends > 0 && $failed_sends > 0) {
-                $error_message = "Mailshot completed with some issues: $successful_sends succeeded, $failed_sends failed.";
-                if (!empty($error_details)) {
-                    $error_message .= "\n\nFirst 5 errors:\n" . implode("\n", array_slice($error_details, 0, 5));
-                    if (count($error_details) > 5) {
-                        $error_message .= "\n... plus " . (count($error_details) - 5) . " more errors.";
-                    }
-                }
-                $NOTIFICATION = "$NAME sent mailshot to $successful_sends clients with $failed_sends failures.";
-                Notify($USERID, $ClientKeyID, $NOTIFICATION); 
-            } elseif ($failed_sends > 0) {
-                $error_message = "Mailshot failed for all selected clients ($failed_sends failures).";
-                if (!empty($error_details)) {
-                    $error_message .= "\n\nFirst 5 errors:\n" . implode("\n", array_slice($error_details, 0, 5));
-                    if (count($error_details) > 5) {
-                        $error_message .= "\n... plus " . (count($error_details) - 5) . " more errors.";
-                    }
-                }
-            }
-        }
+if (isset($_POST['send_email'])) {
+    if (!isset($_SESSION['last_email_time'])) {
+        $_SESSION['last_email_time'] = time();
     }
-}
-
-// Handle search form submission (this block seems to handle an older search method)
-// The current quick filters are handled by JavaScript
-if (isset($_POST['Search'])) {
-    // This block seems to be for a different search mechanism, possibly for logging searches.
-    // The current filtering is done client-side via JavaScript's applyFilters().
-    // If this is still needed for server-side search logging, ensure $SearchID is correctly generated.
-    $Name = $_POST['Name'] ?? '';
-    $ClientType = $_POST['ClientType'] ?? '';
-    $_client_id = $_POST['_client_id'] ?? '';
-    $EmailAddress = $_POST['Email'] ?? '';
-    $PhoneNumber = $_POST['Number'] ?? '';
-    $Address = $_POST['Address'] ?? '';
-    $Postcode = $_POST['Postcode'] ?? '';
-    $City = $_POST['City'] ?? '';
     
-    // Assuming $SearchID is generated elsewhere, e.g., uniqid()
-    // if (!empty($SearchID)) {
-    //     $query = $db_2->prepare("INSERT INTO `search_queries`(`SearchID`, `column`, `value`) 
-    //             VALUES (:SearchID, :column, :value)");
-
-    //     foreach ($_POST as $key => $value) {
-    //         if (!empty($value) && $key !== 'Search') {
-    //             $query->bindParam(':SearchID', $SearchID);
-    //             $query->bindParam(':column', $key);
-    //             $query->bindParam(':value', $value);
-    //             $query->execute();
-    //         }
-    //     }
-
-    //     header("location: $LINK/clients/?q=$SearchID");
-    //     exit();
-    // }
+    // Authentication check is already done at the top of the file
+    // No additional redirect needed here
 }
-
-// Handle delete operation
-if (isset($_POST['delete'])) {
-    $ID = $_POST['ID'];
-    $name = $_POST['name'];
-    $reason = $_POST['reason'];
-
-    // Using $db_2 for _clients table
-    $stmt = $db_2->prepare("DELETE FROM `_clients` WHERE ClientID = :ID");
-    $stmt->bindParam(':ID', $ID);
-
-    if ($stmt->execute()) {
-        $NOTIFICATION = "$NAME has successfully deleted the client named '$name'. Reason for deletion: $reason.";
-        Notify($USERID, $ClientKeyID, $NOTIFICATION); // Assuming Notify is defined
-    } else {
-        error_log("Error deleting record: " . implode(", ", $stmt->errorInfo()));
-        // Optionally set an error message for display
-    }
-}
-
-// Re-defining $SearchID and $isTab for page rendering
-$SearchID = isset($_GET['q']) ? $_GET['q'] : "";
-$isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
-
-// Client Statuses (assuming these are defined in config.php or similar)
-// Example: $clients_status = ['targeted', 'not updated', 'active', 'inactive', 'archived'];
-// If not defined, uncomment and define it here:
-$clients_status = ['targeted', 'not updated', 'active', 'inactive', 'archived'];
-
-
-// Mapping for CreatedBy IDs to Names (for display in tables)
-// This mapping needs to be defined for the client list as well.
-$createdByMapping = [
-    "1" => "Chax Shamwana",
-    "10" => "Millie Brown",
-    "11" => "Jay Fuller",
-    "13" => "Jack Dowler",
-    "15" => "Alex Lapompe",
-    "2" => "Alex Lapompe",
-    "9" => "Jack Dowler"
-];
+// // Enhanced email sending function with anti-spam measures
 
 ?>
 
@@ -396,14 +495,40 @@ $createdByMapping = [
         <div class="pc-content">
             <?php include "../../includes/breadcrumb.php"; ?>
 
+            <!-- Success/Error Messages -->
+            <?php if (isset($success_message)): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="ti ti-check-circle"></i>
+                    <?php echo htmlspecialchars($success_message); ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+
+            <?php if (isset($error_message)): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="ti ti-alert-circle"></i>
+                    <?php echo nl2br(htmlspecialchars($error_message)); ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+
+           
+
             <div class="row">
                 <div class="col-sm-12">
                     <div class="card">
                         <div class="card-header">
                             <div class="d-flex align-items-center justify-content-between">
                                 <h5 class="mb-0">Clients</h5>
+                                <?php if ($canSendMailshot): ?>
+                                    <div class="badge bg-success">
+                                        <i class="ti ti-mail"></i> Consultant: <?php echo htmlspecialchars($consultantMapping[$loggedInUserEmail] ?? $loggedInUserName); ?>
+                                    </div>
+                                <?php endif; ?>
                                 <div class="dropdown">
-                                    <a class="avtar avtar-s btn-link-secondary dropdown-toggle arrow-none" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="ti ti-dots-vertical f-18"></i></a>
+                                    <a class="avtar avtar-s btn-link-secondary dropdown-toggle arrow-none" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="ti ti-dots-vertical f-18"></i>
+                                    </a>
                                     <div class="dropdown-menu dropdown-menu-end">
                                         <a class="dropdown-item" href="<?php echo $LINK; ?>/create_client">
                                             <span class="text-success">
@@ -426,8 +551,8 @@ $createdByMapping = [
                             </div>
                         </div>
 
-                        <!-- Quick Filters -->
                         <div class="card-body" style="padding-bottom: 0;">
+                            <!-- Filter Section -->
                             <div class="row mb-3">
                                 <div class="col-md-3">
                                     <label class="form-label">Filter by Name:</label>
@@ -453,7 +578,6 @@ $createdByMapping = [
                                     <select class="form-select" id="clientTypeFilter" onchange="applyFilters()">
                                         <option value="">All Types</option>
                                         <?php
-                                        // Fetch distinct client types from _clients table
                                         $client_types_query = $db_2->query("SELECT DISTINCT ClientType FROM _clients WHERE ClientType IS NOT NULL AND ClientType != '' ORDER BY ClientType ASC");
                                         $client_types = $client_types_query->fetchAll(PDO::FETCH_COLUMN);
                                         foreach ($client_types as $type) { ?>
@@ -462,7 +586,9 @@ $createdByMapping = [
                                     </select>
                                 </div>
                             </div>
-                           <div class="row mb-3">
+
+                            <!-- Action Buttons -->
+                            <div class="row mb-3">
                                 <div class="col-md-6">
                                     <button type="button" style="background-color: #0d6efd; color: white; border: 1px solid #0d6efd; padding: 0.25rem 0.5rem; border-radius: 0.25rem; margin-right: 0.5rem;" onclick="clearAllFilters()">
                                         <i class="ti ti-refresh"></i> Clear All Filters
@@ -470,179 +596,274 @@ $createdByMapping = [
                                     <button type="button" style="background-color: #0d6efd; color: white; border: 1px solid #0d6efd; padding: 0.25rem 0.5rem; border-radius: 0.25rem;" onclick="applyFilters()">
                                         <i class="ti ti-filter"></i> Apply Filters
                                     </button>
-                                    <!-- New CSV Export Button -->
-                                    <a href="#" id="exportCsvBtn" style="background-color: #21a366; color: white; border: 1px solid #21a366; padding: 0.25rem 0.5rem; border-radius: 0.25rem; text-decoration: none; display: inline-flex; align-items: center; margin-left: 0.5rem;" onclick="return confirm('Export filtered clients to CSV?')">
-                                        <i class="ti ti-file-text"></i> Export CSV
-                                    </a>
+                                    <?php if ($showCsvExportButton): ?>
+                                        <a href="#" id="exportCsvBtn" style="background-color: #21a366; color: white; border: 1px solid #21a366; padding: 0.25rem 0.5rem; border-radius: 0.25rem; text-decoration: none; display: inline-flex; align-items: center; margin-left: 0.5rem;" onclick="return confirm('Export filtered clients to CSV?')">
+                                            <i class="ti ti-file-text"></i> Export CSV
+                                        </a>
+                                    <?php endif; ?>
                                     <span id="filterResults" style="margin-left: 1rem; color: #6c757d;"></span>
                                 </div>
                                 <div style="margin-left: auto; padding-left: 15px;">
-                                    <button type="button" style="background-color: #0d6efd; color: white; border: 1px solid #0d6efd; padding: 0.25rem 0.5rem; border-radius: 0.25rem; display: none;" id="mailshotBtn" onclick="openMailshotModal()">
-                                        <i class="ti ti-mail"></i> Send Mailshot (<span id="selectedCount">0</span>)
-                                    </button>
+                                    <?php if ($canSendMailshot && !isset($_SESSION['mailshot_processing'])): ?>
+                                        <button type="button" style="background-color: #0d6efd; color: white; border: 1px solid #0d6efd; padding: 0.25rem 0.5rem; border-radius: 0.25rem; display: none;" id="mailshotBtn" onclick="openMailshotModal()">
+                                            <i class="ti ti-mail"></i> Send Mailshot (<span id="selectedCount">0</span>)
+                                        </button>
+                                        
+                                    <?php elseif (isset($_SESSION['mailshot_processing'])): ?>
+                                    <?php endif; ?>
                                 </div>
                             </div>
 
-                        <ul class="nav nav-tabs analytics-tab" id="myTab" role="tablist" style="margin-left:30px;">
-                            <li class="nav-item" role="presentation">
-                                <a href="<?php echo $LINK; ?>/clients<?php echo !empty($SearchID) ? "/?q=$SearchID" : "" ?>">
-                                    <button class="nav-link <?php echo ($isTab == "all") ? 'active' : ''; ?>">All Clients</button>
-                                </a>
-                            </li>
-                            <ul class="nav">
-                                <?php foreach ($clients_status as $tab) : ?>
-                                    <li class="nav-item" role="presentation">
-                                        <a href="<?php echo $LINK; ?>/clients<?php echo !empty($SearchID) ? "/?q=$SearchID" : "/?i=0" ?>&isTab=<?php echo $tab; ?>">
-                                            <button class="nav-link <?php echo ($isTab == $tab) ? 'active' : ''; ?>">
-                                                <?php echo $tab; ?>
-                                            </button>
-                                        </a>
-                                    </li>
-                                <?php endforeach; ?>
-                            </ul>
-                        </ul>
-
-                        <div class="card-body">
-                            <div class="table-responsive dt-responsive">
-                                <?php if (IsCheckPermission($USERID, "VIEW_CLIENTS")) : ?>
-                                    <table class="table table-bordered" id="clientsTable">
-                                        <thead>
-                                            <tr>
-                                                <th>#</th>
-                                                <th>
-                                                    <input type="checkbox" id="selectAll" class="form-check-input">
-                                                    <label for="selectAll" class="form-check-label ms-1">Select All</label>
-                                                </th>
-                                                <th>Client Name</th>
-                                                <th>Client ID</th>
-                                                <th>Client Type</th>
-                                                <th>Status</th>
-                                                <th>Email Address</th>
-                                                <th>Phone Number</th>
-                                                <th>Location</th>
-                                                <th>Created By</th>
-                                                <th>Date</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php
-                                            // Start building the query for displaying clients
-                                            $query_display = "SELECT * FROM `_clients` WHERE ClientKeyID = :client_key_id AND isBranch IS NULL ";
-                                            $params_display = [':client_key_id' => $ClientKeyID];
-
-                                            // Apply advanced search filters if SearchID is present
-                                            if (!empty($SearchID)) {
-                                                $qu = $db_2->prepare("SELECT `column`, `value` FROM `search_queries` WHERE SearchID = :search_id");
-                                                $qu->bindParam(':search_id', $SearchID);
-                                                $qu->execute();
-                                                while ($r = $qu->fetchObject()) {
-                                                    $column = $r->column;
-                                                    $value = $r->value;
-                                                    // Ensure valid columns to prevent SQL injection
-                                                    $allowed_columns = ['Name', 'ClientType', '_client_id', 'Email', 'Number', 'Address', 'Postcode', 'City'];
-                                                    if (in_array($column, $allowed_columns)) {
-                                                        $query_display .= " AND " . $column . " LIKE :" . $column;
-                                                        $params_display[':' . $column] = '%' . $value . '%';
-                                                    }
-                                                }
-                                            }
-                                            
-                                            // Apply tab filter (e.g., "active", "inactive")
-                                            if ($isTab !== "all") {
-                                                $query_display .= " AND Status = :is_tab";
-                                                $params_display[':is_tab'] = $isTab;
-                                            }
-                                            
-                                            $query_display .= " ORDER BY Name ASC";
-                                            
-                                            $stmt_display = $db_2->prepare($query_display);
-                                            $stmt_display->execute($params_display);
-                                            $n = 1;
-                                            while ($row = $stmt_display->fetchObject()) { ?>
-                                                <?php
-                                                // Fetch CreatedBy Name
-                                                $CreatedBy = $createdByMapping[$row->CreatedBy] ?? 'Unknown';
-                                                $status_class = strtolower($row->Status ?? 'not updated');
-                                                ?>
-                                                <tr class="client-row" 
-                                                    data-name="<?php echo strtolower($row->Name); ?>"
-                                                    data-email="<?php echo strtolower($row->Email); ?>"
-                                                    data-status="<?php echo $status_class; ?>"
-                                                    data-clienttype="<?php echo strtolower($row->ClientType); ?>">
-                                                    <td><?php echo $n++; ?></td>
-                                                    <td>
-                                                        <input class="form-check-input checkbox-item" 
-                                                               type="checkbox" 
-                                                               value="<?php echo $row->ClientID; ?>" 
-                                                               data-name="<?php echo htmlspecialchars($row->Name); ?>"
-                                                               data-email="<?php echo htmlspecialchars($row->Email); ?>"
-                                                               onchange="updateSelectedCount()">
-                                                    </td>
-                                                    <td><?php echo htmlspecialchars($row->Name); ?></td>
-                                                    <td><?php echo htmlspecialchars($row->_client_id); ?></td>
-                                                    <td><?php echo htmlspecialchars($row->ClientType); ?></td>
-                                                    <td>
-                                                        <?php if ($row->Status == "Active") : ?>
-                                                            <span class="badge bg-success">Active</span>
-                                                        <?php elseif ($row->Status == "Archived") : ?>
-                                                            <span class="badge bg-warning">Archived</span>
-                                                        <?php elseif ($row->Status == "Inactive") : ?>
-                                                            <span class="badge bg-danger">Inactive</span>
-                                                        <?php elseif ($row->Status == "Targeted") : ?>
-                                                            <span class="badge bg-info">Targeted</span>
-                                                        <?php else : ?>
-                                                            <span class="badge bg-danger">Not Updated</span>
-                                                        <?php endif; ?>
-                                                    </td>
-                                                    <td><?php echo htmlspecialchars($row->Email); ?></td>
-                                                    <td><?php echo htmlspecialchars($row->Number); ?></td>
-                                                    <td><?php echo htmlspecialchars($row->City . ', ' . $row->Address); ?></td>
-                                                    <td><?php echo htmlspecialchars($CreatedBy); ?></td>
-                                                    <td><?php echo htmlspecialchars(FormatDate($row->Date)); ?></td>
-                                                    <td>
-                                                        <div class="dropdown">
-                                                            <a class="avtar avtar-s btn-link-secondary dropdown-toggle arrow-none" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="ti ti-dots-vertical f-18"></i></a>
-                                                            <div class="dropdown-menu dropdown-menu-end">
-                                                                <a class="dropdown-item" href="<?php echo $LINK; ?>/edit_client/?ID=<?php echo htmlspecialchars($row->ClientID); ?>">
-                                                                    <span class="text-info">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-                                                                            <path fill="currentColor" d="M4 20v-2.52L17.18 4.288q.155-.137.34-.212T17.907 4t.39.064q.19.063.35.228l1.067 1.074q.165.159.226.35q.06.19.06.38q0 .204-.068.39q-.069.185-.218.339L6.519 20zM17.504 7.589L19 6.111L17.889 5l-1.477 1.496z" />
-                                                                        </svg>
-                                                                    </span>
-                                                                    Edit</a>
-                                                                <?php if (IsCheckPermission($USERID, "DELETE_CLIENT")) : ?>
-                                                                    <a class="dropdown-item delete-entry" href="#" data-bs-toggle="modal" data-bs-target="#DeleteModal" data-id="<?php echo htmlspecialchars($row->ClientID); ?>" data-name="<?php echo htmlspecialchars($row->Name); ?>">
-                                                                        <span class="text-danger">
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 20 20">
-                                                                                <path fill="currentColor" d="M8.5 4h3a1.5 1.5 0 0 0-3 0m-1 0a2.5 2.5 0 0 1 5 0h5a.5.5 0 0 1 0 1h-1.054l-1.194 10.344A3 3 0 0 1 12.272 18H7.728a3 3 0 0 1-2.98-2.656L3.554 5H2.5a.5.5 0 0 1 0-1zM9 8a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0zm2.5-.5a.5.5 0 0 0-.5.5v6a.5.5 0 0 0 1 0V8a.5.5 0 0 0-.5-.5" />
-                                                                            </svg>
-                                                                        </span>
-                                                                        Delete</a>
-                                                                <?php endif; ?>
-                                                                <a class="dropdown-item" href="<?php echo $LINK; ?>/view_client/?ID=<?php echo htmlspecialchars($row->ClientID); ?>">
-                                                                    <span class="text-warning">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 20 20">
-                                                                            <g fill="currentColor">
-                                                                                <path d="M6.5 12a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1zm0 3a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1z" />
-                                                                                <path fill-rule="evenodd" d="M11.185 1H4.5A1.5 1.5 0 0 0 3 2.5v15A1.5 1.5 0 0 0 4.5 19h11a1.5 1.5 0 0 0 1.5-1.5V7.202a1.5 1.5 0 0 0-.395-1.014l-4.314-4.702A1.5 1.5 0 0 0 11.185 1M4 2.5a.5.5 0 0 1 .5-.5h6.685a.5.5 0 0 1 .369.162l4.314 4.702a.5.5 0 0 1 .132.338V17.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5z" clip-rule="evenodd" />
-                                                                                <path d="M11 7h5.5a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5v-6a.5.5 0 0 1 1 0z" />
-                                                                            </g>
-                                                                        </svg>
-                                                                    </span>
-                                                                    View</a>
+                            <!-- Enhanced Mailshot Modal -->
+                            <?php if ($canSendMailshot): ?>
+                                <div class="modal fade" id="mailshotModal" tabindex="-1" role="dialog" aria-labelledby="mailshotModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-xl" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="mailshotModalLabel">
+                                                    <i class="ti ti-mail"></i> Send Professional Mailshot
+                                                    <small class="text-muted d-block">From: <?php echo htmlspecialchars($consultantMapping[$loggedInUserEmail] ?? $loggedInUserName); ?> (<?php echo htmlspecialchars($loggedInUserEmail); ?>)</small>
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form method="POST" action="" enctype="multipart/form-data" id="mailshotForm">
+                                                <div class="modal-body">
+                                                    <input type="hidden" name="selected_clients" id="mailshotSelectedClients">
+                                                   
+                                                    <!-- Anti-Spam Notice -->
+                                                    <div class="alert alert-info">
+                                                        <i class="ti ti-shield-check"></i>
+                                                        <strong>Professional Email Delivery:</strong> This system uses anti-spam measures to ensure your emails reach clients' inboxes. All replies will be forwarded to your email (<?php echo htmlspecialchars($loggedInUserEmail); ?>).
+                                                    </div>
+                                                   
+                                                    <div class="row">
+                                                        <div class="col-md-8">
+                                                            <div class="form-group mb-3">
+                                                                <label for="mailshot_template"><i class="ti ti-template"></i> Choose Template:</label>
+                                                                <select class="form-control" id="mailshot_template" name="mailshot_template">
+                                                                    <option value="">-- Select a Template --</option>
+                                                                    <option value="welcome">Welcome Email</option>
+                                                                    <option value="promotion">New Opportunities</option>
+                                                                    <option value="followup">Follow-up Reminder</option>
+                                                                </select>
+                                                            </div>
+                                                           
+                                                            <div class="form-group mb-3">
+                                                                <label for="mailshot_subject"><i class="ti ti-message"></i> Subject Line:</label>
+                                                                <input type="text" class="form-control" id="mailshot_subject" name="mailshot_subject" required placeholder="Enter compelling subject line...">
+                                                            </div>
+                                                           
+                                                            <div class="form-group mb-3">
+                                                                <label for="mailshot_message"><i class="ti ti-edit"></i> Email Message:</label>
+                                                                <textarea class="form-control" id="mailshot_message" name="mailshot_message" rows="12" placeholder="Enter your professional email message here. Use [CLIENT_NAME] for personalization." required></textarea>
+                                                                <small class="form-text text-muted">
+                                                                    <i class="ti ti-info-circle"></i> Use [CLIENT_NAME] to personalize emails. Professional signature and contact details will be automatically added.
+                                                                </small>
                                                             </div>
                                                         </div>
-                                                    </td>
-                                                </tr>
-                                            <?php } ?>
-                                        </tbody>
-                                    </table>
-                                <?php else : ?>
-                                    <div class="alert alert-warning" role="alert">
-                                        You do not have permission to view clients.
+                                                       
+                                                        <div class="col-md-4">
+                                                            <div class="card">
+                                                                <div class="card-header">
+                                                                    <h6 class="mb-0"><i class="ti ti-paperclip"></i> Attachments</h6>
+                                                                </div>
+                                                                <div class="card-body">
+                                                                    <div class="form-group mb-3">
+                                                                        <label for="mailshot_attachments">Add Files:</label>
+                                                                        <input type="file" class="form-control" id="mailshot_attachments" name="mailshot_attachments[]" multiple accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.txt">
+                                                                        <small class="form-text text-muted">
+                                                                            Supported: Images, PDF, Word, Text<br>
+                                                                            Max: 10MB per file
+                                                                        </small>
+                                                                    </div>
+                                                                   
+                                                                    <div id="filePreview" class="mt-3"></div>
+                                                                </div>
+                                                            </div>
+                                                           
+                                                            <div class="card mt-3">
+                                                                <div class="card-header">
+                                                                    <h6 class="mb-0"><i class="ti ti-users"></i> Recipients</h6>
+                                                                </div>
+                                                                <div class="card-body">
+                                                                    <p class="text-muted mb-2">Total: <span id="mailshotClientCount" class="badge bg-primary">0</span></p>
+                                                                    <div id="mailshotClientList" style="max-height: 150px; overflow-y: auto; font-size: 12px;"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                        <i class="ti ti-x"></i> Cancel
+                                                    </button>
+                                                    <button type="submit" name="send_mailshot" class="btn btn-primary" id="sendMailshotBtn">
+                                                        <i class="ti ti-send"></i> Send Professional Mailshot
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
                                     </div>
-                                <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
+
+                            <!-- Tabs -->
+                            <ul class="nav nav-tabs analytics-tab" id="myTab" role="tablist" style="margin-left:30px;">
+                                <li class="nav-item" role="presentation">
+                                    <a href="<?php echo $LINK; ?>/clients<?php echo !empty($SearchID) ? "/?q=$SearchID" : "" ?>">
+                                        <button class="nav-link <?php echo ($isTab == "all") ? 'active' : ''; ?>">All Clients</button>
+                                    </a>
+                                </li>
+                                <ul class="nav">
+                                    <?php foreach ($clients_status as $tab) : ?>
+                                        <li class="nav-item" role="presentation">
+                                            <a href="<?php echo $LINK; ?>/clients<?php echo !empty($SearchID) ? "/?q=$SearchID" : "/?i=0" ?>&isTab=<?php echo $tab; ?>">
+                                                <button class="nav-link <?php echo ($isTab == $tab) ? 'active' : ''; ?>">
+                                                    <?php echo ucwords($tab); ?>
+                                                </button>
+                                            </a>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            </ul>
+
+                            <!-- Clients Table -->
+                            <div class="card-body">
+                                <div class="table-responsive dt-responsive">
+                                    <?php if (isset($USERID) && function_exists('IsCheckPermission') && IsCheckPermission($USERID, "VIEW_CLIENTS")) : ?>
+                                        <table class="table table-bordered" id="clientsTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <?php if ($canSendMailshot): ?>
+                                                        <th>
+                                                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                                                        </th>
+                                                    <?php endif; ?>
+                                                    <th>Client Name</th>
+                                                    <th>Client ID</th>
+                                                    <th>Client Type</th>
+                                                    <th>Status</th>
+                                                    <th>Email Address</th>
+                                                    <th>Phone Number</th>
+                                                    <th>Location</th>
+                                                    <th>Created By</th>
+                                                    <th>Date</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php
+                                                $query_display = "SELECT * FROM `_clients` WHERE ClientKeyID = :client_key_id AND isBranch IS NULL ";
+                                                $params_display = [':client_key_id' => $ClientKeyID];
+
+                                                if (!empty($SearchID)) {
+                                                    $qu = $db_2->prepare("SELECT `column`, `value` FROM `search_queries` WHERE SearchID = :search_id");
+                                                    $qu->bindParam(':search_id', $SearchID);
+                                                    $qu->execute();
+                                                    while ($r = $qu->fetchObject()) {
+                                                        $column = $r->column;
+                                                        $value = $r->value;
+
+                                                        $allowed_columns = ['Name', 'ClientType', '_client_id', 'Email', 'Number', 'Address', 'Postcode', 'City'];
+                                                        if (in_array($column, $allowed_columns)) {
+                                                            $query_display .= " AND " . $column . " LIKE :" . $column;
+                                                            $params_display[':' . $column] = '%' . $value . '%';
+                                                        }
+                                                    }
+                                                }
+
+                                                if ($isTab !== "all") {
+                                                    $query_display .= " AND Status = :is_tab";
+                                                    $params_display[':is_tab'] = $isTab;
+                                                }
+
+                                                $query_display .= " ORDER BY Name ASC";
+                                                $stmt_display = $db_2->prepare($query_display);
+                                                $stmt_display->execute($params_display);
+                                                $n = 1;
+                                                while ($row = $stmt_display->fetchObject()) { ?>
+                                                    <?php
+                                                    $CreatedBy = $createdByMapping[$row->CreatedBy] ?? 'Unknown';
+                                                    $status_class = strtolower($row->Status ?? 'not updated');
+                                                    ?>
+                                                    <tr class="client-row"
+                                                        data-name="<?php echo strtolower($row->Name); ?>"
+                                                        data-email="<?php echo strtolower($row->Email); ?>"
+                                                        data-status="<?php echo $status_class; ?>"
+                                                        data-clienttype="<?php echo strtolower($row->ClientType); ?>">
+                                                        <td><?php echo $n++; ?></td>
+                                                        <?php if ($canSendMailshot): ?>
+                                                            <td>
+                                                                <input class="form-check-input checkbox-item"
+                                                                       type="checkbox"
+                                                                       value="<?php echo $row->ClientID; ?>"
+                                                                       data-name="<?php echo htmlspecialchars($row->Name); ?>"
+                                                                       data-email="<?php echo htmlspecialchars($row->Email); ?>"
+                                                                       onchange="updateSelectedCount()">
+                                                            </td>
+                                                        <?php endif; ?>
+                                                        <td><?php echo htmlspecialchars($row->Name); ?></td>
+                                                        <td><?php echo htmlspecialchars($row->_client_id); ?></td>
+                                                        <td><?php echo htmlspecialchars($row->ClientType); ?></td>
+                                                        <td>
+                                                            <?php if ($row->Status == "Active") : ?>
+                                                                <span class="badge bg-success">Active</span>
+                                                            <?php elseif ($row->Status == "Archived") : ?>
+                                                                <span class="badge bg-warning">Archived</span>
+                                                            <?php elseif ($row->Status == "Inactive") : ?>
+                                                                <span class="badge bg-danger">Inactive</span>
+                                                            <?php elseif ($row->Status == "Targeted") : ?>
+                                                                <span class="badge bg-info">Targeted</span>
+                                                            <?php else : ?>
+                                                                <span class="badge bg-danger">Not Updated</span>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <td><?php echo htmlspecialchars($row->Email); ?></td>
+                                                        <td><?php echo htmlspecialchars($row->Number); ?></td>
+                                                        <td><?php echo htmlspecialchars($row->City . ', ' . $row->Address); ?></td>
+                                                        <td><?php echo htmlspecialchars($CreatedBy); ?></td>
+                                                        <td><?php echo htmlspecialchars(function_exists('FormatDate') ? FormatDate($row->Date) : $row->Date); ?></td>
+                                                        <td>
+                                                            <div class="dropdown">
+                                                                <a class="avtar avtar-s btn-link-secondary dropdown-toggle arrow-none" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                                    <i class="ti ti-dots-vertical f-18"></i>
+                                                                </a>
+                                                                <div class="dropdown-menu dropdown-menu-end">
+                                                                    <a class="dropdown-item" href="<?php echo $LINK; ?>/edit_client/?ID=<?php echo htmlspecialchars($row->ClientID); ?>">
+                                                                        <span class="text-info">
+                                                                            <i class="ti ti-edit"></i>
+                                                                        </span>
+                                                                        Edit
+                                                                    </a>
+                                                                    <?php if (isset($USERID) && function_exists('IsCheckPermission') && IsCheckPermission($USERID, "DELETE_CLIENT")) : ?>
+                                                                        <a class="dropdown-item delete-entry" href="#" data-bs-toggle="modal" data-bs-target="#DeleteModal" data-id="<?php echo htmlspecialchars($row->ClientID); ?>" data-name="<?php echo htmlspecialchars($row->Name); ?>">
+                                                                            <span class="text-danger">
+                                                                                <i class="ti ti-trash"></i>
+                                                                            </span>
+                                                                            Delete
+                                                                        </a>
+                                                                    <?php endif; ?>
+                                                                    <a class="dropdown-item" href="<?php echo $LINK; ?>/view_client/?ID=<?php echo htmlspecialchars($row->ClientID); ?>">
+                                                                        <span class="text-warning">
+                                                                            <i class="ti ti-eye"></i>
+                                                                        </span>
+                                                                        View
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                <?php } ?>
+                                            </tbody>
+                                        </table>
+                                    <?php else : ?>
+                                        <div class="alert alert-warning" role="alert">
+                                            <i class="ti ti-alert-triangle"></i>
+                                            You do not have permission to view clients.
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -678,70 +899,173 @@ $createdByMapping = [
         </div>
     </div>
 
-    <!-- Mailshot Modal -->
-    <div class="modal fade" id="mailshotModal" tabindex="-1" role="dialog" aria-labelledby="mailshotModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="mailshotModalLabel">Send Mailshot to Selected Clients</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form method="POST" action="">
-                    <div class="modal-body">
-                        <input type="hidden" name="selected_clients" id="mailshotSelectedClients">
-                        <div class="form-group mb-3">
-                            <label for="mailshot_subject">Subject:</label>
-                            <input type="text" class="form-control" id="mailshot_subject" name="mailshot_subject" required>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label for="mailshot_message">Message:</label>
-                            <textarea class="form-control" id="mailshot_message" name="mailshot_message" rows="8" placeholder="Enter your email message here. Use [CLIENT_NAME] for the client's name." required></textarea>
-                        </div>
-                        <p class="text-muted">Selected Clients: <span id="mailshotClientList"></span></p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" name="send_mailshot" class="btn btn-primary">Send Mailshot</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 
-    <?php // include "../../includes/footer_scripts.php"; // Assuming this includes Bootstrap JS, etc. ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Event listener for Delete Modal to populate data
+            // Delete modal functionality
             var deleteModal = document.getElementById('DeleteModal');
             if (deleteModal) {
                 deleteModal.addEventListener('show.bs.modal', function (event) {
-                    var button = event.relatedTarget; // Button that triggered the modal
+                    var button = event.relatedTarget;
                     var clientId = button.getAttribute('data-id');
                     var clientName = button.getAttribute('data-name');
-                    
+                   
                     var modalClientIdInput = deleteModal.querySelector('#deleteClientId');
                     var modalClientNameInput = deleteModal.querySelector('#deleteClientName');
                     var modalClientNameDisplay = deleteModal.querySelector('#modalClientName');
-
+                   
                     modalClientIdInput.value = clientId;
                     modalClientNameInput.value = clientName;
                     modalClientNameDisplay.textContent = clientName;
                 });
             }
 
-            // Select All / Deselect All functionality
+            // File upload preview functionality
+            const fileInput = document.getElementById('mailshot_attachments');
+            const filePreview = document.getElementById('filePreview');
+           
+            if (fileInput) {
+                fileInput.addEventListener('change', function() {
+                    filePreview.innerHTML = '';
+                    const files = this.files;
+                   
+                    for (let i = 0; i < files.length; i++) {
+                        const file = files[i];
+                        const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                       
+                        const fileItem = document.createElement('div');
+                        fileItem.className = 'alert alert-light p-2 mb-2';
+                        fileItem.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small><strong>${file.name}</strong></small><br>
+                                    <small class="text-muted">${fileSize} MB</small>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile(${i})">
+                                    <i class="ti ti-x"></i>
+                                </button>
+                            </div>
+                        `;
+                        filePreview.appendChild(fileItem);
+                    }
+                });
+            }
+
+            // Mailshot functionality
             const selectAllCheckbox = document.getElementById('selectAll');
             const mailshotBtn = document.getElementById('mailshotBtn');
             const selectedCountSpan = document.getElementById('selectedCount');
             const filterResultsSpan = document.getElementById('filterResults');
+            const mailshotSubjectField = document.getElementById('mailshot_subject');
+            const mailshotMessageField = document.getElementById('mailshot_message');
+            const mailshotTemplateDropdown = document.getElementById('mailshot_template');
 
+            // Email templates with consultant-specific content
+            const emailTemplates = {
+                'welcome': {
+                    subject: 'Welcome to Nocturnal Recruitment!',
+                    message: 'Dear [CLIENT_NAME],\n\nWelcome to Nocturnal Recruitment! We are thrilled to have you as part of our community.\n\nAs your dedicated consultant, I am here to help you with all your recruitment needs. Please don\'t hesitate to reach out if you have any questions or if there\'s anything I can assist you with.\n\nI look forward to working with you and helping you achieve your recruitment goals.\n\nBest regards,\n<?php echo htmlspecialchars($consultantMapping[$loggedInUserEmail] ?? $loggedInUserName); ?>'
+                },
+                'promotion': {
+                    subject: 'Exclusive Recruitment Opportunities - Just for You!',
+                    message: 'Hi [CLIENT_NAME],\n\nI hope this email finds you well. I wanted to reach out personally to share some exciting recruitment opportunities that I believe would be perfect for your organization.\n\nWe have access to top-tier candidates in various sectors, and I would love to discuss how we can help you find the right talent for your team.\n\nWould you be available for a brief call this week to explore these opportunities?\n\nLooking forward to hearing from you.\n\nBest regards,\n<?php echo htmlspecialchars($consultantMapping[$loggedInUserEmail] ?? $loggedInUserName); ?>'
+                },
+                'followup': {
+                    subject: 'Following Up on Our Recent Conversation',
+                    message: 'Hello [CLIENT_NAME],\n\nI hope you\'re doing well. I wanted to follow up on our recent discussion about your recruitment needs.\n\nI\'ve been working on finding the perfect candidates for your requirements and have some exciting profiles to share with you.\n\nWould you be available for a quick call to discuss these opportunities? I believe we have some excellent matches that could be exactly what you\'re looking for.\n\nPlease let me know a convenient time for you, and I\'ll be happy to arrange a call.\n\nLooking forward to hearing from you soon.\n\nBest regards,\n<?php echo htmlspecialchars($consultantMapping[$loggedInUserEmail] ?? $loggedInUserName); ?>'
+                }
+            };
+
+            if (mailshotTemplateDropdown) {
+                mailshotTemplateDropdown.addEventListener('change', function() {
+                    const selectedTemplateId = this.value;
+                    if (selectedTemplateId && emailTemplates[selectedTemplateId]) {
+                        const template = emailTemplates[selectedTemplateId];
+                        mailshotSubjectField.value = template.subject;
+                        mailshotMessageField.value = template.message;
+                    } else {
+                        mailshotSubjectField.value = '';
+                        mailshotMessageField.value = '';
+                    }
+                });
+            }
+
+            // Reset modal when closed
+            var mailshotModal = document.getElementById('mailshotModal');
+            if (mailshotModal) {
+                mailshotModal.addEventListener('hidden.bs.modal', function () {
+                    if (mailshotTemplateDropdown) mailshotTemplateDropdown.value = '';
+                    if (mailshotSubjectField) mailshotSubjectField.value = '';
+                    if (mailshotMessageField) mailshotMessageField.value = '';
+                    if (fileInput) fileInput.value = '';
+                    if (filePreview) filePreview.innerHTML = '';
+                });
+            }
+
+            // // Prevent form submission during processing
+            // const sendMailshotBtn = document.getElementById('sendMailshotBtn');
+            // if (sendMailshotBtn) {
+            //     sendMailshotBtn.addEventListener('click', function(e) {
+            //         const selectedClients = document.querySelectorAll('.checkbox-item:checked');
+            //         const subject = document.getElementById('mailshot_subject').value;
+            //         const message = document.getElementById('mailshot_message').value;
+                    
+            //         console.log('Mailshot form submitted with:');
+            //         console.log('Selected clients:', selectedClients.length);
+            //         console.log('Subject:', subject);
+            //         console.log('Message length:', message.length);
+                    
+            //         if (selectedClients.length === 0) {
+            //             e.preventDefault();
+            //             alert('Please select at least one client.');
+            //             return false;
+            //         }
+                    
+            //         if (!subject.trim()) {
+            //             e.preventDefault();
+            //             alert('Please enter a subject line.');
+            //             return false;
+            //         }
+                    
+            //         if (!message.trim()) {
+            //             e.preventDefault();
+            //             alert('Please enter an email message.');
+            //             return false;
+            //         }
+                    
+            //         const isProcessing = document.querySelector('.alert-info .spinner-border');
+            //         if (isProcessing) {
+            //             e.preventDefault();
+            //             alert('Mailshot is currently being processed. Please wait...');
+            //             return false;
+            //         }
+                   
+                    
+            //         this.disabled = true;
+            //         this.innerHTML = '<i class="spinner-border spinner-border-sm me-2"></i>Sending Emails...';
+                    
+                    
+            //         const alertInfo = document.querySelector('.alert-info');
+            //         if (alertInfo) {
+            //             alertInfo.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div><strong>Processing:</strong> Sending mailshot to ' + selectedClients.length + ' clients. Please wait...';
+            //         }
+                   
+                
+            //         setTimeout(() => {
+            //             if (!this.closest('form').checkValidity()) {
+            //                 this.disabled = false;
+            //                 this.innerHTML = '<i class="ti ti-send"></i> Send Professional Mailshot';
+            //             }
+            //         }, 2000);
+            //     });
+            // }
+
+            
             if (selectAllCheckbox) {
                 selectAllCheckbox.addEventListener('change', function() {
                     const checkboxes = document.querySelectorAll('.checkbox-item');
                     checkboxes.forEach(checkbox => {
-                        // Only toggle checkboxes for visible rows
                         if (checkbox.closest('tr').style.display !== 'none') {
                             checkbox.checked = this.checked;
                         }
@@ -750,18 +1074,33 @@ $createdByMapping = [
                 });
             }
 
-            // Update selected count and mailshot button visibility
+            
+            window.toggleSelectAll = function() {
+                const selectAllCheckbox = document.getElementById('selectAll');
+                const checkboxes = document.querySelectorAll('.checkbox-item');
+                checkboxes.forEach(checkbox => {
+                    if (checkbox.closest('tr').style.display !== 'none') {
+                        checkbox.checked = selectAllCheckbox.checked;
+                    }
+                });
+                updateSelectedCount();
+            };
+
+            
             window.updateSelectedCount = function() {
                 const checkedCheckboxes = document.querySelectorAll('.checkbox-item:checked');
-                selectedCountSpan.textContent = checkedCheckboxes.length;
-                if (checkedCheckboxes.length > 0) {
-                    mailshotBtn.style.display = 'inline-block';
-                } else {
-                    mailshotBtn.style.display = 'none';
+                if (selectedCountSpan) selectedCountSpan.textContent = checkedCheckboxes.length;
+               
+                if (mailshotBtn) {
+                    if (checkedCheckboxes.length > 0) {
+                        mailshotBtn.style.display = 'inline-block';
+                    } else {
+                        mailshotBtn.style.display = 'none';
+                    }
                 }
             };
 
-            // Open Mailshot Modal and populate selected clients
+            // Open mailshot modal
             window.openMailshotModal = function() {
                 const checkedCheckboxes = document.querySelectorAll('.checkbox-item:checked');
                 const selectedClientIds = [];
@@ -773,19 +1112,44 @@ $createdByMapping = [
                 });
 
                 document.getElementById('mailshotSelectedClients').value = JSON.stringify(selectedClientIds);
-                document.getElementById('mailshotClientList').textContent = selectedClientNames.join(', ');
+                document.getElementById('mailshotClientCount').textContent = selectedClientIds.length;
+               
+                // Display client names in a more organized way
+                const clientListDiv = document.getElementById('mailshotClientList');
+                clientListDiv.innerHTML = '';
+                selectedClientNames.forEach(name => {
+                    const clientItem = document.createElement('div');
+                    clientItem.className = 'badge bg-light text-dark me-1 mb-1';
+                    clientItem.textContent = name;
+                    clientListDiv.appendChild(clientItem);
+                });
 
-                var mailshotModal = new bootstrap.Modal(document.getElementById('mailshotModal'));
-                mailshotModal.show();
+                var mailshotBootstrapModal = new bootstrap.Modal(document.getElementById('mailshotModal'));
+                mailshotBootstrapModal.show();
             };
 
-            // Apply Filters function
+            // Remove file function
+            window.removeFile = function(index) {
+                const fileInput = document.getElementById('mailshot_attachments');
+                const dt = new DataTransfer();
+                const files = fileInput.files;
+               
+                for (let i = 0; i < files.length; i++) {
+                    if (i !== index) {
+                        dt.items.add(files[i]);
+                    }
+                }
+               
+                fileInput.files = dt.files;
+                fileInput.dispatchEvent(new Event('change'));
+            };
+
+            // Filter functionality
             window.applyFilters = function() {
                 const nameFilter = document.getElementById('nameFilter').value.toLowerCase();
                 const emailFilter = document.getElementById('emailFilter').value.toLowerCase();
                 const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
                 const clientTypeFilter = document.getElementById('clientTypeFilter').value.toLowerCase();
-                
                 const rows = document.querySelectorAll('#clientsTable tbody tr');
                 let visibleRowCount = 0;
 
@@ -808,28 +1172,26 @@ $createdByMapping = [
                     }
                 });
 
-                filterResultsSpan.textContent = `Showing ${visibleRowCount} results.`;
-                updateSelectedCount(); // Update mailshot button visibility based on new filtered list
-                updateCsvExportLink(); // Update the CSV export link
+                if (filterResultsSpan) filterResultsSpan.textContent = `Showing ${visibleRowCount} results.`;
+                updateSelectedCount();
+                updateCsvExportLink();
             };
 
-            // Clear All Filters function
+            // Clear filters
             window.clearAllFilters = function() {
                 document.getElementById('nameFilter').value = '';
                 document.getElementById('emailFilter').value = '';
                 document.getElementById('statusFilter').value = '';
                 document.getElementById('clientTypeFilter').value = '';
-                applyFilters(); // Re-apply filters to show all
+                applyFilters();
             };
 
-            // Function to update the CSV export link dynamically
+            // Update CSV export link
             window.updateCsvExportLink = function() {
                 const nameFilter = document.getElementById('nameFilter').value;
                 const emailFilter = document.getElementById('emailFilter').value;
                 const statusFilter = document.getElementById('statusFilter').value;
                 const clientTypeFilter = document.getElementById('clientTypeFilter').value;
-                
-                // Get the current active tab status from the URL
                 const urlParams = new URLSearchParams(window.location.search);
                 const isTab = urlParams.get('isTab') || 'all';
 
@@ -838,370 +1200,25 @@ $createdByMapping = [
                 exportUrl += `&emailFilter=${encodeURIComponent(emailFilter)}`;
                 exportUrl += `&statusFilter=${encodeURIComponent(statusFilter)}`;
                 exportUrl += `&clientTypeFilter=${encodeURIComponent(clientTypeFilter)}`;
-                exportUrl += `&isTab=${encodeURIComponent(isTab)}`; // Include the active tab filter
+                exportUrl += `&isTab=${encodeURIComponent(isTab)}`;
 
-                document.getElementById('exportCsvBtn').href = exportUrl;
+                const exportBtn = document.getElementById('exportCsvBtn');
+                if (exportBtn) exportBtn.href = exportUrl;
             };
 
-            // Initial calls on page load
-            applyFilters(); // Apply initial filters based on URL parameters or defaults
-            updateSelectedCount(); // Initialize selected count
-            updateCsvExportLink(); // Set the initial CSV export link
-        });
-    </script>
-</body>
-</html>
-
-
-
-
-
-
-
-
-
-
-     <!-- Email Templates (Quick Options) -->
-                            <div class="card">
-                                <div class="card-header">
-                                    <h6 class="mb-0"><i class="ti ti-template me-2"></i>Quick Templates</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="d-grid gap-2">
-                                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="useTemplate('follow_up')">
-                                            Follow Up
-                                        </button>
-                                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="useTemplate('meeting_request')">
-                                            Meeting Request
-                                        </button>
-                                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="useTemplate('update')">
-                                            General Update
-                                        </button>
-                                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="useTemplate('thank_you')">
-                                            Thank You
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-
-
-
-
-
-
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-    // Enhanced debugging for JavaScript
-    console.log('DEBUG: JavaScript loaded');
-    
-    // Email Templates
-    const emailTemplates = {
-        follow_up: {
-            subject: "Following up on our recent conversation",
-            message: "Dear [CLIENT_NAME],\n\nI hope this email finds you well. I wanted to follow up on our recent conversation and see if you have any questions or if there's anything I can assist you with.\n\nPlease don't hesitate to reach out if you need any additional information.\n\nBest regards,\n<?php echo $logged_in_user_name; ?>"
-        },
-        meeting_request: {
-            subject: "Meeting Request - Let's Connect",
-            message: "Dear [CLIENT_NAME],\n\nI hope you're doing well. I would like to schedule a meeting with you to discuss potential opportunities and how we can better serve your needs.\n\nWould you be available for a call or meeting in the coming week? Please let me know what works best for your schedule.\n\nLooking forward to hearing from you.\n\nBest regards,\n<?php echo $logged_in_user_name; ?>"
-        },
-        update: {
-            subject: "Important Update",
-            message: "Dear [CLIENT_NAME],\n\nI wanted to reach out with some important updates that may be of interest to you.\n\n[Please add your specific update information here]\n\nIf you have any questions or would like to discuss this further, please don't hesitate to contact me.\n\nBest regards,\n<?php echo $logged_in_user_name; ?>"
-        },
-        thank_you: {
-            subject: "Thank you for your partnership",
-            message: "Dear [CLIENT_NAME],\n\nI wanted to take a moment to thank you for your continued partnership and trust in our services.\n\nYour business means a lot to us, and we're committed to providing you with the best possible service.\n\nIf there's anything we can do to improve or if you have any feedback, please let us know.\n\nThank you again for choosing us.\n\nBest regards,\n<?php echo $logged_in_user_name; ?>"
-        }
-    };
-
-    // Use email template
-    function useTemplate(templateKey) {
-        console.log('DEBUG: Using template:', templateKey);
-        const template = emailTemplates[templateKey];
-        if (template) {
-            document.getElementById('mailshot_subject').value = template.subject;
-            document.getElementById('mailshot_message').value = template.message;
-            console.log('DEBUG: Template applied successfully');
-        } else {
-            console.log('DEBUG ERROR: Template not found:', templateKey);
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('DEBUG: DOM Content Loaded');
-        
-        // Event listener for Delete Modal to populate data
-        var deleteModal = document.getElementById('DeleteModal');
-        if (deleteModal) {
-            deleteModal.addEventListener('show.bs.modal', function (event) {
-                var button = event.relatedTarget;
-                var clientId = button.getAttribute('data-id');
-                var clientName = button.getAttribute('data-name');
-                
-                var modalClientIdInput = deleteModal.querySelector('#deleteClientId');
-                var modalClientNameInput = deleteModal.querySelector('#deleteClientName');
-                var modalClientNameDisplay = deleteModal.querySelector('#modalClientName');
-
-                modalClientIdInput.value = clientId;
-                modalClientNameInput.value = clientName;
-                modalClientNameDisplay.textContent = clientName;
-            });
-        }
-
-        // Select All / Deselect All functionality
-        const selectAllCheckbox = document.getElementById('selectAll');
-        const mailshotBtn = document.getElementById('mailshotBtn');
-        const selectedCountSpan = document.getElementById('selectedCount');
-        const filterResultsSpan = document.getElementById('filterResults');
-
-        if (selectAllCheckbox) {
-            selectAllCheckbox.addEventListener('change', function() {
-                console.log('DEBUG: Select all checkbox changed:', this.checked);
-                const checkboxes = document.querySelectorAll('.checkbox-item');
-                checkboxes.forEach(checkbox => {
-                    // Only toggle checkboxes for visible rows
-                    if (checkbox.closest('tr').style.display !== 'none') {
-                        checkbox.checked = this.checked;
-                    }
-                });
-                updateSelectedCount();
-            });
-        }
-
-        // Update selected count and mailshot button visibility
-        window.updateSelectedCount = function() {
-            const checkedCheckboxes = document.querySelectorAll('.checkbox-item:checked');
-            console.log('DEBUG: Selected checkboxes count:', checkedCheckboxes.length);
-            selectedCountSpan.textContent = checkedCheckboxes.length;
-            if (checkedCheckboxes.length > 0) {
-                mailshotBtn.style.display = 'inline-block';
-                console.log('DEBUG: Mailshot button shown');
-            } else {
-                mailshotBtn.style.display = 'none';
-                console.log('DEBUG: Mailshot button hidden');
-            }
-        };
-
-        // Generate unique token for mailshot
-        function generateMailshotToken() {
-            const token = 'mailshot_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            console.log('DEBUG: Generated mailshot token:', token);
-            return token;
-        }
-
-        // Open Mailshot Modal and populate selected clients
-        window.openMailshotModal = function() {
-            console.log('DEBUG: Opening mailshot modal');
-            const checkedCheckboxes = document.querySelectorAll('.checkbox-item:checked');
-            const selectedClientIds = [];
-            const selectedClientData = [];
-
-            checkedCheckboxes.forEach(checkbox => {
-                selectedClientIds.push(checkbox.value);
-                selectedClientData.push({
-                    id: checkbox.value,
-                    name: checkbox.dataset.name,
-                    email: checkbox.dataset.email
-                });
-            });
-
-            console.log('DEBUG: Selected client IDs:', selectedClientIds);
-            console.log('DEBUG: Selected client data:', selectedClientData);
-
-            // Generate unique token for this mailshot
-            const mailshotToken = generateMailshotToken();
-            
-            document.getElementById('mailshotSelectedClients').value = JSON.stringify(selectedClientIds);
-            document.getElementById('mailshotToken').value = mailshotToken;
-            
-            console.log('DEBUG: Mailshot token set:', mailshotToken);
-            console.log('DEBUG: Selected clients JSON:', JSON.stringify(selectedClientIds));
-            
-            // Update recipient list in modal
-            const clientListDiv = document.getElementById('mailshotClientList');
-            const recipientCountSpan = document.getElementById('mailshotRecipientCount');
-            
-            recipientCountSpan.textContent = selectedClientData.length;
-            
-            let clientListHTML = '';
-            selectedClientData.forEach(client => {
-                clientListHTML += `
-                    <div class="d-flex align-items-center mb-2 p-2 bg-light rounded">
-                        <i class="ti ti-user me-2"></i>
-                        <div>
-                            <strong>${client.name}</strong><br>
-                            <small class="text-muted">${client.email}</small>
-                        </div>
-                    </div>
-                `;
-            });
-            clientListDiv.innerHTML = clientListHTML;
-
-            console.log('DEBUG: Modal populated, showing modal');
-            var mailshotModal = new bootstrap.Modal(document.getElementById('mailshotModal'));
-            mailshotModal.show();
-        };
-
-        // Enhanced form submission handling with debugging
-        const mailshotForm = document.getElementById('mailshotForm');
-        const sendMailshotBtn = document.getElementById('sendMailshotBtn');
-        let isSubmitting = false;
-
-        if (mailshotForm) {
-            mailshotForm.addEventListener('submit', function(e) {
-                console.log('DEBUG: Form submission started');
-                console.log('DEBUG: Form action:', this.action);
-                console.log('DEBUG: Form method:', this.method);
-                
-                if (isSubmitting) {
-                    console.log('DEBUG: Already submitting, preventing duplicate');
-                    e.preventDefault();
-                    return false;
-                }
-                
-                // Validate form data before submission
-                const selectedClients = document.getElementById('mailshotSelectedClients').value;
-                const subject = document.getElementById('mailshot_subject').value.trim();
-                const message = document.getElementById('mailshot_message').value.trim();
-                const token = document.getElementById('mailshotToken').value;
-                
-                console.log('DEBUG: Form validation:');
-                console.log('  - Selected clients:', selectedClients);
-                console.log('  - Subject:', subject);
-                console.log('  - Message length:', message.length);
-                console.log('  - Token:', token);
-                
-                if (!selectedClients || selectedClients === '[]') {
-                    console.log('DEBUG ERROR: No clients selected');
-                    alert('Please select at least one client.');
-                    e.preventDefault();
-                    return false;
-                }
-                
-                if (!subject) {
-                    console.log('DEBUG ERROR: No subject provided');
-                    alert('Please enter an email subject.');
-                    e.preventDefault();
-                    return false;
-                }
-                
-                if (!message) {
-                    console.log('DEBUG ERROR: No message provided');
-                    alert('Please enter an email message.');
-                    e.preventDefault();
-                    return false;
-                }
-                
-                if (!token) {
-                    console.log('DEBUG ERROR: No token provided');
-                    alert('Invalid form token. Please refresh and try again.');
-                    e.preventDefault();
-                    return false;
-                }
-                
-                console.log('DEBUG: Form validation passed, submitting...');
-                
-                isSubmitting = true;
-                sendMailshotBtn.disabled = true;
-                sendMailshotBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Sending Mailshot...';
-                
-                // Re-enable after 30 seconds as a failsafe
-                setTimeout(function() {
-                    console.log('DEBUG: Re-enabling form after timeout');
-                    isSubmitting = false;
-                    sendMailshotBtn.disabled = false;
-                    sendMailshotBtn.innerHTML = '<i class="ti ti-send me-2"></i>Send Mailshot';
-                }, 30000);
-            });
-        }
-
-        // Apply Filters function
-        window.applyFilters = function() {
-            const nameFilter = document.getElementById('nameFilter').value.toLowerCase();
-            const emailFilter = document.getElementById('emailFilter').value.toLowerCase();
-            const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
-            const clientTypeFilter = document.getElementById('clientTypeFilter').value.toLowerCase();
-            
-            const rows = document.querySelectorAll('#clientsTable tbody tr');
-            let visibleRowCount = 0;
-
-            rows.forEach(row => {
-                const name = row.dataset.name || '';
-                const email = row.dataset.email || '';
-                const status = row.dataset.status || '';
-                const clientType = row.dataset.clienttype || '';
-
-                const nameMatch = name.includes(nameFilter);
-                const emailMatch = email.includes(emailFilter);
-                const statusMatch = statusFilter === '' || status === statusFilter;
-                const clientTypeMatch = clientTypeFilter === '' || clientType === clientTypeFilter;
-
-                if (nameMatch && emailMatch && statusMatch && clientTypeMatch) {
-                    row.style.display = '';
-                    visibleRowCount++;
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-
-            filterResultsSpan.textContent = `Showing ${visibleRowCount} results.`;
+            // Initialize
+            applyFilters();
             updateSelectedCount();
             updateCsvExportLink();
-        };
-
-        // Clear All Filters function
-        window.clearAllFilters = function() {
-            document.getElementById('nameFilter').value = '';
-            document.getElementById('emailFilter').value = '';
-            document.getElementById('statusFilter').value = '';
-            document.getElementById('clientTypeFilter').value = '';
-            applyFilters();
-        };
-
-        // Function to update the CSV export link dynamically
-        window.updateCsvExportLink = function() {
-            const nameFilter = document.getElementById('nameFilter').value;
-            const emailFilter = document.getElementById('emailFilter').value;
-            const statusFilter = document.getElementById('statusFilter').value;
-            const clientTypeFilter = document.getElementById('clientTypeFilter').value;
-            
-            // Get the current active tab status from the URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const isTab = urlParams.get('isTab') || 'all';
-
-            let exportUrl = `?export_csv=true`;
-            exportUrl += `&nameFilter=${encodeURIComponent(nameFilter)}`;
-            exportUrl += `&emailFilter=${encodeURIComponent(emailFilter)}`;
-            exportUrl += `&statusFilter=${encodeURIComponent(statusFilter)}`;
-            exportUrl += `&clientTypeFilter=${encodeURIComponent(clientTypeFilter)}`;
-            exportUrl += `&isTab=${encodeURIComponent(isTab)}`;
-
-            document.getElementById('exportCsvBtn').href = exportUrl;
-        };
-
-        // Initial calls on page load
-        applyFilters();
-        updateSelectedCount();
-        updateCsvExportLink();
-        
-        // Debug information
-        console.log('DEBUG: All JavaScript initialized');
-        console.log('DEBUG: Logged in user: <?php echo $logged_in_user_email; ?>');
-        console.log('DEBUG: All functionality integrated into single file');
-        
-        // Check if PHPMailer is available
-        console.log('DEBUG: Checking server-side components...');
-        
-        // Log current page URL and form action
-        console.log('DEBUG: Current page URL:', window.location.href);
-        console.log('DEBUG: Form element found:', !!document.getElementById('mailshotForm'));
-    });
-</script>
+        });
+    </script>
+    
+    <?php
+    // Ensure mailshot_processing session is cleared at the end of script execution
+    if (isset($_SESSION['mailshot_processing'])) {
+        error_log("WARNING: mailshot_processing session still set at end of script - clearing it");
+        unset($_SESSION['mailshot_processing']);
+    }
+    ?>
 </body>
 </html>
