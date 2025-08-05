@@ -1100,7 +1100,7 @@ if (isset($_POST['send_email'])) {
                 }
             };
 
-            // Open mailshot modal
+       
             window.openMailshotModal = function() {
                 const checkedCheckboxes = document.querySelectorAll('.checkbox-item:checked');
                 const selectedClientIds = [];
@@ -1114,7 +1114,7 @@ if (isset($_POST['send_email'])) {
                 document.getElementById('mailshotSelectedClients').value = JSON.stringify(selectedClientIds);
                 document.getElementById('mailshotClientCount').textContent = selectedClientIds.length;
                
-                // Display client names in a more organized way
+             
                 const clientListDiv = document.getElementById('mailshotClientList');
                 clientListDiv.innerHTML = '';
                 selectedClientNames.forEach(name => {
@@ -1128,7 +1128,7 @@ if (isset($_POST['send_email'])) {
                 mailshotBootstrapModal.show();
             };
 
-            // Remove file function
+          
             window.removeFile = function(index) {
                 const fileInput = document.getElementById('mailshot_attachments');
                 const dt = new DataTransfer();
@@ -1144,7 +1144,7 @@ if (isset($_POST['send_email'])) {
                 fileInput.dispatchEvent(new Event('change'));
             };
 
-            // Filter functionality
+        
             window.applyFilters = function() {
                 const nameFilter = document.getElementById('nameFilter').value.toLowerCase();
                 const emailFilter = document.getElementById('emailFilter').value.toLowerCase();
@@ -1177,7 +1177,7 @@ if (isset($_POST['send_email'])) {
                 updateCsvExportLink();
             };
 
-            // Clear filters
+         
             window.clearAllFilters = function() {
                 document.getElementById('nameFilter').value = '';
                 document.getElementById('emailFilter').value = '';
@@ -1186,7 +1186,7 @@ if (isset($_POST['send_email'])) {
                 applyFilters();
             };
 
-            // Update CSV export link
+         
             window.updateCsvExportLink = function() {
                 const nameFilter = document.getElementById('nameFilter').value;
                 const emailFilter = document.getElementById('emailFilter').value;
@@ -1206,7 +1206,7 @@ if (isset($_POST['send_email'])) {
                 if (exportBtn) exportBtn.href = exportUrl;
             };
 
-            // Initialize
+       
             applyFilters();
             updateSelectedCount();
             updateCsvExportLink();
@@ -1214,7 +1214,7 @@ if (isset($_POST['send_email'])) {
     </script>
     
     <?php
-    // Ensure mailshot_processing session is cleared at the end of script execution
+    
     if (isset($_SESSION['mailshot_processing'])) {
         error_log("WARNING: mailshot_processing session still set at end of script - clearing it");
         unset($_SESSION['mailshot_processing']);
