@@ -1125,20 +1125,20 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
             margin-bottom: 20px;
             font-size: 1.25rem;
             font-weight: 600;
-            border-bottom: 1px solid #dee2e6; /* Separator line */
+            border-bottom: 1px solid #dee2e6; 
             padding-bottom: 10px;
         }
 
         .filter-row {
             display: flex;
             flex-wrap: wrap;
-            gap: 15px; /* Spacing between filter inputs */
+            gap: 15px; 
             margin-bottom: 15px;
         }
 
         .filter-row .col-md-3 {
-            flex: 1 1 calc(25% - 15px); /* Four columns on larger screens, adjusting for gap */
-            min-width: 200px; /* Minimum width for filter inputs to prevent squishing */
+            flex: 1 1 calc(25% - 15px); 
+            min-width: 200px; 
         }
 
         .filter-label {
@@ -1150,7 +1150,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
         .filter-input, .filter-select, .mailshot-textarea {
             width: 100%;
             padding: 10px 12px;
-            border: 1px solid #ced4da; /* Standard input border */
+            border: 1px solid #ced4da; /
             border-radius: 6px;
             font-size: 1rem;
             color: #495057;
@@ -1159,14 +1159,14 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
         }
 
         .filter-input:focus, .filter-select:focus, .mailshot-textarea:focus {
-            border-color: #80bdff; /* Blue border on focus */
+            border-color: #80bdff; 
             outline: 0;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Blue glow on focus */
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); 
         }
 
         .filter-select[multiple] {
             height: auto;
-            min-height: 120px; /* Minimum height for multi-select dropdowns */
+            min-height: 120px; 
         }
 
         .filter-buttons {
@@ -1192,7 +1192,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
         }
 
         .filter-buttons button[type="submit"] {
-            background-color: #007bff; /* Blue submit button */
+            background-color: #007bff; 
             color: white;
         }
 
@@ -1201,7 +1201,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
         }
 
         .filter-buttons button[type="reset"] {
-            background-color: #6c757d; /* Grey reset button */
+            background-color: #6c757d; 
             color: white;
         }
 
@@ -1209,7 +1209,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
             background-color: #5a6268;
         }
 
-        /* Mailshot Specific Styles */
+      
         .mailshot-form .form-group {
             margin-bottom: 15px;
         }
@@ -1222,7 +1222,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
         }
 
         .mailshot-form .btn-send {
-            background-color: #28a745; /* Green send button */
+            background-color: #28a745; 
             color: white;
             padding: 12px 25px;
             border: none;
@@ -1239,7 +1239,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
             transform: translateY(-1px);
         }
 
-        /* File upload and attachment styles */
+       
         .file-item {
             background-color: #f8f9fa;
             border: 1px solid #dee2e6;
@@ -1256,13 +1256,12 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
             font-size: 12px;
         }
 
-        /* Candidate selection styles */
+    
         .candidate-checkbox, input[name="selected_candidates[]"] {
             transform: scale(1.2);
             margin-right: 8px;
         }
 
-        /* Enhanced card styles for mailshot sidebar */
         .card {
             border: 1px solid #e9ecef;
             border-radius: 8px;
@@ -1285,7 +1284,6 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
             padding: 16px;
         }
 
-        /* Badge styles for recipients */
         .badge {
             font-size: 11px;
             padding: 4px 8px;
@@ -1300,7 +1298,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
             color: #343a40 !important;
         }
 
-        /* Alert styles */
+        
         .alert-info {
             background-color: #d1ecf1;
             border-color: #bee5eb;
@@ -1313,14 +1311,14 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
             margin-right: 8px;
         }
 
-        /* Processing spinner */
+     
         .spinner-border-sm {
             width: 1rem;
             height: 1rem;
             border-width: 0.1em;
         }
 
-        /* Button enhancements */
+      
         .btn-primary {
             background-color: #007bff;
             border-color: #007bff;
@@ -1342,19 +1340,19 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
             font-size: 1.1rem;
         }
 
-        /* KPI Report Information Section */
+       
         .kpi-info {
-            background-color: #e6f7ff; /* Light blue background */
-            border: 1px solid #91d5ff; /* Blue border */
+            background-color: #e6f7ff; 
+            border: 1px solid #91d5ff; 
             border-radius: 8px;
             padding: 15px 20px;
             margin-bottom: 25px;
-            color: #0050b3; /* Darker blue text */
+            color: #0050b3; 
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
         .kpi-info h5 {
-            color: #003a8c; /* Even darker blue heading */
+            color: #003a8c; 
             margin-bottom: 10px;
             font-size: 1.3rem;
             display: flex;
@@ -1370,10 +1368,10 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
             line-height: 1.6;
         }
 
-        /* KPI Summary Cards */
+      
         .kpi-summary-cards {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Responsive grid */
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
             gap: 20px;
             margin-bottom: 30px;
         }
@@ -1395,7 +1393,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
         .kpi-card .value {
             font-size: 2.5rem;
             font-weight: 700;
-            color: #007bff; /* Blue value */
+            color: #007bff; 
             margin-bottom: 5px;
         }
 
