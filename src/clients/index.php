@@ -68,48 +68,62 @@ function getConsultantDetails($db_2, $USERID) {
 
 function getEmailFooter($consultantEmail, $consultantName, $consultantNumber = '', $consultantTitle = 'Consultant') {
     return '
-    <div style="margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: #ffffff; font-family: Arial, sans-serif; border-radius: 8px; max-width: 600px;">
-        <div style="text-align: center; margin-bottom: 20px;">
-            <h3 style="margin: 0; color: #ffffff; font-size: 18px; font-weight: bold;">Nocturnal Recruitment</h3>
-            <p style="margin: 5px 0 0 0; color: #b8d4ff; font-size: 14px;">Your Trusted Recruitment Partner</p>
-        </div>
-        <table style="width: 100%; margin-bottom: 20px;" cellpadding="5" cellspacing="0">
-            <tr>
-                <td style="text-align: center; vertical-align: top; width: 33%;">
-                    <div style="color: #6daffb; font-size: 12px; margin-bottom: 3px;">📍 Address</div>
-                    <div style="color: #ffffff; font-size: 11px;">Office 16, 321 High Road, RM6 6AX</div>
-                </td>
-                <td style="text-align: center; vertical-align: top; width: 33%;">
-                    <div style="color: #6daffb; font-size: 12px; margin-bottom: 3px;">📞 Phone</div>
-                    <div style="color: #ffffff; font-size: 11px;">0208 050 2708</div>
-                </td>
-                <td style="text-align: center; vertical-align: top; width: 33%;">
-                    <div style="color: #6daffb; font-size: 12px; margin-bottom: 3px;">📱 Mobile</div>
-                    <div style="color: #ffffff; font-size: 11px;">0755 357 0871</div>
-                </td>
-            </tr>
-        </table>
-        <div style="text-align: center; margin-bottom: 20px;">
-            <div style="color: #6daffb; font-size: 12px; margin-bottom: 3px;">✉️ Your Consultant</div>
-            <div style="color: #ffffff; font-size: 13px; font-weight: bold;">' . htmlspecialchars($consultantName) . '</div>
-            <div style="color: #b8d4ff; font-size: 11px;">
-                <a href="mailto:' . htmlspecialchars($consultantEmail) . '" style="color: #6daffb; text-decoration: none;">' . htmlspecialchars($consultantEmail) . '</a>
+    <div style="margin-top: 30px; max-width: 600px; font-family: Arial, sans-serif;">
+        <!-- Consultant Info Section -->
+        <div style="margin-bottom: 20px;">
+            <div style="color: #333333; font-size: 14px; font-weight: bold;">' . htmlspecialchars($consultantName) . '</div>
+            <div style="color: #666666; font-size: 12px;">' . htmlspecialchars($consultantTitle) . '</div>
+            <div style="color: #666666; font-size: 12px;">
+                <a href="mailto:' . htmlspecialchars($consultantEmail) . '" style="color: #0066cc; text-decoration: none;">' . htmlspecialchars($consultantEmail) . '</a>
             </div>
-            <div style="color: #b8d4ff; font-size: 11px;">' . htmlspecialchars($consultantTitle) . '</div>
-            <div style="color: #b8d4ff; font-size: 11px;">' . htmlspecialchars($consultantNumber) . '</div>
+            ' . ($consultantNumber ? '<div style="color: #666666; font-size: 12px;">' . htmlspecialchars($consultantNumber) . '</div>' : '') . '
         </div>
-        <div style="text-align: center; margin-bottom: 20px;">
-            <div style="color: #6daffb; font-size: 12px; margin-bottom: 8px;">🌐 Connect With Us</div>
-            <div>
-                <a href="https://www.nocturnalrecruitment.co.uk" target="_blank" style="color: #6daffb; text-decoration: none; margin: 0 5px; font-size: 11px;">Website</a>
-            </div>
-            <div style="color: #8bb3e8; font-size: 9px; line-height: 1.3;">
-                This email is confidential and intended only for the addressee. If you are not the intended recipient,
-                please delete this email and notify us at <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #6daffb;">info@nocturnalrecruitment.co.uk</a>
+
+        <!-- Logo and Contact Section -->
+        <div style="margin-bottom: 15px;">
+            <img src="' . $GLOBALS['LINK'] . '/images/nocturnal-logo.png" alt="Nocturnal Recruitment" style="width: 200px; margin-bottom: 10px;">
+            <div style="margin-top: 10px;">
+                <div style="font-size: 12px; color: #333333;">
+                    <a href="https://maps.google.com/?q=Office+16,+321+High+Road,+RM6+6AX" style="color: #0066cc; text-decoration: none;">
+                        📍 Nocturnal Recruitment, Office 16, 321 High Road, RM6 6AX
+                    </a>
+                </div>
+                <div style="font-size: 12px; color: #333333; margin-top: 3px;">
+                    ☎️ <a href="tel:02080502708" style="color: #0066cc; text-decoration: none;">0208 050 2708</a>
+                </div>
+                <div style="font-size: 12px; color: #333333; margin-top: 3px;">
+                    📱 <a href="tel:07827519020" style="color: #0066cc; text-decoration: none;">07827 519020</a>
+                </div>
+                <div style="font-size: 12px; color: #333333; margin-top: 3px;">
+                    ✉️ <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #0066cc; text-decoration: none;">info@nocturnalrecruitment.co.uk</a>
+                </div>
+                <div style="font-size: 12px; color: #333333; margin-top: 3px;">
+                    🌐 <a href="https://www.nocturnalrecruitment.co.uk" target="_blank" style="color: #0066cc; text-decoration: none;">www.nocturnalrecruitment.co.uk</a>
+                </div>
             </div>
         </div>
-        <div style="text-align: center; margin-top: 10px; font-size: 9px; color: #8bb3e8;">
-            BroadMead 3.0 &copy; 2025 - Powered by <a href="https://www.cog-nation.com" target="_blank" style="color: #E1AD01; text-decoration: none; font-weight: bold;">CogNation Digital</a>
+
+        <!-- Social Media and Certification Logos -->
+        <div style="margin-bottom: 15px; border-top: 1px solid #dddddd; padding-top: 15px;">
+            <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 15px;">
+                <img src="' . $GLOBALS['LINK'] . '/images/rec-logo.png" alt="REC" style="height: 40px;">
+                <img src="' . $GLOBALS['LINK'] . '/images/linkedin-logo.png" alt="LinkedIn" style="height: 40px;">
+                <img src="' . $GLOBALS['LINK'] . '/images/instagram-logo.png" alt="Instagram" style="height: 40px;">
+                <img src="' . $GLOBALS['LINK'] . '/images/facebook-logo.png" alt="Facebook" style="height: 40px;">
+                <img src="' . $GLOBALS['LINK'] . '/images/cyber-essentials-logo.png" alt="Cyber Essentials" style="height: 40px;">
+            </div>
+            <div style="text-align: center; color: #666666; font-size: 11px;">
+                Company Registration – 11817091
+            </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div style="font-size: 9px; color: #999999; line-height: 1.4; border-top: 1px solid #dddddd; padding-top: 15px;">
+            <strong>Disclaimer*</strong> This email is intended only for the use of the addressee named above and may be confidential or legally privileged. 
+            If you are not the addressee, you must not read it and must not use any information contained in nor copy it nor inform any person other than 
+            <a href="https://www.nocturnalrecruitment.co.uk" style="color: #0066cc; text-decoration: none;">Nocturnal Recruitment</a> or the addressee of its existence or contents. 
+            If you have received this email in error, please delete it and notify our team at 
+            <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #0066cc; text-decoration: none;">info@nocturnalrecruitment.co.uk</a>
         </div>
     </div>';
 }
