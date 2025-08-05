@@ -872,7 +872,7 @@ if (isset($_POST['send_email'])) {
         </div>
     </div>
 
-    <!-- Delete Modal -->
+    
     <div class="modal fade" id="DeleteModal" tabindex="-1" role="dialog" aria-labelledby="DeleteModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -903,7 +903,7 @@ if (isset($_POST['send_email'])) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Delete modal functionality
+          
             var deleteModal = document.getElementById('DeleteModal');
             if (deleteModal) {
                 deleteModal.addEventListener('show.bs.modal', function (event) {
@@ -921,7 +921,7 @@ if (isset($_POST['send_email'])) {
                 });
             }
 
-            // File upload preview functionality
+        
             const fileInput = document.getElementById('mailshot_attachments');
             const filePreview = document.getElementById('filePreview');
            
@@ -952,7 +952,7 @@ if (isset($_POST['send_email'])) {
                 });
             }
 
-            // Mailshot functionality
+           
             const selectAllCheckbox = document.getElementById('selectAll');
             const mailshotBtn = document.getElementById('mailshotBtn');
             const selectedCountSpan = document.getElementById('selectedCount');
@@ -961,7 +961,7 @@ if (isset($_POST['send_email'])) {
             const mailshotMessageField = document.getElementById('mailshot_message');
             const mailshotTemplateDropdown = document.getElementById('mailshot_template');
 
-            // Email templates with consultant-specific content
+         
             const emailTemplates = {
                 'welcome': {
                     subject: 'Welcome to Nocturnal Recruitment!',
