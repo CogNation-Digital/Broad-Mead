@@ -52,6 +52,117 @@ $allowedExportEmails = [
     'chax@nocturnalrecruitment.co.uk'
 ];
 
+
+function getConsultantDetails($db_2, $USERID) {
+    $stmt = $db_2->prepare("SELECT Name, Email, Number, Position FROM users WHERE UserID = :userid");
+    $stmt->bindParam(':userid', $USERID);
+    $stmt->execute();
+    $user = $stmt->fetch(PDO::FETCH_OBJ);
+    return [
+        'name' => $user->Name ?? 'Consultant',
+        'email' => $user->Email ?? '',
+        'number' => $user->Number ?? '',
+        'title' => $user->Position ?? 'Consultant'
+    ];
+}
+
+function getEmailFooter($consultantEmail, $consultantName, $consultantNumber = '', $consultantTitle = 'Consultant') {
+    return '
+    <div style="margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: #ffffff; font-family: Arial, sans-serif; border-radius: 8px; max-width: 600px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; color: #ffffff; font-size: 18px; font-weight: bold;">Nocturnal Recruitment</h3>
+            <p style="margin: 5px 0 0 0; color: #b8d4ff; font-size: 14px;">Your Trusted Recruitment Partner</p>
+        </div>
+        <table style="width: 100%; margin-bottom: 20px;" cellpadding="5" cellspacing="0">
+            <tr>
+                <td style="text-align: center; vertical-align: top; width: 33%;">
+                    <div style="color: #6daffb; font-size: 12px; margin-bottom: 3px;">📍 Address</div>
+                    <div style="color: #ffffff; font-size: 11px;">Office 16, 321 High Road, RM6 6AX</div>
+                </td>
+                <td style="text-align: center; vertical-align: top; width: 33%;">
+                    <div style="color: #6daffb; font-size: 12px; margin-bottom: 3px;">📞 Phone</div>
+                    <div style="color: #ffffff; font-size: 11px;">0208 050 2708</div>
+                </td>
+                <td style="text-align: center; vertical-align: top; width: 33%;">
+                    <div style="color: #6daffb; font-size: 12px; margin-bottom: 3px;">📱 Mobile</div>
+                    <div style="color: #ffffff; font-size: 11px;">0755 357 0871</div>
+                </td>
+            </tr>
+        </table>
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div style="color: #6daffb; font-size: 12px; margin-bottom: 3px;">✉️ Your Consultant</div>
+            <div style="color: #ffffff; font-size: 13px; font-weight: bold;">' . htmlspecialchars($consultantName) . '</div>
+            <div style="color: #b8d4ff; font-size: 11px;">
+                <a href="mailto:' . htmlspecialchars($consultantEmail) . '" style="color: #6daffb; text-decoration: none;">' . htmlspecialchars($consultantEmail) . '</a>
+            </div>
+            <div style="color: #b8d4ff; font-size: 11px;">' . htmlspecialchars($consultantTitle) . '</div>
+            <div style="color: #b8d4ff; font-size: 11px;">' . htmlspecialchars($consultantNumber) . '</div>
+        </div>
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div style="color: #6daffb; font-size: 12px; margin-bottom: 8px;">🌐 Connect With Us</div>
+            <div>
+                <a href="https://www.nocturnalrecruitment.co.uk" target="_blank" style="color: #6daffb; text-decoration: none; margin: 0 5px; font-size: 11px;">Website</a>
+            </div>
+            <div style="color: #8bb3e8; font-size: 9px; line-height: 1.3;">
+                This email is confidential and intended only for the addressee. If you are not the intended recipient,
+                please delete this email and notify us at <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #6daffb;">info@nocturnalrecruitment.co.uk</a>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 10px; font-size: 9px; color: #8bb3e8;">
+            BroadMead 3.0 &copy; 2025 - Powered by <a href="https://www.cog-nation.com" target="_blank" style="color: #E1AD01; text-decoration: none; font-weight: bold;">CogNation Digital</a>
+        </div>
+    </div>';
+}
+// function getEmailFooter($consultantEmail, $consultantName) {
+//     return '
+//     <div style="margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: #ffffff; font-family: Arial, sans-serif; border-radius: 8px; max-width: 600px;">
+//         <div style="text-align: center; margin-bottom: 20px;">
+//             <h3 style="margin: 0; color: #ffffff; font-size: 18px; font-weight: bold;">Nocturnal Recruitment</h3>
+//             <p style="margin: 5px 0 0 0; color: #b8d4ff; font-size: 14px;">Your Trusted Recruitment Partner</p>
+//         </div>
+       
+//         <table style="width: 100%; margin-bottom: 20px;" cellpadding="5" cellspacing="0">
+//             <tr>
+//                 <td style="text-align: center; vertical-align: top; width: 33%;">
+//                     <div style="color: #6daffb; font-size: 12px; margin-bottom: 3px;">📍 Address</div>
+//                     <div style="color: #ffffff; font-size: 11px;">Office 16, 321 High Road, RM6 6AX</div>
+//                 </td>
+//                 <td style="text-align: center; vertical-align: top; width: 33%;">
+//                     <div style="color: #6daffb; font-size: 12px; margin-bottom: 3px;">📞 Phone</div>
+//                     <div style="color: #ffffff; font-size: 11px;">0208 050 2708</div>
+//                 </td>
+//                 <td style="text-align: center; vertical-align: top; width: 33%;">
+//                     <div style="color: #6daffb; font-size: 12px; margin-bottom: 3px;">📱 Mobile</div>
+//                     <div style="color: #ffffff; font-size: 11px;">0755 357 0871</div>
+//                 </td>
+//             </tr>
+//         </table>
+       
+//         <div style="text-align: center; margin-bottom: 20px;">
+//             <div style="color: #6daffb; font-size: 12px; margin-bottom: 3px;">✉️ Your Consultant</div>
+//             <div style="color: #ffffff; font-size: 13px; font-weight: bold;">' . htmlspecialchars($consultantName) . '</div>
+//             <div style="color: #b8d4ff; font-size: 11px;">
+//                 <a href="mailto:' . htmlspecialchars($consultantEmail) . '" style="color: #6daffb; text-decoration: none;">' . htmlspecialchars($consultantEmail) . '</a>
+//             </div>
+//         </div>
+       
+//         <div style="text-align: center; margin-bottom: 20px;">
+//             <div style="color: #6daffb; font-size: 12px; margin-bottom: 8px;">🌐 Connect With Us</div>
+//             <div>
+//                 <a href="https://www.nocturnalrecruitment.co.uk" target="_blank" style="color: #6daffb; text-decoration: none; margin: 0 5px; font-size: 11px;">Website</a> |
+//                 <a href
+//             <div style="color: #8bb3e8; font-size: 9px; line-height: 1.3;">
+//                 This email is confidential and intended only for the addressee. If you are not the intended recipient,
+//                 please delete this email and notify us at <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #6daffb;">info@nocturnalrecruitment.co.uk</a>
+//             </div>
+//         </div>
+       
+//         <div style="text-align: center; margin-top: 10px; font-size: 9px; color: #8bb3e8;">
+//             BroadMead 3.0 &copy; 2025 - Powered by <a href="https://www.cog-nation.com" target="_blank" style="color: #E1AD01; text-decoration: none; font-weight: bold;">CogNation Digital</a>
+//         </div>
+//     </div>';
+// }
+
 function getSMTPConfig() {
     return [
         'host' => 'smtp.titan.email',
@@ -72,10 +183,10 @@ function getSMTPConfig() {
     ];
 }
 
-function getEmailFooter($consultantEmail, $consultantName) {
-    // ... [same as your original, omitted for brevity] ...
-    return '...'; // Use your full HTML signature from the original
-}
+// function getEmailFooter($consultantEmail, $consultantName) {
+//     // ... [same as your original, omitted for brevity] ...
+//     return '...'; // Use your full HTML signature from the original
+// }
 
 // Secure file upload handler
 function handleFileUploads() {
@@ -279,7 +390,7 @@ if (isset($_POST['send_mailshot']) && !isset($_SESSION['mailshot_processing'])) 
                             $successful_sends++;
                             // Log email tracking
                             $tracking_stmt = $db_2->prepare("
-                                INSERT INTO email_tracking (mailshot_id, client_id, consultant_email, consultant_name, subject, sent_date, delivery_status)
+                                INSERT INTO email_tracking (id, client_id, consultant_email, consultant_name, subject, sent_date, status)
                                 VALUES (?, ?, ?, ?, ?, NOW(), 'sent')
                             ");
                             $tracking_stmt->execute([
@@ -604,14 +715,15 @@ if (isset($_POST['send_email'])) {
                                     <span id="filterResults" style="margin-left: 1rem; color: #6c757d;"></span>
                                 </div>
                                 <div style="margin-left: auto; padding-left: 15px;">
-                                    <?php if ($canSendMailshot && !isset($_SESSION['mailshot_processing'])): ?>
-                                        <button type="button" style="background-color: #0d6efd; color: white; border: 1px solid #0d6efd; padding: 0.25rem 0.5rem; border-radius: 0.25rem; display: none;" id="mailshotBtn" onclick="openMailshotModal()">
-                                            <i class="ti ti-mail"></i> Send Mailshot (<span id="selectedCount">0</span>)
-                                        </button>
-                                        
-                                    <?php elseif (isset($_SESSION['mailshot_processing'])): ?>
-                                    <?php endif; ?>
-                                </div>
+                                <?php if ($canSendMailshot): ?>
+            <button type="button" 
+                    id="mailshotBtn" 
+                    class="btn btn-primary d-none"
+                    onclick="openMailshotModal()">
+                <i class="ti ti-mail"></i> Send Mailshot (<span id="selectedCount">0</span>)
+            </button>
+        <?php endif; ?>
+    </div>
                             </div>
 
                             <!-- Enhanced Mailshot Modal -->
@@ -1211,6 +1323,44 @@ if (isset($_POST['send_email'])) {
             updateSelectedCount();
             updateCsvExportLink();
         });
+
+        document.addEventListener('DOMContentLoaded', function() {
+    // Handle checkbox selection and button visibility
+    function updateMailshotButtonVisibility() {
+        const checkedBoxes = document.querySelectorAll('.checkbox-item:checked');
+        const mailshotBtn = document.getElementById('mailshotBtn');
+        const selectedCount = document.getElementById('selectedCount');
+        
+        if (mailshotBtn) {
+            mailshotBtn.classList.toggle('d-none', checkedBoxes.length === 0);
+        }
+        if (selectedCount) {
+            selectedCount.textContent = checkedBoxes.length;
+        }
+    }
+
+    // Toggle all checkboxes
+    function toggleSelectAll() {
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('.checkbox-item');
+        
+        checkboxes.forEach(checkbox => {
+            if (checkbox.closest('tr').style.display !== 'none') {
+                checkbox.checked = selectAllCheckbox.checked;
+            }
+        });
+        updateMailshotButtonVisibility();
+    }
+
+    // Add event listeners to checkboxes
+    const checkboxes = document.querySelectorAll('.checkbox-item');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateMailshotButtonVisibility);
+    });
+
+    // Initialize button state
+    updateMailshotButtonVisibility();
+});
     </script>
     
     <?php
