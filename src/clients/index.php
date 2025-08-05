@@ -65,7 +65,7 @@ function getConsultantDetails($db_2, $USERID) {
         'title' => $user->Position ?? 'Consultant'
     ];
 }function getEmailFooter($consultantEmail, $consultantName, $consultantNumber = '', $consultantTitle = 'Consultant') {
-    // Adjusted paths to match your folder structure
+  
     $logoPath = __DIR__ . '/images/Logo NRS.png';
     $recLogoPath = __DIR__ . '/images/image009.jpg';  // REC logo
     $linkedinLogoPath = __DIR__ . '/images/Linked in badge.jpg';
@@ -73,7 +73,7 @@ function getConsultantDetails($db_2, $USERID) {
     $facebookLogoPath = __DIR__ . '/images/Facebook logo.jpg';
     $cyberLogoPath = __DIR__ . '/images/image011.jpg';  // Cyber Essentials
     
-    // Function to convert image to base64
+ 
     function imageToBase64($imagePath) {
         if (file_exists($imagePath)) {
             $imageData = file_get_contents($imagePath);
@@ -92,93 +92,69 @@ function getConsultantDetails($db_2, $USERID) {
     $cyberLogoBase64 = imageToBase64($cyberLogoPath);
 
     return '
-    <div style="max-width: 600px; font-family: Arial, sans-serif; line-height: 1.4;">
-        <!-- Consultant Info Section -->
-        <div style="margin-bottom: 20px;">
+    <div style="max-width: 600px; font-family: Arial, sans-serif; line-height: 1.4; margin: auto;">
+        
+        <div style="text-align: center; margin-bottom: 20px;">
+            ' . ($logoBase64 ? '<img src="' . $logoBase64 . '" alt="Nocturnal Recruitment" style="width: 300px; height: auto;">' : '<div style="font-weight: bold; font-size: 24px; margin-bottom: 10px;">NOCTURNAL RECRUITMENT SOLUTIONS</div>') . '
+        </div>
+
+        <div style="text-align: center; margin-bottom: 20px;">
             <div style="color: #333333; font-size: 16px; font-weight: bold; margin-bottom: 2px;">' . htmlspecialchars($consultantName) . '</div>
             <div style="color: #666666; font-size: 14px; margin-bottom: 5px;">' . htmlspecialchars($consultantTitle) . '</div>
-            <div style="color: #0066cc; font-size: 14px;">
+            <div style="color: #0066cc; font-size: 14px; margin-bottom: 5px;">
                 <a href="mailto:' . htmlspecialchars($consultantEmail) . '" style="color: #0066cc; text-decoration: none;">' . htmlspecialchars($consultantEmail) . '</a>
+            </div>
+            <div style="font-size: 14px; color: #333333;">
+                📱 <a href="tel:02080502708" style="color: #0066cc; text-decoration: none;">0208 050 2708</a>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 20px;">
+            <a href="https://www.linkedin.com/company/nocturnal-recruitment-solutions/" target="_blank" style="display: inline-block; margin: 0 5px;">
+                ' . ($linkedinLogoBase64 ? '<img src="' . $linkedinLogoBase64 . '" alt="LinkedIn" style="height: 40px; width: auto; border: none;">' : '<span style="font-size: 10px;">LI</span>') . '
+            </a>
+            <a href="https://www.instagram.com/nocturnalrecruitment/" target="_blank" style="display: inline-block; margin: 0 5px;">
+                ' . ($instagramLogoBase64 ? '<img src="' . $instagramLogoBase64 . '" alt="Instagram" style="height: 40px; width: auto; border: none;">' : '<span style="font-size: 10px;">IG</span>') . '
+            </a>
+            <a href="https://www.facebook.com/nocturnalrecruitment/" target="_blank" style="display: inline-block; margin: 0 5px;">
+                ' . ($facebookLogoBase64 ? '<img src="' . $facebookLogoBase64 . '" alt="Facebook" style="height: 40px; width: auto; border: none;">' : '<span style="font-size: 10px;">FB</span>') . '
+            </a>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+            <table style="width: 100%; border-collapse: collapse; text-align: center;">
+                <tr>
+                    <td style="width: 50%; text-align: right; padding-right: 10px;">
+                        <a href="https://www.rec.uk.com/" target="_blank" style="text-decoration: none;">
+                            ' . ($recLogoBase64 ? '<img src="' . $recLogoBase64 . '" alt="REC Corporate Member" style="height: 60px; width: auto; display: inline-block;">' : '<span style="font-size: 12px;">REC Corporate Member</span>') . '
+                        </a>
+                    </td>
+                    <td style="width: 50%; text-align: left; padding-left: 10px;">
+                        ' . ($cyberLogoBase64 ? '<img src="' . $cyberLogoBase64 . '" alt="Cyber Essentials Certified" style="height: 80px; width: auto; display: inline-block;">' : '') . '
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div style="font-size: 14px; color: #0066cc; margin-bottom: 5px;">
+                📍 <a href="https://maps.google.com/?q=Office+16,+321+High+Road,+RM6+6AX" style="color: #0066cc; text-decoration: none;">Nocturnal Recruitment, Office 16, 321 High Road, RM6 6AX</a>
+            </div>
+            <div style="font-size: 14px; color: #333333; margin-bottom: 5px;">
+                ☎️ <a href="tel:02080502708" style="color: #0066cc; text-decoration: none;">0208 050 2708</a>
+            </div>
+            <div style="font-size: 14px; color: #0066cc; margin-bottom: 5px;">
+                ✉️ <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #0066cc; text-decoration: none;">info@nocturnalrecruitment.co.uk</a>
+            </div>
+            <div style="font-size: 14px; color: #0066cc;">
+                🌐 <a href="https://www.nocturnalrecruitment.co.uk" style="color: #0066cc; text-decoration: none;">www.nocturnalrecruitment.co.uk</a>
             </div>
         </div>
 
-        <!-- Logo Section -->
-        <div style="margin-bottom: 20px;">
-            ' . ($logoBase64 ? '<img src="' . $logoBase64 . '" alt="Nocturnal Recruitment" style="width: 300px; height: auto; display: block;">' : '<div style="font-weight: bold; font-size: 24px; margin-bottom: 10px;">NOCTURNAL RECRUITMENT SOLUTIONS</div>') . '
-        </div>
-
-        <!-- Contact Info Section -->
-        <div style="margin-bottom: 20px;">
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                    <td style="width: 50%; vertical-align: top; padding-right: 20px;">
-                        <div style="font-size: 14px; color: #0066cc; margin-bottom: 5px;">
-                            📍 <a href="https://maps.google.com/?q=Office+16,+321+High+Road,+RM6+6AX" style="color: #0066cc; text-decoration: none;">Nocturnal Recruitment, Office 16, 321 High Road, RM6 6AX</a>
-                        </div>
-                        ' . ($consultantNumber ? '<div style="font-size: 14px; color: #333333; margin-bottom: 3px;">📱 <a href="tel:' . str_replace(' ', '', $consultantNumber) . '" style="color: #0066cc; text-decoration: none;">' . htmlspecialchars($consultantNumber) . '</a></div>' : '') . '
-                    </td>
-                    <td style="width: 50%; vertical-align: top;">
-                        <div style="font-size: 14px; color: #333333; margin-bottom: 3px;">
-                            ☎️ <a href="tel:02080502708" style="color: #0066cc; text-decoration: none;">0208 050 2708</a>
-                        </div>
-                        <div style="font-size: 14px; color: #0066cc; margin-bottom: 3px;">
-                            ✉️ <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #0066cc; text-decoration: none;">info@nocturnalrecruitment.co.uk</a>
-                        </div>
-                        <div style="font-size: 14px; color: #0066cc;">
-                            🌐 <a href="https://www.nocturnalrecruitment.co.uk" style="color: #0066cc; text-decoration: none;">www.nocturnalrecruitment.co.uk</a>
-                        </div>
-                    </td>
-                </tr>
-            </table>
-        </div>
-
-        <!-- Cyber Essentials Logo (Center) -->
-        <div style="text-align: center; margin: 20px 0;">
-            ' . ($cyberLogoBase64 ? '<img src="' . $cyberLogoBase64 . '" alt="Cyber Essentials Certified" style="height: 80px; width: auto;">' : '') . '
-        </div>
-
-        <!-- Social Media and REC Logos Section -->
-        <div style="margin: 30px 0; text-align: center;">
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                    <td style="width: 50%; text-align: left; vertical-align: middle;">
-                        <!-- REC Logo -->
-                        <a href="https://www.rec.uk.com/" target="_blank" style="text-decoration: none;">
-                            ' . ($recLogoBase64 ? '<img src="' . $recLogoBase64 . '" alt="REC Corporate Member" style="height: 60px; width: auto;">' : '<span style="font-size: 12px;">REC Corporate Member</span>') . '
-                        </a>
-                    </td>
-                    <td style="width: 50%; text-align: right; vertical-align: middle;">
-                        <!-- Social Media Icons -->
-                        <table style="float: right; border-collapse: collapse;">
-                            <tr>
-                                <td style="padding: 0 5px;">
-                                    <a href="https://www.linkedin.com/company/nocturnal-recruitment-solutions/" target="_blank">
-                                        ' . ($linkedinLogoBase64 ? '<img src="' . $linkedinLogoBase64 . '" alt="LinkedIn" style="height: 40px; width: auto; border: none;">' : '<span style="font-size: 10px;">LI</span>') . '
-                                    </a>
-                                </td>
-                                <td style="padding: 0 5px;">
-                                    <a href="https://www.instagram.com/nocturnalrecruitment/" target="_blank">
-                                        ' . ($instagramLogoBase64 ? '<img src="' . $instagramLogoBase64 . '" alt="Instagram" style="height: 40px; width: auto; border: none;">' : '<span style="font-size: 10px;">IG</span>') . '
-                                    </a>
-                                </td>
-                                <td style="padding: 0 5px;">
-                                    <a href="https://www.facebook.com/nocturnalrecruitment/" target="_blank">
-                                        ' . ($facebookLogoBase64 ? '<img src="' . $facebookLogoBase64 . '" alt="Facebook" style="height: 40px; width: auto; border: none;">' : '<span style="font-size: 10px;">FB</span>') . '
-                                    </a>
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-            </table>
-        </div>
-
-        <!-- Company Registration -->
-        <div style="text-align: left; color: #333333; font-size: 14px; font-weight: bold; margin: 20px 0;">
+        <div style="text-align: center; color: #333333; font-size: 14px; font-weight: bold; margin: 20px 0;">
             Company Registration – 11817091
         </div>
 
-        <!-- Disclaimer -->
         <div style="font-size: 12px; color: #333333; line-height: 1.6; border-top: 1px solid #dddddd; padding-top: 15px; margin-top: 20px;">
             <strong style="color: #c41e3a;">Disclaimer*</strong> This email is intended only for the use of the addressee named above and may be confidential or legally privileged. If you are not the addressee, you must not read it and must not use any information contained in nor copy it nor inform any person other than <a href="https://www.nocturnalrecruitment.co.uk" style="color: #c41e3a; text-decoration: none; font-weight: bold;">Nocturnal Recruitment</a> or the addressee of its existence or contents. If you have received this email in error, please delete it and notify our team at <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #0066cc; text-decoration: none;">info@nocturnalrecruitment.co.uk</a>
         </div>
@@ -301,7 +277,7 @@ function handleFileUploads() {
     return $uploadedFiles;
 }
 
-// The ONLY email sending function used
+
 function sendOptimizedEmail($recipientEmail, $recipientName, $subject, $htmlBody, $textBody, $consultantEmail, $consultantName, $attachments = []) {
     $config = getSMTPConfig();
     $mail = new PHPMailer(true);
@@ -324,7 +300,7 @@ function sendOptimizedEmail($recipientEmail, $recipientName, $subject, $htmlBody
         $mail->addReplyTo($consultantEmail, $consultantName);
         $mail->addAddress($recipientEmail, $recipientName);
         
-        // Add headers
+       
         $mail->addCustomHeader('Return-Path', $config['username']);
         $mail->addCustomHeader('X-Mailer', 'BroadMead CRM v3.0');
         $mail->addCustomHeader('X-Priority', '3');
@@ -338,12 +314,12 @@ function sendOptimizedEmail($recipientEmail, $recipientName, $subject, $htmlBody
         $mail->Body = $htmlBody;
         $mail->AltBody = $textBody;
 
-        // Add attachments
+     
         foreach ($attachments as $attachment) {
             $mail->addAttachment($attachment['path'], $attachment['name']);
         }
 
-        // Send with retry mechanism
+     
         $maxRetries = 3;
         $retryDelay = 2;
         
@@ -364,7 +340,7 @@ function sendOptimizedEmail($recipientEmail, $recipientName, $subject, $htmlBody
         return ['success' => false, 'message' => $e->getMessage()];
     }
 }
-// Get logged-in consultant info
+
 $loggedInUserEmail = '';
 $loggedInUserName = '';
 $USERID = $_COOKIE['USERID'] ?? null;
@@ -379,7 +355,7 @@ if ($USERID) {
     }
 }
 
-// Only allow authorized consultants to send mailshots
+
 $allowedMailshotEmails = array_keys($consultantMapping);
 $canSendMailshot = in_array($loggedInUserEmail, array_map('strtolower', $allowedMailshotEmails));
 
@@ -405,7 +381,7 @@ if (isset($_POST['send_mailshot']) && !isset($_SESSION['mailshot_processing'])) 
         } else {
             $uploadedFiles = handleFileUploads();
             $consultant_name = $consultantMapping[$loggedInUserEmail] ?? $loggedInUserName;
-            // Create mailshot log
+          
             $ClientKeyID = $_COOKIE['ClientKeyID'] ?? 1;
             $USERID = $_COOKIE['USERID'] ?? 1;
             $total_recipients = count($selected_clients);
@@ -430,7 +406,7 @@ if (isset($_POST['send_mailshot']) && !isset($_SESSION['mailshot_processing'])) 
             $error_details = [];
             foreach ($selected_clients as $client_id) {
                 try {
-                    // Get client details (try v3, fallback v1)
+                 
                     $stmt = $db_2->prepare("SELECT Name, Email FROM _clients WHERE ClientID = ?");
                     $stmt->execute([$client_id]);
                     $client = $stmt->fetch(PDO::FETCH_OBJ);
@@ -452,14 +428,14 @@ if (isset($_POST['send_mailshot']) && !isset($_SESSION['mailshot_processing'])) 
                         '</body></html>';
                         $text_body = $personalized_message . "\n\n---\nBest regards,\n" .
                                      $consultant_name . "\nNocturnal Recruitment\nEmail: " . $loggedInUserEmail;
-                        // Send email via the ONLY function
+                       
                         $result = sendOptimizedEmail(
                             $client->Email, $client->Name, $mailshot_subject, $html_body, $text_body,
                             $loggedInUserEmail, $consultant_name, $uploadedFiles
                         );
                         if ($result['success']) {
                             $successful_sends++;
-                            // Log email tracking
+                          
                             $tracking_stmt = $db_2->prepare("
                                 INSERT INTO email_tracking (id, client_id, consultant_email, consultant_name, subject, sent_date, status)
                                 VALUES (?, ?, ?, ?, ?, NOW(), 'sent')
@@ -480,16 +456,16 @@ if (isset($_POST['send_mailshot']) && !isset($_SESSION['mailshot_processing'])) 
                     $error_details[] = "Error for client ID $client_id: " . $e->getMessage();
                 }
             }
-            // Update mailshot log
+       
             $update_log = $db_2->prepare("
                 UPDATE mailshot_log SET SuccessCount = ?, FailedCount = ?, is_completed = 1 WHERE id = ?
             ");
             $update_log->execute([$successful_sends, $failed_sends, $mailshot_id]);
-            // Clean up uploaded files
+       
             foreach ($uploadedFiles as $file) {
                 if (file_exists($file['path'])) unlink($file['path']);
             }
-            // Result message
+         
             if ($successful_sends > 0 && $failed_sends === 0) {
                 $success_message = "Mailshot successfully sent to $successful_sends clients.";
             } elseif ($successful_sends > 0 && $failed_sends > 0) {
@@ -504,7 +480,7 @@ if (isset($_POST['send_mailshot']) && !isset($_SESSION['mailshot_processing'])) 
     }
 }
 
-// Show result message after mailshot
+
 if (isset($_SESSION['mailshot_completed'])) {
     if (isset($_SESSION['mailshot_result'])) {
         if (strpos($_SESSION['mailshot_result'], 'successfully') !== false) {
@@ -516,7 +492,6 @@ if (isset($_SESSION['mailshot_completed'])) {
     unset($_SESSION['mailshot_completed'], $_SESSION['mailshot_result']);
 }
 
-// [rest of your page logic, HTML, JS can stay mostly as-is]
 
 
 $SearchID = isset($_GET['q']) ? $_GET['q'] : "";
@@ -540,7 +515,7 @@ $showCsvExportButton = in_array($loggedInUserEmail, $allowedExportEmails);
 $allowedMailshotEmails = array_keys($consultantMapping);
 $canSendMailshot = in_array($loggedInUserEmail, array_map('strtolower', $allowedMailshotEmails));
 
-// Search functionality
+
 if (isset($_POST['Search'])) {
     $Name = $_POST['Name'] ?? '';
     $ClientType = $_POST['ClientType'] ?? '';
@@ -552,7 +527,7 @@ if (isset($_POST['Search'])) {
     $City = $_POST['City'] ?? '';
 }
 
-// Delete functionality
+
 if (isset($_POST['delete'])) {
     $ID = $_POST['ID'];
     $name = $_POST['name'];
@@ -677,7 +652,7 @@ if (isset($_POST['send_email'])) {
         <div class="pc-content">
             <?php include "../../includes/breadcrumb.php"; ?>
 
-            <!-- Success/Error Messages -->
+          
             <?php if (isset($success_message)): ?>
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     <i class="ti ti-check-circle"></i>
@@ -734,7 +709,7 @@ if (isset($_POST['send_email'])) {
                         </div>
 
                         <div class="card-body" style="padding-bottom: 0;">
-                            <!-- Filter Section -->
+                      
                             <div class="row mb-3">
                                 <div class="col-md-3">
                                     <label class="form-label">Filter by Name:</label>
@@ -769,7 +744,7 @@ if (isset($_POST['send_email'])) {
                                 </div>
                             </div>
 
-                            <!-- Action Buttons -->
+                          
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <button type="button" style="background-color: #0d6efd; color: white; border: 1px solid #0d6efd; padding: 0.25rem 0.5rem; border-radius: 0.25rem; margin-right: 0.5rem;" onclick="clearAllFilters()">
@@ -797,7 +772,7 @@ if (isset($_POST['send_email'])) {
     </div>
                             </div>
 
-                            <!-- Enhanced Mailshot Modal -->
+                         
                             <?php if ($canSendMailshot): ?>
                                 <div class="modal fade" id="mailshotModal" tabindex="-1" role="dialog" aria-labelledby="mailshotModalLabel" aria-hidden="true">
                                     <div class="modal-dialog modal-xl" role="document">
@@ -813,7 +788,7 @@ if (isset($_POST['send_email'])) {
                                                 <div class="modal-body">
                                                     <input type="hidden" name="selected_clients" id="mailshotSelectedClients">
                                                    
-                                                    <!-- Anti-Spam Notice -->
+                                                  
                                                     <div class="alert alert-info">
                                                         <i class="ti ti-shield-check"></i>
                                                         <strong>Professional Email Delivery:</strong> This system uses anti-spam measures to ensure your emails reach clients' inboxes. All replies will be forwarded to your email (<?php echo htmlspecialchars($loggedInUserEmail); ?>).
@@ -890,7 +865,7 @@ if (isset($_POST['send_email'])) {
                                 </div>
                             <?php endif; ?>
 
-                            <!-- Tabs -->
+                      
                             <ul class="nav nav-tabs analytics-tab" id="myTab" role="tablist" style="margin-left:30px;">
                                 <li class="nav-item" role="presentation">
                                     <a href="<?php echo $LINK; ?>/clients<?php echo !empty($SearchID) ? "/?q=$SearchID" : "" ?>">
@@ -910,7 +885,7 @@ if (isset($_POST['send_email'])) {
                                 </ul>
                             </ul>
 
-                            <!-- Clients Table -->
+                       
                             <div class="card-body">
                                 <div class="table-responsive dt-responsive">
                                     <?php if (isset($USERID) && function_exists('IsCheckPermission') && IsCheckPermission($USERID, "VIEW_CLIENTS")) : ?>
@@ -1396,7 +1371,7 @@ if (isset($_POST['send_email'])) {
         });
 
         document.addEventListener('DOMContentLoaded', function() {
-    // Handle checkbox selection and button visibility
+
     function updateMailshotButtonVisibility() {
         const checkedBoxes = document.querySelectorAll('.checkbox-item:checked');
         const mailshotBtn = document.getElementById('mailshotBtn');
@@ -1410,7 +1385,7 @@ if (isset($_POST['send_email'])) {
         }
     }
 
-    // Toggle all checkboxes
+ 
     function toggleSelectAll() {
         const selectAllCheckbox = document.getElementById('selectAll');
         const checkboxes = document.querySelectorAll('.checkbox-item');
@@ -1423,13 +1398,13 @@ if (isset($_POST['send_email'])) {
         updateMailshotButtonVisibility();
     }
 
-    // Add event listeners to checkboxes
+
     const checkboxes = document.querySelectorAll('.checkbox-item');
     checkboxes.forEach(checkbox => {
         checkbox.addEventListener('change', updateMailshotButtonVisibility);
     });
 
-    // Initialize button state
+  
     updateMailshotButtonVisibility();
 });
     </script>

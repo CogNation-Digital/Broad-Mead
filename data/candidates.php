@@ -584,10 +584,10 @@ if ($mode === 'kpi') {
                 const dailyTrendChart = new Chart(dailyTrendCtx, {
                     type: 'line',
                     data: {
-                        labels: [<?php echo "'" . implode("','", array_column($kpi_data['daily_trend'], 'date')) . "'"; ?>],
+                        labels: [<?php echo !empty($kpi_data['daily_trend']) ? "'" . implode("','", array_column($kpi_data['daily_trend'], 'date')) . "'" : ''; ?>],
                         datasets: [{
                             label: 'Daily Registrations',
-                            data: [<?php echo implode(',', array_column($kpi_data['daily_trend'], 'count')); ?>],
+                            data: [<?php echo !empty($kpi_data['daily_trend']) ? implode(',', array_column($kpi_data['daily_trend'], 'count')) : ''; ?>],
                             borderColor: '#007bff',
                             backgroundColor: 'rgba(0, 123, 255, 0.1)',
                             tension: 0.4,
@@ -612,10 +612,10 @@ if ($mode === 'kpi') {
                         labels: ['Active', 'Inactive', 'Archived', 'Pending'],
                         datasets: [{
                             data: [
-                                <?php echo $kpi_data['active_candidates']; ?>,
-                                <?php echo $kpi_data['inactive_candidates']; ?>,
-                                <?php echo $kpi_data['archived_candidates']; ?>,
-                                <?php echo $kpi_data['pending_candidates']; ?>
+                                <?php echo isset($kpi_data['active_candidates']) ? $kpi_data['active_candidates'] : 0; ?>,
+                                <?php echo isset($kpi_data['inactive_candidates']) ? $kpi_data['inactive_candidates'] : 0; ?>,
+                                <?php echo isset($kpi_data['archived_candidates']) ? $kpi_data['archived_candidates'] : 0; ?>,
+                                <?php echo isset($kpi_data['pending_candidates']) ? $kpi_data['pending_candidates'] : 0; ?>
                             ],
                             backgroundColor: [
                                 '#28a745',
@@ -637,15 +637,15 @@ if ($mode === 'kpi') {
 
                 // Export function
                 function exportKPIReport() {
-                    let csvContent = "KPI Report - <?php echo $kpi_data['date_range']['start']; ?> to <?php echo $kpi_data['date_range']['end']; ?>\n\n";
+                    let csvContent = "KPI Report - <?php echo isset($kpi_data['date_range']['start']) ? $kpi_data['date_range']['start'] : 'N/A'; ?> to <?php echo isset($kpi_data['date_range']['end']) ? $kpi_data['date_range']['end'] : 'N/A'; ?>\n\n";
                     csvContent += "Metric,Value\n";
-                    csvContent += "Total Candidates,<?php echo $kpi_data['total_candidates']; ?>\n";
-                    csvContent += "New Candidates,<?php echo $kpi_data['new_candidates']; ?>\n";
-                    csvContent += "Active Candidates,<?php echo $kpi_data['active_candidates']; ?>\n";
-                    csvContent += "Inactive Candidates,<?php echo $kpi_data['inactive_candidates']; ?>\n";
-                    csvContent += "Archived Candidates,<?php echo $kpi_data['archived_candidates']; ?>\n";
-                    csvContent += "Pending Candidates,<?php echo $kpi_data['pending_candidates']; ?>\n";
-                    csvContent += "Growth Rate,<?php echo $kpi_data['growth_rate']; ?>%\n";
+                    csvContent += "Total Candidates,<?php echo isset($kpi_data['total_candidates']) ? $kpi_data['total_candidates'] : 0; ?>\n";
+                    csvContent += "New Candidates,<?php echo isset($kpi_data['new_candidates']) ? $kpi_data['new_candidates'] : 0; ?>\n";
+                    csvContent += "Active Candidates,<?php echo isset($kpi_data['active_candidates']) ? $kpi_data['active_candidates'] : 0; ?>\n";
+                    csvContent += "Inactive Candidates,<?php echo isset($kpi_data['inactive_candidates']) ? $kpi_data['inactive_candidates'] : 0; ?>\n";
+                    csvContent += "Archived Candidates,<?php echo isset($kpi_data['archived_candidates']) ? $kpi_data['archived_candidates'] : 0; ?>\n";
+                    csvContent += "Pending Candidates,<?php echo isset($kpi_data['pending_candidates']) ? $kpi_data['pending_candidates'] : 0; ?>\n";
+                    csvContent += "Growth Rate,<?php echo isset($kpi_data['growth_rate']) ? $kpi_data['growth_rate'] : 0; ?>%\n";
                     
                     const blob = new Blob([csvContent], { type: 'text/csv' });
                     const url = window.URL.createObjectURL(blob);

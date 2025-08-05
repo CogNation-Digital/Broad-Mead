@@ -328,7 +328,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     "Email: " . $loggedInUserEmail . "\n" .
                                     "Phone: 0208 050 2708";
 
-                        // Add attachments
                         foreach ($uploadedFiles as $attachment) {
                             try {
                                 $mail->addAttachment($attachment['path'], $attachment['name']);
@@ -339,12 +338,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             }
                         }
                         
-                        // Send the email
+                      
                         if ($mail->send()) {
                             $successful_sends++;
                             error_log("SUCCESS: Email sent to " . $candidate->Email);
                             
-                            // Log individual email tracking
+                          
                             try {
                                 $tracking_stmt = $db_2->prepare("
                                     INSERT INTO candidate_email_tracking
@@ -371,7 +370,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             error_log("ERROR: " . $error_msg);
                         }
                         
-                        // Clear addresses and attachments for next iteration
+                     
                         $mail->clearAddresses();
                         $mail->clearAttachments();
                         
@@ -391,14 +390,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             error_log("Mailshot completed. Success: $successful_sends, Failed: $failed_sends");
 
-            // Clean up uploaded files
             foreach ($uploadedFiles as $file) {
                 if (file_exists($file['path'])) {
                     unlink($file['path']);
                 }
             }
 
-            // Set result messages
             if ($successful_sends > 0 && $failed_sends === 0) {
                 $_SESSION['success_message'] = "Mailshot successfully sent to $successful_sends candidates from $consultant_name ($loggedInUserEmail).";
             } elseif ($successful_sends > 0 && $failed_sends > 0) {
@@ -419,7 +416,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $final_result = $_SESSION['success_message'] ?? $_SESSION['error_message'] ?? 'Unknown result';
             error_log("Final result: " . $final_result);
             
-            // Store debug info for the next page load
             $_SESSION['debug_info'] = [
                 'PROCESS_COMPLETED' => true,
                 'SUCCESSFUL_SENDS' => $successful_sends,
@@ -428,22 +424,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'FINAL_RESULT' => $final_result,
                 'ERROR_DETAILS' => $error_details
             ];
-        }
-    }
-
-    // Always redirect back to mailshot mode
-    header("Location: " . $_SERVER['PHP_SELF'] . "?mode=mailshot");
-    exit;
-}
+        } // closes: if (!empty subject/message/etc)
+    } // closes: if ($mode === 'mailshot' && isset(...))
 } else {
     error_log("No mailshot POST request detected, skipping mailshot processing");
 }
-
-// Export functionality
-
-
-  
-
+                            
 
 if (isset($_GET['export'])) {
     
@@ -794,7 +780,6 @@ function getPreviousPeriodRange($period, $currentRange) {
     ];
 }
 
-
 function calculateKPIs($db, $period, $start_date = null, $end_date = null, $status_filter = 'all', $location_filter = '') {
     $kpis = [];
     try {
@@ -871,34 +856,33 @@ function calculateKPIs($db, $period, $start_date = null, $end_date = null, $stat
         $stmt->execute($status_count_params);
         $kpis['pending_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['pending'];
 
-        // Job Title Stats (not affected by overall status/location filter for distribution)
+      
         $stmt = $db->prepare("SELECT JobTitle, COUNT(*) as count FROM _candidates WHERE Date BETWEEN :start_date AND :end_date AND JobTitle IS NOT NULL AND JobTitle != '' GROUP BY JobTitle ORDER BY count DESC");
         $stmt->execute($status_count_params);
         $kpis['job_title_stats'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // City Stats (not affected by overall status/location filter for distribution)
         $stmt = $db->prepare("SELECT City, COUNT(*) as count FROM _candidates WHERE Date BETWEEN :start_date AND :end_date AND City IS NOT NULL AND City != '' GROUP BY City ORDER BY count DESC");
         $stmt->execute($status_count_params);
         $kpis['city_stats'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // CreatedBy Stats (not affected by overall status/location filter for distribution)
+       
         $stmt = $db->prepare("SELECT CreatedBy, COUNT(*) as count FROM _candidates WHERE Date BETWEEN :start_date AND :end_date GROUP BY CreatedBy ORDER BY count DESC");
         $stmt->execute($status_count_params);
         $kpis['created_by_stats'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Daily Trend (not affected by overall status/location filter for distribution)
+        
         $stmt = $db->prepare("SELECT DATE(Date) as date, COUNT(*) as count FROM _candidates WHERE Date BETWEEN :start_date AND :end_date GROUP BY DATE(Date) ORDER BY date");
         $stmt->execute($status_count_params);
         $kpis['daily_trend'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Growth Rate calculation (uses the same filters as 'new_candidates' for consistency)
+      
         $previousPeriod = getPreviousPeriodRange($period, $dateRange);
         $prev_period_params = [
             ':start_date' => $previousPeriod['start'] . ' 00:00:00',
             ':end_date' => $previousPeriod['end'] . ' 23:59:59'
         ];
 
-        // Apply the same status/location filters to the previous period count for fair comparison
+     
         $prev_where_conditions = ["Date BETWEEN :start_date AND :end_date"];
         if ($status_filter !== 'all') {
             $prev_where_conditions[] = "Status = :status_filter";
@@ -911,12 +895,12 @@ function calculateKPIs($db, $period, $start_date = null, $end_date = null, $stat
 
         $prev_where_clause = 'WHERE ' . implode(' AND ', $prev_where_conditions);
 
-        // Get previous period count
+       
         $stmt = $db->prepare("SELECT COUNT(*) as count FROM _candidates $prev_where_clause");
         $stmt->execute($prev_period_params);
         $prev_period_count = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
 
-        // Calculate growth rate
+    
         $curr_period_count = $kpis['new_candidates'];
         $kpis['growth_rate'] = $prev_period_count > 0 
             ? round((($curr_period_count - $prev_period_count) / $prev_period_count) * 100, 2)
@@ -929,7 +913,7 @@ function calculateKPIs($db, $period, $start_date = null, $end_date = null, $stat
     }
 }
 
-// --- Data for Mailshot Filter Dropdowns (Job Titles, Locations) ---
+
 if ($mode === 'mailshot') {
     $job_titles_query = "SELECT DISTINCT JobTitle FROM _candidates WHERE JobTitle IS NOT NULL AND JobTitle != '' ORDER BY JobTitle";
     $job_titles_stmt = $db_2->query($job_titles_query);
@@ -940,13 +924,13 @@ if ($mode === 'mailshot') {
     $locations = $locations_stmt->fetchAll(PDO::FETCH_COLUMN);
 }
 
-// --- KPI Data Calculation for Display (only if mode is 'kpi') ---
+
 $kpi_data = [];
 if ($mode === 'kpi') {
     $kpi_data = calculateKPIs($db_2, $kpi_period, $kpi_start_date, $kpi_end_date, $kpi_status_filter, $kpi_location_filter);
 }
 
-// Mapping for CreatedBy IDs to Names (for display in tables)
+
 $createdByMapping = [
     "1" => "Chax Shamwana",
     "10" => "Millie Brown",
@@ -957,7 +941,7 @@ $createdByMapping = [
     "9" => "Jack Dowler"
 ];
 
-// Debug output to check if user is authorized (remove this in production)
+
 error_log("Debug - Logged in user email: " . $loggedInUserEmail);
 error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
 ?>
@@ -967,41 +951,41 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Candidate Management</title>
-    <!-- Font Awesome for icons -->
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Inter font from Google Fonts -->
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Tailwind CSS CDN (for utility classes, though custom styles are also used) -->
+  
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Your custom stylesheet (if you have one, otherwise styles are inline below) -->
+
     <link rel="stylesheet" href="style.css">
-    <?php include "../../includes/head.php"; // Assuming this includes meta tags, etc. ?>
+    <?php include "../../includes/head.php";  ?>
     <style>
         
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f4f7f6; /* Light background */
-            color: #333; /* Dark grey text */
+            background-color: #f4f7f6; 
+            color: #333; /
         }
 
         .pc-container {
-            margin-left: 280px; /* Adjust based on sidebar width from includes/sidebar.php */
+            margin-left: 280px; 
             padding: 20px;
-            background-color: #ffffff; /* White content background */
+            background-color: #ffffff; 
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Soft shadow */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); 
         }
 
         .pc-content {
             padding: 20px;
         }
 
-        /* Navigation Buttons (View Candidates, Mailshot, KPI) */
+    
         .nav-buttons {
             display: flex;
             gap: 10px;
             margin-bottom: 25px;
-            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            flex-wrap: wrap; 
         }
 
         .nav-buttons a {
@@ -1022,16 +1006,16 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
         }
 
         .nav-buttons a.active {
-            background: #007bff; /* Blue for active tab */
+            background: #007bff; 
             color: white;
         }
 
         .nav-buttons a:not(.active) {
-            background: #e0e0e0; /* Light grey for inactive tabs */
+            background: #e0e0e0; 
             color: #333;
         }
 
-        /* Status Filter Buttons (Active, Inactive, etc.) */
+      
         .status-filter-buttons {
             display: flex;
             gap: 8px;
@@ -1115,21 +1099,21 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
         }
 
         .success-message {
-            background-color: #d4edda; /* Light green */
-            color: #155724; /* Dark green text */
+            background-color: #d4edda; 
+            color: #155724; 
             border: 1px solid #c3e6cb;
         }
 
         .error-message {
-            background-color: #f8d7da; /* Light red */
-            color: #721c24; /* Dark red text */
+            background-color: #f8d7da; 
+            color: #721c24; 
             border: 1px solid #f5c6cb;
         }
 
        
         .filter-section, .kpi-filter-section {
-            background-color: #f8f9fa; /* Very light grey background */
-            border: 1px solid #e9ecef; /* Light border */
+            background-color: #f8f9fa; 
+            border: 1px solid #e9ecef; 
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 25px;
@@ -1636,7 +1620,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                 </div>
             <?php endif; ?>
 
-            <!-- Success/Error Messages -->
+      
             <?php if (isset($success_message)): ?>
                 <div class="success-message">
                     <i class="fa fa-check-circle"></i> <?php echo nl2br(htmlspecialchars($success_message)); ?>
@@ -1650,100 +1634,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
             <?php endif; ?>
 
             <?php if ($mode !== 'kpi'): ?>
-                <!-- Candidate Filtering Section (for 'candidates' and 'mailshot' modes) -->
-                <div class="filter-section">
-                    <h5>
-                        <?php echo $mode === 'mailshot' ? 'Filter Candidates for Mailshot' : 'Candidate Filtering System'; ?>
-                    </h5>
-                    <form method="GET" action="">
-                        <input type="hidden" name="mode" value="<?php echo htmlspecialchars($mode); ?>">
-                        <div class="row filter-row">
-                            <div class="col-md-3">
-                                <div class="filter-label">Keywords (Name, Email, Job Title)</div>
-                                <input type="text" name="keyword" class="filter-input"
-                                    placeholder="Search by keywords..."
-                                    value="<?php echo htmlspecialchars($keyword_filter); ?>">
-                            </div>
-                            <div class="col-md-3">
-                                <div class="filter-label">Location (City, Address, Postcode)</div>
-                                <input type="text" name="location" class="filter-input"
-                                    placeholder="Search by location..."
-                                    value="<?php echo htmlspecialchars($location_filter); ?>">
-                            </div>
-                            <div class="col-md-3">
-                                <div class="filter-label">Position Title</div>
-                                <input type="text" name="position" class="filter-input"
-                                    placeholder="Search by position..."
-                                    value="<?php echo htmlspecialchars($position_filter); ?>">
-                            </div>
-                            <?php if ($mode === 'candidates'): ?>
-                            <div class="col-md-3">
-                                <div class="filter-label">Status</div>
-                                <select name="status" class="filter-select">
-                                    <option value="all" <?= $status_filter === 'all' ? 'selected' : '' ?>>All</option>
-                                    <option value="active" <?= $status_filter === 'active' ? 'selected' : '' ?>>Active</option>
-                                    <option value="inactive" <?= $status_filter === 'inactive' ? 'selected' : '' ?>>Inactive</option>
-                                    <option value="pending" <?= $status_filter === 'pending' ? 'selected' : '' ?>>Pending</option>
-                                    <option value="archived" <?= $status_filter === 'archived' ? 'selected' : '' ?>>Archived</option>
-                                </select>
-                            </div>
-                            <?php endif; ?>
-                            <div class="col-md-3">
-                                <div class="filter-label">Center Postcode (for distance)</div>
-                                <input type="text"
-            </div>
-
-            <!-- Export Buttons for Candidates List -->
-            <?php if ($canExport): // Only show export buttons if user is authorized ?>
-            <div class="export-buttons">
-                <a href="?mode=candidates&export=excel&status=<?= htmlspecialchars($status_filter) ?>&keyword=<?= htmlspecialchars($keyword_filter) ?>&location=<?= htmlspecialchars($location_filter) ?>&position=<?= htmlspecialchars($position_filter) ?>&center_postcode=<?= htmlspecialchars($center_postcode) ?>&distance_miles=<?= htmlspecialchars($distance_miles) ?>"
-                   class="export-btn excel"
-                   onclick="return confirm('Export filtered candidates to Excel?')">
-                    <i class="fa fa-file-excel"></i> Export Excel
-                </a>
-                <a href="?mode=candidates&export=csv&status=<?= htmlspecialchars($status_filter) ?>&keyword=<?= htmlspecialchars($keyword_filter) ?>&location=<?= htmlspecialchars($location_filter) ?>&position=<?= htmlspecialchars($position_filter) ?>&center_postcode=<?= htmlspecialchars($center_postcode) ?>&distance_miles=<?= htmlspecialchars($distance_miles) ?>"
-                   class="export-btn csv"
-                   onclick="return confirm('Export filtered candidates to CSV?')">
-                    <i class="fa fa-file-csv"></i> Export CSV
-                </a>
-            </div>
-            <?php else: ?>
-            <!-- Debug message for unauthorized users (remove in production) -->
-            <div class="alert alert-info">
-                <small>Export functionality is restricted to authorized users only. Current user: <?= htmlspecialchars($loggedInUserEmail) ?></small>
-            </div>
-            <?php endif; ?>
-
-            <?php if ($mode === 'kpi'): ?>
-                <!-- KPI Information Box -->
-                <div class="kpi-info">
-                    <h5><i class="fa fa-bar-chart"></i> KPI Reporting Dashboard</h5>
-                    <p><strong>Track and analyze your candidate metrics:</strong></p>
-                    <ul>
-                        <li>Monitor weekly, monthly, and quarterly candidate registration trends</li>
-                        <li>Analyze candidate status distributions and conversion rates</li>
-                        <li>Track top performing job titles and locations</li>
-                        <li>View team performance and candidate creation statistics</li>
-                        <li>Generate custom reports for specific date ranges</li>
-                    </ul>
-                </div>
-            <?php endif; ?>
-
-            <!-- Success/Error Messages -->
-            <?php if (isset($success_message)): ?>
-                <div class="success-message">
-                    <i class="fa fa-check-circle"></i> <?php echo nl2br(htmlspecialchars($success_message)); ?>
-                </div>
-            <?php endif; ?>
-
-            <?php if (isset($error_message)): ?>
-                <div class="error-message">
-                    <i class="fa fa-exclamation-triangle"></i> <?php echo nl2br(htmlspecialchars($error_message)); ?>
-                </div>
-            <?php endif; ?>
-
-            <?php if ($mode !== 'kpi'): ?>
-                <!-- Candidate Filtering Section (for 'candidates' and 'mailshot' modes) -->
+             
                 <div class="filter-section">
                     <h5>
                         <?php echo $mode === 'mailshot' ? 'Filter Candidates for Mailshot' : 'Candidate Filtering System'; ?>
@@ -1802,8 +1693,9 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                 </div>
             <?php endif; ?>
 
+
             <?php if ($mode === 'candidates' || $mode === 'mailshot'): ?>
-                <!-- Enhanced Candidate List Table Section -->
+               
                 <div class="card p-4">
                     <div class="d-flex align-items-center justify-content-between mb-4">
                         <h4 class="mb-0">
@@ -1817,19 +1709,19 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                     </div>
 
                     <?php if ($mode === 'mailshot'): ?>
-                        <!-- Enhanced Mailshot Form with File Upload -->
+                       
                         <form method="POST" action="<?php echo $_SERVER['PHP_SELF']; ?>?mode=mailshot" enctype="multipart/form-data" class="mailshot-form" id="candidateMailshotForm">
                             <input type="hidden" name="send_mailshot" value="1">
                             <input type="hidden" name="selected_candidates" id="mailshotSelectedCandidates">
                            
-                            <!-- Debug Info -->
+                           
                             <?php if(isset($_SESSION['debug_info'])): ?>
                             <div class="alert alert-warning">
                                 <pre><?php echo htmlspecialchars(print_r($_SESSION['debug_info'], true)); ?></pre>
                             </div>
                             <?php unset($_SESSION['debug_info']); endif; ?>
                            
-                            <!-- Anti-Spam Notice -->
+                         
                             <div class="alert alert-info mb-4">
                                 <i class="fa fa-shield-alt"></i>
                                 <strong>Professional Email Delivery:</strong> This system uses anti-spam measures to ensure your emails reach candidates' inboxes. All replies will be forwarded to your email (<?php echo htmlspecialchars($loggedInUserEmail); ?>).
@@ -1902,7 +1794,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                     <?php endif; ?>
 
                     <?php if ($mode === 'candidates' && $canSendMailshot): ?>
-                        <!-- Enhanced action buttons for candidates mode -->
+                     
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <button type="button" style="background-color: #0d6efd; color: white; border: 1px solid #0d6efd; padding: 0.25rem 0.5rem; border-radius: 0.25rem; display: none;" id="candidateMailshotBtn" onclick="window.location.href='?mode=mailshot'">
@@ -1952,7 +1844,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                                             <?php endif; ?>
                                             <td>
                                                 <?php
-                                                // Use ProfilePictureURL if available, otherwise fallback to a generic placeholder
+                                         
                                                 $profile_pic_url = !empty($candidate['ProfileImage']) ? htmlspecialchars($candidate['ProfileImage']) : 'https://placehold.co/40x40/cccccc/333333?text=N/A';
                                                 ?>
                                                 <img src="<?= $profile_pic_url ?>" alt="Profile" class="profile-pic" onerror="this.onerror=null;this.src='https://placehold.co/40x40/cccccc/333333?text=N/A';">
@@ -1966,7 +1858,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                                             <td><?= htmlspecialchars($createdByMapping[$candidate['CreatedBy']] ?? 'Unknown') ?></td>
                                             <?php if ($mode === 'candidates'): ?>
                                                 <td>
-                                                    <!-- Action buttons (placeholders for now) -->
+                                             
                                                     <a href="#" class="btn btn-sm btn-info" title="View Details" style="background-color: #17a2b8; color: white; padding: 5px 8px; border-radius: 4px; text-decoration: none;"><i class="fa fa-eye"></i></a>
                                                     <a href="#" class="btn btn-sm btn-warning" title="Edit" style="background-color: #ffc107; color: white; padding: 5px 8px; border-radius: 4px; text-decoration: none;"><i class="fa fa-edit"></i></a>
                                                     <a href="#" class="btn btn-sm btn-danger" title="Delete" style="background-color: #dc3545; color: white; padding: 5px 8px; border-radius: 4px; text-decoration: none;"><i class="fa fa-trash"></i></a>
@@ -1986,18 +1878,9 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                     </div>
                 </div>
             <?php endif; ?>
-
-
-
-
-
-
-
-
-
-            
+   
             <?php if ($mode === 'kpi'): ?>
-                <!-- KPI Report Filtering Section -->
+           
                 <div class="kpi-filter-section">
                     <h5>Filter KPI Report</h5>
                     <form method="GET" action="">
@@ -2051,8 +1934,8 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                     </form>
                 </div>
 
-                <!-- Export Buttons for KPI Report -->
-                <?php if ($canExport): // Only show export buttons if user is authorized ?>
+              
+                <?php if ($canExport): ?>
                 <div class="export-buttons">
                     <a href="?mode=kpi&export=excel&kpi_period=<?= htmlspecialchars($kpi_period) ?>&kpi_start_date=<?= htmlspecialchars($kpi_start_date) ?>&kpi_end_date=<?= htmlspecialchars($kpi_end_date) ?>&kpi_status_filter=<?= htmlspecialchars($kpi_status_filter) ?>&kpi_location_filter=<?= htmlspecialchars($kpi_location_filter) ?>"
                        class="export-btn excel"
@@ -2072,7 +1955,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                         <i class="fa fa-exclamation-triangle"></i> KPI Calculation Error: <?= htmlspecialchars($kpi_data['error']) ?>
                     </div>
                 <?php else: ?>
-                    <!-- KPI Summary Cards -->
+                 
                     <div class="kpi-summary-cards">
                         <div class="kpi-card">
                             <div class="value"><?= $kpi_data['total_candidates'] ?? 0 ?></div>
@@ -2104,7 +1987,7 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
                         </div>
                     </div>
 
-                    <!-- KPI Detail Tables -->
+    
                     <h5 class="mt-4 mb-3">Candidate Status Distribution (Current Period)</h5>
                     <div class="table-responsive mb-4">
                         <table class="kpi-detail-table">
@@ -2464,25 +2347,23 @@ error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
         };
 
         // JavaScript for KPI Report: Toggle Custom Date Inputs enabled/disabled state
-        function toggleCustomDateInputs() {
-            const periodSelect = document.getElementById('kpi_period');
-            const startDateInput = document.getElementById('kpi_start_date');
-            const endDateInput = document.getElementById('kpi_end_date');
-            if (periodSelect && startDateInput && endDateInput) {
-                if (periodSelect.value === 'custom') {
-                    startDateInput.removeAttribute('disabled');
-                    endDateInput.removeAttribute('disabled');
-                } else {
-                    startDateInput.setAttribute('disabled', 'disabled');
-                    endDateInput.setAttribute('disabled', 'disabled');
-                }
-            }
-            }
+     function toggleCustomDateInputs() {
+    const periodSelect = document.getElementById('kpi_period');
+    const startDateInput = document.getElementById('kpi_start_date');
+    const endDateInput = document.getElementById('kpi_end_date');
     
+    if (periodSelect && startDateInput && endDateInput) {
+        if (periodSelect.value === 'custom') {
+            startDateInput.removeAttribute('disabled');
+            endDateInput.removeAttribute('disabled');
+        } else {
+            startDateInput.setAttribute('disabled', 'disabled');
+            endDateInput.setAttribute('disabled', 'disabled');
+        }
+    }
+}
     </script>
 
-    <?php 
-        include "../../includes/js.php";
-    ?>
+    <?php include "../../includes/js.php"; ?>
 </body>
 </html>
