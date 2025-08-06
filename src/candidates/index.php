@@ -76,59 +76,99 @@ $allowedExportEmails = [
 $canExport = in_array($loggedInUserEmail, array_map('strtolower', $allowedExportEmails));
 
 // Enhanced email footer function
-function getEmailFooter($consultantEmail, $consultantName) {
+function getEmailFooter($consultantEmail, $consultantName, $consultantNumber = '', $consultantTitle = 'Consultant') {
+  
+    $logoPath = __DIR__ . '/images/Logo NRS.png';
+    $recLogoPath = __DIR__ . '/images/image009.jpg';  // REC logo
+    $linkedinLogoPath = __DIR__ . '/images/Linked in badge.jpg';
+    $instagramLogoPath = __DIR__ . '/images/image008.png';
+    $facebookLogoPath = __DIR__ . '/images/Facebook logo.jpg';
+    $cyberLogoPath = __DIR__ . '/images/image011.jpg';  // Cyber Essentials
+    
+ 
+    function imageToBase64($imagePath) {
+        if (file_exists($imagePath)) {
+            $imageData = file_get_contents($imagePath);
+            $imageType = pathinfo($imagePath, PATHINFO_EXTENSION);
+            if ($imageType === 'jpg') $imageType = 'jpeg';
+            return 'data:image/' . $imageType . ';base64,' . base64_encode($imageData);
+        }
+        return '';
+    }
+    
+    $logoBase64 = imageToBase64($logoPath);
+    $recLogoBase64 = imageToBase64($recLogoPath);
+    $linkedinLogoBase64 = imageToBase64($linkedinLogoPath);
+    $instagramLogoBase64 = imageToBase64($instagramLogoPath);
+    $facebookLogoBase64 = imageToBase64($facebookLogoPath);
+    $cyberLogoBase64 = imageToBase64($cyberLogoPath);
+
     return '
-    <div style="margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: #ffffff; font-family: Arial, sans-serif; border-radius: 8px; max-width: 600px;">
+    <div style="max-width: 600px; font-family: Arial, sans-serif; line-height: 1.4; margin: auto;">
+        
         <div style="text-align: center; margin-bottom: 20px;">
-            <h3 style="margin: 0; color: #ffffff; font-size: 18px; font-weight: bold;">Nocturnal Recruitment</h3>
-            <p style="margin: 5px 0 0 0; color: #b8d4ff; font-size: 14px;">Your Trusted Recruitment Partner</p>
+            ' . ($logoBase64 ? '<img src="' . $logoBase64 . '" alt="Nocturnal Recruitment" style="width: 300px; height: auto;">' : '<div style="font-weight: bold; font-size: 24px; margin-bottom: 10px;">NOCTURNAL RECRUITMENT SOLUTIONS</div>') . '
         </div>
-       
-        <table style="width: 100%; margin-bottom: 20px;" cellpadding="5" cellspacing="0">
-            <tr>
-                <td style="text-align: center; vertical-align: top; width: 33%;">
-                    <div style="color: #6daffb; font-size: 12px; margin-bottom: 3px;">📍 Address</div>
-                    <div style="color: #ffffff; font-size: 11px;">Office 16, 321 High Road, RM6 6AX</div>
-                </td>
-                <td style="text-align: center; vertical-align: top; width: 33%;">
-                    <div style="color: #6daffb; font-size: 12px; margin-bottom: 3px;">📞 Phone</div>
-                    <div style="color: #ffffff; font-size: 11px;">0208 050 2708</div>
-                </td>
-                <td style="text-align: center; vertical-align: top; width: 33%;">
-                    <div style="color: #6daffb; font-size: 12px; margin-bottom: 3px;">📱 Mobile</div>
-                    <div style="color: #ffffff; font-size: 11px;">0755 357 0871</div>
-                </td>
-            </tr>
-        </table>
-       
+
         <div style="text-align: center; margin-bottom: 20px;">
-            <div style="color: #6daffb; font-size: 12px; margin-bottom: 3px;">✉️ Your Consultant</div>
-            <div style="color: #ffffff; font-size: 13px; font-weight: bold;">' . htmlspecialchars($consultantName) . '</div>
-            <div style="color: #b8d4ff; font-size: 11px;">
-                <a href="mailto:' . htmlspecialchars($consultantEmail) . '" style="color: #6daffb; text-decoration: none;">' . htmlspecialchars($consultantEmail) . '</a>
+            <div style="color: #333333; font-size: 16px; font-weight: bold; margin-bottom: 2px;">' . htmlspecialchars($consultantName) . '</div>
+            <div style="color: #666666; font-size: 14px; margin-bottom: 5px;">' . htmlspecialchars($consultantTitle) . '</div>
+            <div style="color: #0066cc; font-size: 14px; margin-bottom: 5px;">
+                <a href="mailto:' . htmlspecialchars($consultantEmail) . '" style="color: #0066cc; text-decoration: none;">' . htmlspecialchars($consultantEmail) . '</a>
+            </div>
+            <div style="font-size: 14px; color: #333333;">
+                📱 <a href="tel:02080502708" style="color: #0066cc; text-decoration: none;">0208 050 2708</a>
             </div>
         </div>
-       
+        
         <div style="text-align: center; margin-bottom: 20px;">
-            <div style="color: #6daffb; font-size: 12px; margin-bottom: 8px;">🌐 Connect With Us</div>
-            <div>
-                <a href="https://www.nocturnalrecruitment.co.uk" target="_blank" style="color: #6daffb; text-decoration: none; margin: 0 5px; font-size: 11px;">Website</a> |
-                <a href="https://www.linkedin.com/company/nocturnalrecruitment" target="_blank" style="color: #6daffb; text-decoration: none; margin: 0 5px; font-size: 11px;">LinkedIn</a> |
-                <a href="https://www.instagram.com/nocturnalrecruitment" target="_blank" style="color: #6daffb; text-decoration: none; margin: 0 5px; font-size: 11px;">Instagram</a> |
-                <a href="https://www.facebook.com/nocturnalrecruitment" target="_blank" style="color: #6daffb; text-decoration: none; margin: 0 5px; font-size: 11px;">Facebook</a>
+            <a href="https://www.linkedin.com/company/nocturnal-recruitment-solutions/" target="_blank" style="display: inline-block; margin: 0 5px;">
+                ' . ($linkedinLogoBase64 ? '<img src="' . $linkedinLogoBase64 . '" alt="LinkedIn" style="height: 40px; width: auto; border: none;">' : '<span style="font-size: 10px;">LI</span>') . '
+            </a>
+            <a href="https://www.instagram.com/nocturnalrecruitment/" target="_blank" style="display: inline-block; margin: 0 5px;">
+                ' . ($instagramLogoBase64 ? '<img src="' . $instagramLogoBase64 . '" alt="Instagram" style="height: 40px; width: auto; border: none;">' : '<span style="font-size: 10px;">IG</span>') . '
+            </a>
+            <a href="https://www.facebook.com/nocturnalrecruitment/" target="_blank" style="display: inline-block; margin: 0 5px;">
+                ' . ($facebookLogoBase64 ? '<img src="' . $facebookLogoBase64 . '" alt="Facebook" style="height: 40px; width: auto; border: none;">' : '<span style="font-size: 10px;">FB</span>') . '
+            </a>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+            <table style="width: 100%; border-collapse: collapse; text-align: center;">
+                <tr>
+                    <td style="width: 50%; text-align: right; padding-right: 10px;">
+                        <a href="https://www.rec.uk.com/" target="_blank" style="text-decoration: none;">
+                            ' . ($recLogoBase64 ? '<img src="' . $recLogoBase64 . '" alt="REC Corporate Member" style="height: 60px; width: auto; display: inline-block;">' : '<span style="font-size: 12px;">REC Corporate Member</span>') . '
+                        </a>
+                    </td>
+                    <td style="width: 50%; text-align: left; padding-left: 10px;">
+                        ' . ($cyberLogoBase64 ? '<img src="' . $cyberLogoBase64 . '" alt="Cyber Essentials Certified" style="height: 80px; width: auto; display: inline-block;">' : '') . '
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div style="font-size: 14px; color: #0066cc; margin-bottom: 5px;">
+                📍 <a href="https://maps.google.com/?q=Office+16,+321+High+Road,+RM6+6AX" style="color: #0066cc; text-decoration: none;">Nocturnal Recruitment, Office 16, 321 High Road, RM6 6AX</a>
+            </div>
+            <div style="font-size: 14px; color: #333333; margin-bottom: 5px;">
+                ☎️ <a href="tel:02080502708" style="color: #0066cc; text-decoration: none;">0208 050 2708</a>
+            </div>
+            <div style="font-size: 14px; color: #0066cc; margin-bottom: 5px;">
+                ✉️ <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #0066cc; text-decoration: none;">info@nocturnalrecruitment.co.uk</a>
+            </div>
+            <div style="font-size: 14px; color: #0066cc;">
+                🌐 <a href="https://www.nocturnalrecruitment.co.uk" style="color: #0066cc; text-decoration: none;">www.nocturnalrecruitment.co.uk</a>
             </div>
         </div>
-       
-        <div style="text-align: center; border-top: 1px solid #4a6fa5; padding-top: 15px;">
-            <div style="color: #b8d4ff; font-size: 10px; margin-bottom: 5px;">Company Registration: 11817091 | REC Corporate Member</div>
-            <div style="color: #8bb3e8; font-size: 9px; line-height: 1.3;">
-                This email is confidential and intended only for the addressee. If you are not the intended recipient,
-                please delete this email and notify us at <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #6daffb;">info@nocturnalrecruitment.co.uk</a>
-            </div>
+
+        <div style="text-align: center; color: #333333; font-size: 14px; font-weight: bold; margin: 20px 0;">
+            Company Registration – 11817091
         </div>
-       
-        <div style="text-align: center; margin-top: 10px; font-size: 9px; color: #8bb3e8;">
-            BroadMead 3.0 &copy; 2025 - Powered by <a href="https://www.cog-nation.com" target="_blank" style="color: #E1AD01; text-decoration: none; font-weight: bold;">CogNation Digital</a>
+
+        <div style="font-size: 12px; color: #333333; line-height: 1.6; border-top: 1px solid #dddddd; padding-top: 15px; margin-top: 20px;">
+            <strong style="color: #c41e3a;">Disclaimer*</strong> This email is intended only for the use of the addressee named above and may be confidential or legally privileged. If you are not the addressee, you must not read it and must not use any information contained in nor copy it nor inform any person other than <a href="https://www.nocturnalrecruitment.co.uk" style="color: #c41e3a; text-decoration: none; font-weight: bold;">Nocturnal Recruitment</a> or the addressee of its existence or contents. If you have received this email in error, please delete it and notify our team at <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #0066cc; text-decoration: none;">info@nocturnalrecruitment.co.uk</a>
         </div>
     </div>';
 }
