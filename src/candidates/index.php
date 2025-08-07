@@ -233,7 +233,7 @@ function handleFileUploads() {
 $allowedMailshotEmails = array_keys($consultantMapping);
 $canSendMailshot = in_array($loggedInUserEmail, array_map('strtolower', $allowedMailshotEmails));
 
-// Get the current mode from URL parameter
+
 $mode = isset($_GET['mode']) ? $_GET['mode'] : 'candidates';
 
 // Handle POST requests
@@ -366,7 +366,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             "Email: " . $loggedInUserEmail . "\n" .
                             "Phone: 0208 050 2708";
                        
-                        // Add attachments
+                 
                         foreach ($uploadedFiles as $attachment) {
                             try {
                                 $mail->addAttachment($attachment['path'], $attachment['name']);
@@ -377,12 +377,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             }
                         }
                        
-                        // Send the email
+                     
                         if ($mail->send()) {
                             $successful_sends++;
                             error_log("SUCCESS: Email sent to " . $candidate->Email);
                            
-                            // Log individual email tracking
+                         
                             try {
                                 $tracking_stmt = $db_2->prepare("
                                     INSERT INTO candidate_email_tracking
@@ -390,7 +390,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     VALUES (?, ?, ?, ?, ?, NOW(), 'sent')
                                 ");
                                 $tracking_stmt->execute([
-                                    null, // mailshot_id
+                                    null,
                                     $candidate_id,
                                     $loggedInUserEmail,
                                     $consultant_name,
@@ -409,7 +409,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             error_log("ERROR: " . $error_msg);
                         }
                        
-                        // Clear addresses and attachments for next iteration
+                   
                         $mail->clearAddresses();
                         $mail->clearAttachments();
                        
@@ -429,14 +429,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
            
             error_log("Mailshot completed. Success: $successful_sends, Failed: $failed_sends");
            
-            // Clean up uploaded files
+          
             foreach ($uploadedFiles as $file) {
                 if (file_exists($file['path'])) {
                     unlink($file['path']);
                 }
             }
            
-            // Set result messages
+     
             if ($successful_sends > 0 && $failed_sends === 0) {
                 $_SESSION['success_message'] = "Mailshot successfully sent to $successful_sends candidates from $consultant_name ($loggedInUserEmail).";
             } elseif ($successful_sends > 0 && $failed_sends > 0) {
@@ -457,7 +457,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $final_result = $_SESSION['success_message'] ?? $_SESSION['error_message'] ?? 'Unknown result';
             error_log("Final result: " . $final_result);
            
-            // Store debug info for the next page load
+           
             $_SESSION['debug_info'] = [
                 'PROCESS_COMPLETED' => true,
                 'SUCCESSFUL_SENDS' => $successful_sends,
@@ -469,14 +469,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
    
-    // Always redirect back to mailshot mode
+   
     header("Location: " . $_SERVER['PHP_SELF'] . "?mode=mailshot");
     exit;
 } else {
     error_log("No mailshot POST request detected, skipping mailshot processing");
 }
 
-// Export functionality
 if (isset($_GET['export'])) {
    
     if (!$canExport) {
@@ -890,34 +889,34 @@ function calculateKPIs($db, $period, $start_date = null, $end_date = null, $stat
         $stmt->execute($status_count_params);
         $kpis['pending_candidates'] = $stmt->fetch(PDO::FETCH_ASSOC)['pending'];
        
-        // Job Title Stats (not affected by overall status/location filter for distribution)
+      
         $stmt = $db->prepare("SELECT JobTitle, COUNT(*) as count FROM _candidates WHERE Date BETWEEN :start_date AND :end_date AND JobTitle IS NOT NULL AND JobTitle != '' GROUP BY JobTitle ORDER BY count DESC");
         $stmt->execute($status_count_params);
         $kpis['job_title_stats'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
        
-        // City Stats (not affected by overall status/location filter for distribution)
+        
         $stmt = $db->prepare("SELECT City, COUNT(*) as count FROM _candidates WHERE Date BETWEEN :start_date AND :end_date AND City IS NOT NULL AND City != '' GROUP BY City ORDER BY count DESC");
         $stmt->execute($status_count_params);
         $kpis['city_stats'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
        
-        // CreatedBy Stats (not affected by overall status/location filter for distribution)
+      
         $stmt = $db->prepare("SELECT CreatedBy, COUNT(*) as count FROM _candidates WHERE Date BETWEEN :start_date AND :end_date GROUP BY CreatedBy ORDER BY count DESC");
         $stmt->execute($status_count_params);
         $kpis['created_by_stats'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
        
-        // Daily Trend (not affected by overall status/location filter for distribution)
+       
         $stmt = $db->prepare("SELECT DATE(Date) as date, COUNT(*) as count FROM _candidates WHERE Date BETWEEN :start_date AND :end_date GROUP BY DATE(Date) ORDER BY date");
         $stmt->execute($status_count_params);
         $kpis['daily_trend'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
        
-        // Growth Rate calculation (uses the same filters as 'new_candidates' for consistency)
+    
         $previousPeriod = getPreviousPeriodRange($period, $dateRange);
         $prev_period_params = [
             ':start_date' => $previousPeriod['start'] . ' 00:00:00',
             ':end_date' => $previousPeriod['end'] . ' 23:59:59'
         ];
        
-        // Apply the same status/location filters to the previous period count for fair comparison
+       
         $prev_where_conditions = ["Date BETWEEN :start_date AND :end_date"];
         if ($status_filter !== 'all') {
             $prev_where_conditions[] = "Status = :status_filter";
@@ -929,12 +928,12 @@ function calculateKPIs($db, $period, $start_date = null, $end_date = null, $stat
         }
         $prev_where_clause = 'WHERE ' . implode(' AND ', $prev_where_conditions);
        
-        // Get previous period count
+      
         $stmt = $db->prepare("SELECT COUNT(*) as count FROM _candidates $prev_where_clause");
         $stmt->execute($prev_period_params);
         $prev_period_count = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
        
-        // Calculate growth rate
+     
         $curr_period_count = $kpis['new_candidates'];
         $kpis['growth_rate'] = $prev_period_count > 0
             ? round((($curr_period_count - $prev_period_count) / $prev_period_count) * 100, 2)
@@ -948,7 +947,7 @@ function calculateKPIs($db, $period, $start_date = null, $end_date = null, $stat
     }
 }
 
-// --- Data for Mailshot Filter Dropdowns (Job Titles, Locations) ---
+
 if ($mode === 'mailshot') {
     $job_titles_query = "SELECT DISTINCT JobTitle FROM _candidates WHERE JobTitle IS NOT NULL AND JobTitle != '' ORDER BY JobTitle";
     $job_titles_stmt = $db_2->query($job_titles_query);
@@ -959,13 +958,13 @@ if ($mode === 'mailshot') {
     $locations = $locations_stmt->fetchAll(PDO::FETCH_COLUMN);
 }
 
-// --- KPI Data Calculation for Display (only if mode is 'kpi') ---
+
 $kpi_data = [];
 if ($mode === 'kpi') {
     $kpi_data = calculateKPIs($db_2, $kpi_period, $kpi_start_date, $kpi_end_date, $kpi_status_filter, $kpi_location_filter);
 }
 
-// Mapping for CreatedBy IDs to Names (for display in tables)
+
 $createdByMapping = [
     "1" => "Chax Shamwana",
     "10" => "Millie Brown",
@@ -976,11 +975,11 @@ $createdByMapping = [
     "9" => "Jack Dowler"
 ];
 
-// Debug output to check if user is authorized (remove this in production)
+
 error_log("Debug - Logged in user email: " . $loggedInUserEmail);
 error_log("Debug - Can export: " . ($canExport ? 'YES' : 'NO'));
 
-// Get success/error messages from session
+
 $success_message = $_SESSION['success_message'] ?? null;
 $error_message = $_SESSION['error_message'] ?? null;
 unset($_SESSION['success_message']);
@@ -993,26 +992,26 @@ unset($_SESSION['error_message']);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Candidate Management</title>
-    <!-- Font Awesome for icons -->
+   
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Inter font from Google Fonts -->
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Tailwind CSS CDN (for utility classes, though custom styles are also used) -->
+  
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Your custom stylesheet (if you have one, otherwise styles are inline below) -->
+   
     <link rel="stylesheet" href="style.css">
-    <?php include "../../includes/head.php"; // Assuming this includes meta tags, etc. ?>
+    <?php include "../../includes/head.php";  ?>
    
     <style>
        
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f4f7f6; /* Light background */
-            color: #333; /* Dark grey text */
+            background-color: #f4f7f6; 
+            color: #333; 
         }
        
         .pc-container {
-            margin-left: 280px; /* Adjust based on sidebar width from includes/sidebar.php */
+            margin-left: 280px; 
             padding: 20px;
             background-color: #ffffff; /* White content background */
             border-radius: 8px;
@@ -1533,6 +1532,7 @@ unset($_SESSION['error_message']);
             gap: 20px;
             margin-bottom: 30px;
         }
+        
        
         .kpi-card {
             background-color: white;
@@ -1709,7 +1709,7 @@ unset($_SESSION['error_message']);
         <div class="pc-content">
             <?php include "../../includes/breadcrumb.php"; ?>
            
-            <!-- Navigation Buttons -->
+           >
             <div class="nav-buttons">
                 <a href="?mode=candidates" class="<?= ($mode === 'candidates') ? 'active' : '' ?>">
                     <i class="fa fa-users"></i> View Candidates
@@ -1722,7 +1722,7 @@ unset($_SESSION['error_message']);
                 </a>
             </div>
            
-            <!-- Success/Error Messages -->
+           
             <?php if (isset($success_message)): ?>
                 <div class="success-message">
                     <i class="fa fa-check-circle"></i> <?php echo nl2br(htmlspecialchars($success_message)); ?>
@@ -1735,11 +1735,9 @@ unset($_SESSION['error_message']);
                 </div>
             <?php endif; ?>
            
-            <!-- =============================================== -->
-            <!-- VIEW CANDIDATES SECTION -->
-            <!-- =============================================== -->
+            
             <div id="candidates-section" class="mode-section <?= ($mode === 'candidates') ? 'active' : '' ?>">
-                <!-- Candidates Information Box -->
+            
                 <div class="candidates-info">
                     <h5><i class="fa fa-users"></i> Candidate Management System</h5>
                     <p><strong>Comprehensive candidate database management:</strong></p>
@@ -1752,7 +1750,7 @@ unset($_SESSION['error_message']);
                     </ul>
                 </div>
                
-                <!-- Status Filter Buttons for Candidates View -->
+               
                 <div class="status-filter-buttons">
                     <a href="?mode=candidates&status=all" class="<?= ($status_filter === 'all') ? 'active' : '' ?>">
                         <i class="fa fa-list-alt"></i> All
@@ -1771,7 +1769,7 @@ unset($_SESSION['error_message']);
                     </a>
                 </div>
                
-                <!-- Candidate Filtering Section -->
+               
                 <div class="filter-section">
                     <h5><i class="fa fa-filter"></i> Candidate Filtering System</h5>
                     <form method="GET" action="">
@@ -1807,7 +1805,7 @@ unset($_SESSION['error_message']);
                     </form>
                 </div>
                
-                <!-- Export Buttons for Candidates -->
+             
                 <?php if ($canExport): ?>
                 <div class="export-buttons">
                     <a href="?mode=candidates&export=excel&status=<?= htmlspecialchars($status_filter) ?>&keyword=<?= htmlspecialchars($keyword_filter) ?>&location=<?= htmlspecialchars($location_filter) ?>&position=<?= htmlspecialchars($position_filter) ?>" class="export-btn excel" onclick="return confirm('Export filtered candidates to Excel?')">
@@ -1819,7 +1817,7 @@ unset($_SESSION['error_message']);
                 </div>
                 <?php endif; ?>
                
-                <!-- Candidates Table -->
+          
                 <div class="card p-4">
                     <div class="d-flex align-items-center justify-content-between mb-4">
                         <h4 class="mb-0"><i class="fa fa-users"></i> Candidates Database (<?= count($candidates_for_display) ?> records)</h4>
@@ -1904,16 +1902,14 @@ unset($_SESSION['error_message']);
                 </div>
             </div>
            
-            <!-- =============================================== -->
-            <!-- CREATE MAILSHOT SECTION -->
-            <!-- =============================================== -->
+          
             <div id="mailshot-section" class="mode-section <?= ($mode === 'mailshot') ? 'active' : '' ?>">
                 <?php if (!$canSendMailshot): ?>
                     <div class="error-message">
                         <i class="fa fa-exclamation-triangle"></i> Access Denied: You do not have permission to send mailshots. Only authorized consultants can send mailshots.
                     </div>
                 <?php else: ?>
-                    <!-- Mailshot Information Box -->
+                  
                     <div class="mailshot-info">
                         <h5><i class="fa fa-paper-plane"></i> Professional Mailshot System</h5>
                         <p><strong>Send targeted email campaigns to selected candidates:</strong></p>
@@ -1926,7 +1922,7 @@ unset($_SESSION['error_message']);
                         </ul>
                     </div>
                    
-                    <!-- Mailshot Filtering Section -->
+                 
                     <div class="filter-section">
                         <h5><i class="fa fa-filter"></i> Filter Candidates for Mailshot</h5>
                         <form method="GET" action="">
@@ -1962,7 +1958,7 @@ unset($_SESSION['error_message']);
                         </form>
                     </div>
                    
-                    <!-- Enhanced Mailshot Form -->
+                   
                     <div class="card p-4 mb-4">
                         <div class="d-flex align-items-center justify-content-between mb-4">
                             <h4 class="mb-0"><i class="fa fa-paper-plane"></i> Create Professional Mailshot</h4>
@@ -1975,7 +1971,7 @@ unset($_SESSION['error_message']);
                             <input type="hidden" name="send_mailshot" value="1">
                             <input type="hidden" name="selected_candidates" id="mailshotSelectedCandidates">
                            
-                            <!-- Anti-Spam Notice -->
+                          
                             <div class="alert alert-info mb-4">
                                 <i class="fa fa-shield-alt"></i>
                                 <strong>Professional Email Delivery:</strong> This system uses anti-spam measures to ensure your emails reach candidates' inboxes. All replies will be forwarded to your email (<?php echo htmlspecialchars($loggedInUserEmail); ?>).
@@ -2029,7 +2025,7 @@ unset($_SESSION['error_message']);
                         </form>
                     </div>
                    
-                    <!-- Candidate Selection Table for Mailshot -->
+                  
                     <div class="card p-4">
                         <h5><i class="fa fa-list"></i> Select Candidates for Mailshot (<?= count($candidates_for_display) ?> found)</h5>
                         <div class="table-responsive">
@@ -2079,11 +2075,9 @@ unset($_SESSION['error_message']);
                 <?php endif; ?>
             </div>
            
-            <!-- =============================================== -->
-            <!-- KPI REPORTING SECTION -->
-            <!-- =============================================== -->
+          
             <div id="kpi-section" class="mode-section <?= ($mode === 'kpi') ? 'active' : '' ?>">
-                <!-- KPI Information Box -->
+              
                 <div class="kpi-info">
                     <h5><i class="fa fa-bar-chart"></i> KPI Reporting Dashboard</h5>
                     <p><strong>Track and analyze your candidate metrics:</strong></p>
@@ -2096,7 +2090,7 @@ unset($_SESSION['error_message']);
                     </ul>
                 </div>
                
-                <!-- KPI Filter Section -->
+              
                 <div class="kpi-filter-section">
                     <h5>Filter KPI Report</h5>
                     <form method="GET" action="">
@@ -2143,7 +2137,7 @@ unset($_SESSION['error_message']);
                     </form>
                 </div>
                
-                <!-- Export Buttons for KPI -->
+            
                 <?php if ($canExport): ?>
                 <div class="export-buttons">
                     <a href="?mode=kpi&export=excel&kpi_period=<?= htmlspecialchars($kpi_period) ?>&kpi_start_date=<?= htmlspecialchars($kpi_start_date) ?>&kpi_end_date=<?= htmlspecialchars($kpi_end_date) ?>&kpi_status_filter=<?= htmlspecialchars($kpi_status_filter) ?>&kpi_location_filter=<?= htmlspecialchars($kpi_location_filter) ?>" class="export-btn excel" onclick="return confirm('Export KPI detailed report to Excel?')">
@@ -2160,7 +2154,7 @@ unset($_SESSION['error_message']);
                         <i class="fa fa-exclamation-triangle"></i> KPI Calculation Error: <?= htmlspecialchars($kpi_data['error']) ?>
                     </div>
                 <?php else: ?>
-                    <!-- KPI Summary Cards -->
+                 
                     <div class="kpi-summary-cards">
                         <div class="kpi-card">
                             <div class="value"><?= $kpi_data['total_candidates'] ?? 0 ?></div>
@@ -2192,7 +2186,7 @@ unset($_SESSION['error_message']);
                         </div>
                     </div>
                    
-                    <!-- KPI Detail Tables -->
+                   
                     <h5 class="mt-4 mb-3">Candidate Status Distribution (Current Period)</h5>
                     <div class="table-responsive mb-4">
                         <table class="kpi-detail-table">
@@ -2285,7 +2279,7 @@ unset($_SESSION['error_message']);
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // File input handling for mailshot attachments
+            
             const fileInput = document.getElementById('mailshot_attachments');
             const filePreview = document.getElementById('filePreview');
            
@@ -2306,7 +2300,7 @@ unset($_SESSION['error_message']);
                 });
             }
            
-            // Email template handling
+         
             const mailshotTemplateDropdown = document.getElementById('mailshot_template');
             const mailshotSubjectField = document.getElementById('mailshot_subject');
             const mailshotMessageField = document.getElementById('mailshot_message');
@@ -2340,7 +2334,7 @@ unset($_SESSION['error_message']);
                 });
             }
            
-            // Mailshot form handling
+      
             const candidateMailshotForm = document.getElementById('candidateMailshotForm');
             const sendCandidateMailshotBtn = document.getElementById('sendCandidateMailshotBtn');
            
@@ -2380,7 +2374,7 @@ unset($_SESSION['error_message']);
             updateSelectedCandidateCount();
         });
        
-        // Function to toggle custom date inputs for KPI mode
+     
         function toggleCustomDateInputs() {
             const period = document.getElementById('kpi_period');
             const startDate = document.getElementById('kpi_start_date');
@@ -2397,7 +2391,7 @@ unset($_SESSION['error_message']);
             }
         }
        
-        // Function to toggle select all candidates
+       
         window.toggleSelectAllCandidates = function() {
             const selectAllCheckbox = document.getElementById('selectAll') || document.getElementById('selectAllCandidates');
             const checkboxes = document.querySelectorAll('.candidate-checkbox, input[name="selected_candidates[]"]');
@@ -2407,7 +2401,7 @@ unset($_SESSION['error_message']);
             updateSelectedCandidateCount();
         };
        
-        // Function to update selected candidate count
+      
         window.updateSelectedCandidateCount = function() {
             const checkedCheckboxes = document.querySelectorAll('.candidate-checkbox:checked, input[name="selected_candidates[]"]:checked');
             const selectedCandidateCountSpan = document.getElementById('selectedCandidateCount') || document.getElementById('mailshotCandidateCount');
@@ -2438,7 +2432,7 @@ unset($_SESSION['error_message']);
             }
         };
        
-        // Function to remove file
+        
         window.removeFile = function(index) {
             const fileInput = document.getElementById('mailshot_attachments');
             const dt = new DataTransfer();
@@ -2458,3 +2452,5 @@ unset($_SESSION['error_message']);
     <?php include "../../includes/js.php"; ?>
 </body>
 </html>
+endif; ?>
+
