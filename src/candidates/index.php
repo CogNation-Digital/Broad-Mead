@@ -632,6 +632,32 @@ if (isset($_GET['export'])) {
     }
 }
 
+// Handle candidate deletion
+if (isset($_POST['delete'])) {
+    $ID = $_POST['ID'];
+    $name = $_POST['name'];
+    $reason = $_POST['reason'];
+
+    $stmt = $db_2->prepare("DELETE FROM `_candidates` WHERE id = :ID");
+    $stmt->bindParam(':ID', $ID);
+    if ($stmt->execute()) {
+        $NOTIFICATION = ($loggedInUserName ?? 'A user') . " has successfully deleted the candidate named '$name'. Reason for deletion: $reason.";
+       
+        // Log the deletion activity if the function exists
+        if (function_exists('Notify')) {
+            Notify($USERID, $ClientKeyID ?? 1, $NOTIFICATION);
+        }
+        $_SESSION['success_message'] = "Candidate '$name' has been successfully deleted.";
+    } else {
+        error_log("Error deleting candidate record: " . implode(", ", $stmt->errorInfo()));
+        $_SESSION['error_message'] = "Failed to delete candidate. Please try again.";
+    }
+    
+    // Redirect to avoid resubmission
+    header("Location: " . $_SERVER['PHP_SELF'] . "?" . http_build_query($_GET));
+    exit;
+}
+
 $keyword_filter = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
 $location_filter = isset($_GET['location']) ? trim($_GET['location']) : '';
 $position_filter = isset($_GET['position']) ? trim($_GET['position']) : '';
@@ -1496,6 +1522,25 @@ unset($_SESSION['error_message']);
             padding: 12px 30px;
             font-size: 1.1rem;
         }
+
+        /* Fix dropdown z-index and positioning issues */
+        .dropdown-menu {
+            z-index: 1050 !important;
+            position: absolute !important;
+            display: none;
+        }
+        
+        .dropdown-menu.show {
+            display: block !important;
+        }
+        
+        .dropdown-toggle::after {
+            display: none !important;
+        }
+        
+        .dropdown:hover .dropdown-menu {
+            display: none; /* Only show on click, not hover */
+        }
        
         /* KPI Report Information Section */
         .kpi-info {
@@ -1647,19 +1692,19 @@ unset($_SESSION['error_message']);
         .status-badge.pending { background-color: #fff3cd; color: #856404; } /* Yellow */
         .status-badge.archived { background-color: #e2e3e5; color: #383d41; } /* Grey */
        
-        /* No Candidates/Data Message */
+     
         .no-candidates-message {
             text-align: center;
             padding: 30px;
             background-color: #fefefe;
-            border: 1px dashed #ced4da; /* Dashed border */
+            border: 1px dashed #ced4da;
             border-radius: 8px;
             margin-top: 20px;
             color: #6c757d;
             font-size: 1.1rem;
         }
        
-        /* Hide sections based on mode */
+       
         .mode-section {
             display: none;
         }
@@ -1668,33 +1713,33 @@ unset($_SESSION['error_message']);
             display: block;
         }
        
-        /* Responsive adjustments */
+    
         @media (max-width: 992px) {
             .pc-container {
-                margin-left: 0; /* Sidebar might collapse or become overlay on smaller screens */
+                margin-left: 0; 
             }
             .filter-row .col-md-3 {
-                flex: 1 1 calc(50% - 15px); /* Two columns on medium screens */
+                flex: 1 1 calc(50% - 15px); 
             }
         }
        
         @media (max-width: 768px) {
             .filter-row .col-md-3 {
-                flex: 1 1 100%; /* Single column on small screens */
+                flex: 1 1 100%; 
             }
             .nav-buttons, .status-filter-buttons, .export-buttons, .filter-buttons {
                 flex-direction: column;
-                align-items: stretch; /* Stack buttons vertically */
+                align-items: stretch; 
             }
             .kpi-summary-cards {
-                grid-template-columns: 1fr; /* Single column for KPI cards */
+                grid-template-columns: 1fr; 
             }
             .candidates-table, .kpi-detail-table {
-                font-size: 0.85rem; /* Slightly smaller font for tables */
+                font-size: 0.85rem;
             }
             .candidates-table th, .candidates-table td,
             .kpi-detail-table th, .kpi-detail-table td {
-                padding: 8px 10px; /* Reduced padding */
+                padding: 8px 10px; 
             }
         }
     </style>
@@ -1884,8 +1929,31 @@ unset($_SESSION['error_message']);
                                             <td><?= htmlspecialchars(date('Y-m-d', strtotime($candidate['Date'] ?? ''))) ?></td>
                                             <td><?= htmlspecialchars($createdByMapping[$candidate['CreatedBy']] ?? 'Unknown') ?></td>
                                             <td>
-                                                <a href="#" class="btn btn-sm btn-info" title="View Details"><i class="fa fa-eye"></i></a>
-                                                <a href="#" class="btn btn-sm btn-warning" title="Edit"><i class="fa fa-edit"></i></a>
+                                                <div class="dropdown">
+                                                    <a class="avtar avtar-s btn-link-secondary dropdown-toggle arrow-none" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                        <i class="ti ti-dots-vertical f-18"></i>
+                                                    </a>
+                                                    <div class="dropdown-menu dropdown-menu-end">
+                                                        <a class="dropdown-item" href="<?php echo $LINK; ?>/edit_candidate/?CandidateID=<?php echo htmlspecialchars($candidate['id']); ?>">
+                                                            <span class="text-info">
+                                                                <i class="ti ti-edit"></i>
+                                                            </span>
+                                                            Edit
+                                                        </a>
+                                                        <a class="dropdown-item" href="<?php echo $LINK; ?>/view_candidate/?ID=<?php echo htmlspecialchars($candidate['id']); ?>">
+                                                            <span class="text-warning">
+                                                                <i class="ti ti-eye"></i>
+                                                            </span>
+                                                            View
+                                                        </a>
+                                                        <a class="dropdown-item delete-entry" href="#" data-bs-toggle="modal" data-bs-target="#DeleteCandidateModal" data-id="<?php echo htmlspecialchars($candidate['id']); ?>" data-name="<?php echo htmlspecialchars($candidate['Name']); ?>">
+                                                            <span class="text-danger">
+                                                                <i class="ti ti-trash"></i>
+                                                            </span>
+                                                            Delete
+                                                        </a>
+                                                    </div>
+                                                </div>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -2040,6 +2108,7 @@ unset($_SESSION['error_message']);
                                         <th>Status</th>
                                         <th>Location</th>
                                         <th>Date Added</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -2059,11 +2128,38 @@ unset($_SESSION['error_message']);
                                                 <td><span class="status-badge <?= strtolower(htmlspecialchars($candidate['Status'] ?? '')) ?>"><?= htmlspecialchars($candidate['Status'] ?? 'N/A') ?></span></td>
                                                 <td><?= htmlspecialchars($candidate['City'] ?? 'N/A') ?> (<?= htmlspecialchars($candidate['Postcode'] ?? 'N/A') ?>)</td>
                                                 <td><?= htmlspecialchars(date('Y-m-d', strtotime($candidate['Date'] ?? ''))) ?></td>
+                                                <td>
+                                                    <div class="dropdown">
+                                                        <a class="avtar avtar-s btn-link-secondary dropdown-toggle arrow-none" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                            <i class="ti ti-dots-vertical f-18"></i>
+                                                        </a>
+                                                        <div class="dropdown-menu dropdown-menu-end">
+                                                            <a class="dropdown-item" href="<?php echo $LINK; ?>/edit_candidate/?CandidateID=<?php echo htmlspecialchars($candidate['id']); ?>">
+                                                                <span class="text-info">
+                                                                    <i class="ti ti-edit"></i>
+                                                                </span>
+                                                                Edit
+                                                            </a>
+                                                            <a class="dropdown-item" href="<?php echo $LINK; ?>/view_candidate/?ID=<?php echo htmlspecialchars($candidate['id']); ?>">
+                                                                <span class="text-warning">
+                                                                    <i class="ti ti-eye"></i>
+                                                                </span>
+                                                                View
+                                                            </a>
+                                                            <a class="dropdown-item delete-entry" href="#" data-bs-toggle="modal" data-bs-target="#DeleteCandidateModal" data-id="<?php echo htmlspecialchars($candidate['id']); ?>" data-name="<?php echo htmlspecialchars($candidate['Name']); ?>">
+                                                                <span class="text-danger">
+                                                                    <i class="ti ti-trash"></i>
+                                                                </span>
+                                                                Delete
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </td>
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php else: ?>
                                         <tr>
-                                            <td colspan="8" class="no-candidates-message">
+                                            <td colspan="9" class="no-candidates-message">
                                                 No candidates found matching your criteria for mailshot.
                                             </td>
                                         </tr>
@@ -2242,6 +2338,7 @@ unset($_SESSION['error_message']);
                                     <th>Location</th>
                                     <th>Date Added</th>
                                     <th>Added By</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -2259,11 +2356,38 @@ unset($_SESSION['error_message']);
                                             <td><?= htmlspecialchars($candidate['City'] ?? 'N/A') ?> (<?= htmlspecialchars($candidate['Postcode'] ?? 'N/A') ?>)</td>
                                             <td><?= htmlspecialchars(date('Y-m-d', strtotime($candidate['Date'] ?? ''))) ?></td>
                                             <td><?= htmlspecialchars($createdByMapping[$candidate['CreatedBy']] ?? 'Unknown') ?></td>
+                                            <td>
+                                                <div class="dropdown">
+                                                    <a class="avtar avtar-s btn-link-secondary dropdown-toggle arrow-none" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                        <i class="ti ti-dots-vertical f-18"></i>
+                                                    </a>
+                                                    <div class="dropdown-menu dropdown-menu-end">
+                                                        <a class="dropdown-item" href="<?php echo $LINK; ?>/edit_candidate/?CandidateID=<?php echo htmlspecialchars($candidate['id']); ?>">
+                                                            <span class="text-info">
+                                                                <i class="ti ti-edit"></i>
+                                                            </span>
+                                                            Edit
+                                                        </a>
+                                                        <a class="dropdown-item" href="<?php echo $LINK; ?>/view_candidate/?ID=<?php echo htmlspecialchars($candidate['id']); ?>">
+                                                            <span class="text-warning">
+                                                                <i class="ti ti-eye"></i>
+                                                            </span>
+                                                            View
+                                                        </a>
+                                                        <a class="dropdown-item delete-entry" href="#" data-bs-toggle="modal" data-bs-target="#DeleteCandidateModal" data-id="<?php echo htmlspecialchars($candidate['id']); ?>" data-name="<?php echo htmlspecialchars($candidate['Name']); ?>">
+                                                            <span class="text-danger">
+                                                                <i class="ti ti-trash"></i>
+                                                            </span>
+                                                            Delete
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
-                                        <td colspan="8" class="no-candidates-message">
+                                        <td colspan="9" class="no-candidates-message">
                                             No candidates found matching your KPI criteria.
                                         </td>
                                     </tr>
@@ -2275,10 +2399,108 @@ unset($_SESSION['error_message']);
             </div>
         </div>
     </div>
+
    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="modal fade" id="DeleteCandidateModal" tabindex="-1" role="dialog" aria-labelledby="DeleteCandidateModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="DeleteCandidateModalLabel">Confirm Deletion</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" action="">
+                    <div class="modal-body">
+                        <input type="hidden" name="ID" id="deleteCandidateId">
+                        <input type="hidden" name="name" id="deleteCandidateName">
+                        <p>Are you sure you want to delete candidate: <strong id="modalCandidateName"></strong>?</p>
+                        <div class="form-group">
+                            <label for="deleteReason">Reason for deletion:</label>
+                            <textarea class="form-control" name="reason" id="deleteReason" rows="3" required placeholder="Please provide a reason for deleting this candidate..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" name="delete" class="btn btn-danger">Delete Candidate</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+   
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            
+          
+            var deleteCandidateModal = document.getElementById('DeleteCandidateModal');
+            if (deleteCandidateModal) {
+                deleteCandidateModal.addEventListener('show.bs.modal', function (event) {
+                    var button = event.relatedTarget;
+                    var candidateId = button.getAttribute('data-id');
+                    var candidateName = button.getAttribute('data-name');
+                   
+                    var modalCandidateIdInput = deleteCandidateModal.querySelector('#deleteCandidateId');
+                    var modalCandidateNameInput = deleteCandidateModal.querySelector('#deleteCandidateName');
+                    var modalCandidateNameDisplay = deleteCandidateModal.querySelector('#modalCandidateName');
+                   
+                    modalCandidateIdInput.value = candidateId;
+                    modalCandidateNameInput.value = candidateName;
+                    modalCandidateNameDisplay.textContent = candidateName;
+                });
+            }
+            
+            // Fix dropdown functionality
+            document.querySelectorAll('.dropdown-toggle').forEach(function(toggle) {
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Close all other dropdowns first
+                    document.querySelectorAll('.dropdown-menu').forEach(function(menu) {
+                        menu.classList.remove('show');
+                        menu.style.display = 'none';
+                    });
+                    
+                    // Toggle this dropdown
+                    var menu = this.nextElementSibling;
+                    if (menu && menu.classList.contains('dropdown-menu')) {
+                        if (menu.classList.contains('show')) {
+                            menu.classList.remove('show');
+                            menu.style.display = 'none';
+                        } else {
+                            menu.classList.add('show');
+                            menu.style.display = 'block';
+                        }
+                    }
+                });
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.dropdown')) {
+                    document.querySelectorAll('.dropdown-menu').forEach(function(menu) {
+                        menu.classList.remove('show');
+                        menu.style.display = 'none';
+                    });
+                }
+            });
+            
+            // Prevent dropdown menu clicks from closing
+            document.querySelectorAll('.dropdown-menu').forEach(function(menu) {
+                menu.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            });
+            
+            // Close dropdown when clicking menu items
+            document.querySelectorAll('.dropdown-menu a').forEach(function(link) {
+                link.addEventListener('click', function() {
+                    var menu = this.closest('.dropdown-menu');
+                    if (menu) {
+                        menu.classList.remove('show');
+                        menu.style.display = 'none';
+                    }
+                });
+            });
             
             const fileInput = document.getElementById('mailshot_attachments');
             const filePreview = document.getElementById('filePreview');
@@ -2453,4 +2675,5 @@ unset($_SESSION['error_message']);
 </body>
 </html>
 endif; ?>
+
 

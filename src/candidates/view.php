@@ -5,7 +5,7 @@ if (!isset($_COOKIE['USERID'])) {
 }
 $CandidateID = $_GET['ID'];
 $isTab = (isset($_GET['isTab'])) ? $_GET['isTab'] : 'Details';
-$CandidateData = $conn->query("SELECT * FROM `_candidates` WHERE CandidateID = '$CandidateID' ")->fetchObject();
+$CandidateData = $conn->query("SELECT * FROM `_candidates` WHERE id = '$CandidateID' ")->fetchObject();
 
 
 if (isset($_POST['CreateDocument'])) {

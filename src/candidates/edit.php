@@ -26,7 +26,7 @@ if (isset($_POST['submit'])) {
     $Status = $_POST['Status'];
     $Gender = $_POST['Gender'];
 
-    $checkStmt = $conn->prepare("SELECT COUNT(*) FROM `_candidates` WHERE CandidateID = :candidateID");
+    $checkStmt = $conn->prepare("SELECT COUNT(*) FROM `_candidates` WHERE id = :candidateID");
     $checkStmt->bindParam(':candidateID', $CandidateID);
     $checkStmt->execute();
     $candidateExists = $checkStmt->fetchColumn() > 0;
@@ -45,7 +45,7 @@ if (isset($_POST['submit'])) {
             `Postcode` = :postcode, 
             `City` = :city,
             `Gender` = :Gender
-            WHERE `CandidateID` = :candidateID");
+            WHERE `id` = :candidateID");
 
         $stmt->bindParam(':candidateID', $CandidateID);
         $stmt->bindParam(':IdentificationNumber', $IdentificationNumber);
@@ -104,7 +104,7 @@ if (isset($_POST['submit'])) {
 }
 
 
-$CandidateData = $conn->query("SELECT * FROM `_candidates` WHERE CandidateID = '$CandidateID' ")->fetchObject();
+$CandidateData = $conn->query("SELECT * FROM `_candidates` WHERE id = '$CandidateID' ")->fetchObject();
 $Name = !$CandidateData ? "" : $CandidateData->Name;
 $IDNumber = !$CandidateData || empty($CandidateData->IdentificationNumber)  ? $NextIDNumber : $CandidateData->IdentificationNumber;
 $Email = !$CandidateData ? "" : $CandidateData->Email;
@@ -122,7 +122,7 @@ $inputJSON = file_get_contents('php://input');
 $inputData = json_decode($inputJSON, true);
 if (isset($inputData['UpdateProfile'])) {
     $avatarSrc = $inputData['avatarSrc'];
-    $query = $conn->query("UPDATE `_candidates` SET `ProfileImage`='$avatarSrc' WHERE `CandidateID`='$CandidateID' ");
+    $query = $conn->query("UPDATE `_candidates` SET `ProfileImage`='$avatarSrc' WHERE `id`='$CandidateID' ");
 }
 
 if (isset($_POST['UpdateprofileImage'])) {
@@ -134,7 +134,7 @@ if (isset($_POST['UpdateprofileImage'])) {
         $filePath = $Image_Directory . $newFileName;
         if (move_uploaded_file($file['tmp_name'], $filePath)) {
             $FilePath = $LINK . '/assets/images/' . $newFileName;
-            $query = $conn->query("UPDATE `_candidates` SET `ProfileImage`='$FilePath' WHERE `CandidateID`='$CandidateID' ");
+            $query = $conn->query("UPDATE `_candidates` SET `ProfileImage`='$FilePath' WHERE `id`='$CandidateID' ");
         } else {
             $response = "Error uploading the file.";
         }
