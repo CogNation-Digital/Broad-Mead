@@ -104,7 +104,29 @@ if (isset($_POST['submit'])) {
 }
 
 
-$CandidateData = $conn->query("SELECT * FROM `_candidates` WHERE id = '$CandidateID' ")->fetchObject();
+// Debug information for troubleshooting
+if (empty($CandidateID)) {
+    echo "<div class='alert alert-danger'>Error: No Candidate ID provided in URL</div>";
+}
+
+try {
+    $CandidateData = $conn->query("SELECT * FROM `_candidates` WHERE id = '$CandidateID' ")->fetchObject();
+    
+    // Debug: Check if candidate was found
+    if (!$CandidateData) {
+        echo "<div class='alert alert-warning'>Debug: No candidate found with ID: " . htmlspecialchars($CandidateID) . "</div>";
+        echo "<div class='alert alert-info'>Available candidates: ";
+        $debugQuery = $conn->query("SELECT id, Name FROM `_candidates` LIMIT 5");
+        while ($row = $debugQuery->fetchObject()) {
+            echo "ID: " . $row->id . " - " . $row->Name . "; ";
+        }
+        echo "</div>";
+    }
+} catch (PDOException $e) {
+    echo "<div class='alert alert-danger'>Database Error: " . $e->getMessage() . "</div>";
+    $CandidateData = false;
+}
+
 $Name = !$CandidateData ? "" : $CandidateData->Name;
 $IDNumber = !$CandidateData || empty($CandidateData->IdentificationNumber)  ? $NextIDNumber : $CandidateData->IdentificationNumber;
 $Email = !$CandidateData ? "" : $CandidateData->Email;

@@ -5,15 +5,37 @@ if (!isset($_COOKIE['USERID'])) {
 }
 $CandidateID = $_GET['ID'];
 $isTab = (isset($_GET['isTab'])) ? $_GET['isTab'] : 'Details';
-$CandidateData = $conn->query("SELECT * FROM `_candidates` WHERE id = '$CandidateID' ")->fetchObject();
+
+
+if (empty($CandidateID)) {
+    echo "<div class='alert alert-danger'>Error: No Candidate ID provided in URL</div>";
+}
+
+try {
+    $CandidateData = $conn->query("SELECT * FROM `_candidates` WHERE id = '$CandidateID' ")->fetchObject();
+    
+   
+    if (!$CandidateData) {
+        echo "<div class='alert alert-warning'>Debug: No candidate found with ID: " . htmlspecialchars($CandidateID) . "</div>";
+        echo "<div class='alert alert-info'>Available candidates: ";
+        $debugQuery = $conn->query("SELECT id, Name FROM `_candidates` LIMIT 5");
+        while ($row = $debugQuery->fetchObject()) {
+            echo "ID: " . $row->id . " - " . $row->Name . "; ";
+        }
+        echo "</div>";
+    }
+} catch (PDOException $e) {
+    echo "<div class='alert alert-danger'>Database Error: " . $e->getMessage() . "</div>";
+    $CandidateData = false;
+}
 
 
 if (isset($_POST['CreateDocument'])) {
-    // Define allowed file extensions
+  
     $allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx'];
 
     if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
-        // Extract file details
+       
         $fileTmpPath = $_FILES['file']['tmp_name'];
         $fileName = $_FILES['file']['name'];
         $fileSize = $_FILES['file']['size'];
@@ -21,16 +43,16 @@ if (isset($_POST['CreateDocument'])) {
         $fileNameParts = pathinfo($fileName);
         $fileExtension = strtolower($fileNameParts['extension']);
 
-        // Validate file extension
+        
         if (in_array($fileExtension, $allowedExtensions)) {
-            // Generate a unique filename
+           
             $newFileName = $KeyID . '.' . $fileExtension;
             $destPath = $File_Directory . $newFileName;
 
-            // Move the file to the target directory
+           
             if (move_uploaded_file($fileTmpPath, $destPath)) {
 
-                // Get other form data
+               
                 $type = $_POST['Type'];
                 $name = $_POST['Name'];
                 $issueDate = $_POST['IssueDate'];
@@ -40,13 +62,13 @@ if (isset($_POST['CreateDocument'])) {
 
 
 
-                // Prepare SQL insertion statement
+              
                 $query = "INSERT INTO `_candidates_documents`( `ClientKeyID`, `CandidateID`, `Type`, `Name`, `Path`, `IssuedDate`, `ExpiryDate`, `CreatedBy`, `Date`) 
                           VALUES (:ClientKeyID, :CandidateID, :Type, :Name, :Path, :IssuedDate, :ExpiryDate, :CreatedBy, :Date)";
 
                 $stmt = $conn->prepare($query);
 
-                // Bind parameters
+             
                 $stmt->bindParam(':ClientKeyID', $ClientKeyID);
                 $stmt->bindParam(':CandidateID', $CandidateID);
                 $stmt->bindParam(':Type', $type);
@@ -57,7 +79,6 @@ if (isset($_POST['CreateDocument'])) {
                 $stmt->bindParam(':CreatedBy', $USERID);
                 $stmt->bindParam(':Date', $date);
 
-                // Execute the statement
                 if ($stmt->execute()) {
                     $Modification = "Document $name uploaded for candidate $CandidateData->Name";
                     $Notification = "$NAME has uploaded a new document titled $name for candidate $CandidateData->Name.";
@@ -86,11 +107,11 @@ if (isset($_POST['CreateDocument'])) {
 }
 
 if (isset($_POST['UpdateDocument'])) {
-    // Define allowed file extensions
+   
     $allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx'];
 
     if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
-        // Extract file details
+     
         $fileTmpPath = $_FILES['file']['tmp_name'];
         $fileName = $_FILES['file']['name'];
         $fileSize = $_FILES['file']['size'];
@@ -98,7 +119,7 @@ if (isset($_POST['UpdateDocument'])) {
         $fileNameParts = pathinfo($fileName);
         $fileExtension = strtolower($fileNameParts['extension']);
 
-        // Validate file extension
+       
         if (in_array($fileExtension, $allowedExtensions)) {
             // Generate a unique filename
             $newFileName = $KeyID . '.' . $fileExtension;

@@ -65,98 +65,85 @@ function getConsultantDetails($db_2, $USERID) {
         'title' => $user->Position ?? 'Consultant'
     ];
 }function getEmailFooter($consultantEmail, $consultantName, $consultantNumber = '', $consultantTitle = 'Consultant') {
-  
-    $logoPath = __DIR__ . '/images/Logo NRS.png';
-    $recLogoPath = __DIR__ . '/images/image009.jpg';  // REC logo
-    $linkedinLogoPath = __DIR__ . '/images/Linked in badge.jpg';
-    $instagramLogoPath = __DIR__ . '/images/image008.png';
-    $facebookLogoPath = __DIR__ . '/images/Facebook logo.jpg';
-    $cyberLogoPath = __DIR__ . '/images/image011.jpg';  // Cyber Essentials
+    // Direct Google Drive URLs for email images
+    $driveBaseUrl = 'https://drive.google.com/uc?export=view&id=';
+    $images = [
+        'logo' => $driveBaseUrl . '1nTWBGbLYzj6XxxkFZwvPAQgBsuFFCVbD',        // Nocturnal logo
+        'linkedin' => $driveBaseUrl . '10bVdFqZdGSloE2DoavlBzm5IXNTm7qBj',    // LinkedIn badge
+        'facebook' => $driveBaseUrl . '1SR3INbhT1SC0CXmKG-1EFRlSOe3QDULC',    // Facebook logo
+        'instagram' => $driveBaseUrl . '1t8o-XT-w9xphxzCfaHN9VimI6zhXrXRJ',   // Instagram badge
+        'cyber' => $driveBaseUrl . '1_HUGtuMrnmuw6WPvhOHHLuqMZKwaXdqr',       // Cyber Essentials
+        'rec' => $driveBaseUrl . '1kck0O1jAvG6QlahYJC_oPeWCAuApsqKI'          // REC Corporate
+    ];
     
- 
-    function imageToBase64($imagePath) {
-        if (file_exists($imagePath)) {
-            $imageData = file_get_contents($imagePath);
-            $imageType = pathinfo($imagePath, PATHINFO_EXTENSION);
-            if ($imageType === 'jpg') $imageType = 'jpeg';
-            return 'data:image/' . $imageType . ';base64,' . base64_encode($imageData);
-        }
-        return '';
-    }
-    
-    $logoBase64 = imageToBase64($logoPath);
-    $recLogoBase64 = imageToBase64($recLogoPath);
-    $linkedinLogoBase64 = imageToBase64($linkedinLogoPath);
-    $instagramLogoBase64 = imageToBase64($instagramLogoPath);
-    $facebookLogoBase64 = imageToBase64($facebookLogoPath);
-    $cyberLogoBase64 = imageToBase64($cyberLogoPath);
-
     return '
-    <div style="max-width: 600px; font-family: Arial, sans-serif; line-height: 1.4; margin: auto;">
+    <div style="max-width: 600px; font-family: Arial, sans-serif; line-height: 1.4; margin: auto; border-top: 2px solid #333; padding-top: 20px; margin-top: 30px;">
         
-        <div style="text-align: center; margin-bottom: 20px;">
-            ' . ($logoBase64 ? '<img src="' . $logoBase64 . '" alt="Nocturnal Recruitment" style="width: 300px; height: auto;">' : '<div style="font-weight: bold; font-size: 24px; margin-bottom: 10px;">NOCTURNAL RECRUITMENT SOLUTIONS</div>') . '
-        </div>
-
-        <div style="text-align: center; margin-bottom: 20px;">
-            <div style="color: #333333; font-size: 16px; font-weight: bold; margin-bottom: 2px;">' . htmlspecialchars($consultantName) . '</div>
-            <div style="color: #666666; font-size: 14px; margin-bottom: 5px;">' . htmlspecialchars($consultantTitle) . '</div>
-            <div style="color: #0066cc; font-size: 14px; margin-bottom: 5px;">
-                <a href="mailto:' . htmlspecialchars($consultantEmail) . '" style="color: #0066cc; text-decoration: none;">' . htmlspecialchars($consultantEmail) . '</a>
-            </div>
-            <div style="font-size: 14px; color: #333333;">
-                📱 <a href="tel:02080502708" style="color: #0066cc; text-decoration: none;">0208 050 2708</a>
-            </div>
+        <!-- Signature Line -->
+        <div style="margin-bottom: 20px;">
+            <p style="margin: 0; color: #333; font-size: 14px;">Best regards,<br>
+            <strong>' . htmlspecialchars($consultantName) . '</strong><br>
+            ' . htmlspecialchars($consultantTitle) . '</p>
         </div>
         
+        <!-- Nocturnal Logo -->
         <div style="text-align: center; margin-bottom: 20px;">
-            <a href="https://www.linkedin.com/company/nocturnal-recruitment-solutions/" target="_blank" style="display: inline-block; margin: 0 5px;">
-                ' . ($linkedinLogoBase64 ? '<img src="' . $linkedinLogoBase64 . '" alt="LinkedIn" style="height: 40px; width: auto; border: none;">' : '<span style="font-size: 10px;">LI</span>') . '
-            </a>
-            <a href="https://www.instagram.com/nocturnalrecruitment/" target="_blank" style="display: inline-block; margin: 0 5px;">
-                ' . ($instagramLogoBase64 ? '<img src="' . $instagramLogoBase64 . '" alt="Instagram" style="height: 40px; width: auto; border: none;">' : '<span style="font-size: 10px;">IG</span>') . '
-            </a>
-            <a href="https://www.facebook.com/nocturnalrecruitment/" target="_blank" style="display: inline-block; margin: 0 5px;">
-                ' . ($facebookLogoBase64 ? '<img src="' . $facebookLogoBase64 . '" alt="Facebook" style="height: 40px; width: auto; border: none;">' : '<span style="font-size: 10px;">FB</span>') . '
-            </a>
+            <img src="' . $images['logo'] . '" alt="Nocturnal Recruitment Solutions" style="max-width: 280px; height: auto; display: block; margin: 0 auto;">
         </div>
 
+        <!-- Contact Information -->
+        <div style="text-align: center; margin-bottom: 20px; font-size: 14px; color: #333;">
+            <div style="margin-bottom: 8px;">
+                <span style="color: #666;">📍</span>
+                <a href="https://maps.google.com/?q=Office+16,+321+High+Road,+RM6+6AX" style="color: #0066cc; text-decoration: none;">Nocturnal Recruitment, Office 16, 321 High Road, RM6 6AX</a>
+            </div>
+            <div style="margin-bottom: 8px;">
+                <span style="color: #666;">☎️</span> <a href="tel:02080502708" style="color: #333; text-decoration: none;">0208 050 2708</a>
+                <span style="margin-left: 20px; color: #666;">📱</span> <a href="tel:07827519020" style="color: #333; text-decoration: none;">07827 519020</a>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <span style="color: #666;">✉️</span> <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #0066cc; text-decoration: none;">info@nocturnalrecruitment.co.uk</a>
+                <span style="margin-left: 20px; color: #666;">🌐</span> <a href="https://www.nocturnalrecruitment.co.uk" style="color: #0066cc; text-decoration: none;">www.nocturnalrecruitment.co.uk</a>
+            </div>
+        </div>
+
+        <!-- Social Media and Certifications -->
         <div style="text-align: center; margin-bottom: 20px;">
-            <table style="width: 100%; border-collapse: collapse; text-align: center;">
+            <table style="margin: 0 auto; border-collapse: collapse;">
                 <tr>
-                    <td style="width: 50%; text-align: right; padding-right: 10px;">
-                        <a href="https://www.rec.uk.com/" target="_blank" style="text-decoration: none;">
-                            ' . ($recLogoBase64 ? '<img src="' . $recLogoBase64 . '" alt="REC Corporate Member" style="height: 60px; width: auto; display: inline-block;">' : '<span style="font-size: 12px;">REC Corporate Member</span>') . '
+                    <td style="text-align: center; padding: 5px;">
+                        <a href="https://www.linkedin.com/company/nocturnal-recruitment-solutions/" target="_blank">
+                            <img src="' . $images['linkedin'] . '" alt="LinkedIn" style="height: 30px; width: auto; border: none; display: block;">
                         </a>
                     </td>
-                    <td style="width: 50%; text-align: left; padding-left: 10px;">
-                        ' . ($cyberLogoBase64 ? '<img src="' . $cyberLogoBase64 . '" alt="Cyber Essentials Certified" style="height: 80px; width: auto; display: inline-block;">' : '') . '
+                    <td style="text-align: center; padding: 5px;">
+                        <a href="https://www.facebook.com/nocturnalrecruitment/" target="_blank">
+                            <img src="' . $images['facebook'] . '" alt="Facebook" style="height: 30px; width: auto; border: none; display: block;">
+                        </a>
+                    </td>
+                    <td style="text-align: center; padding: 5px;">
+                        <a href="https://www.instagram.com/nocturnalrecruitment/" target="_blank">
+                            <img src="' . $images['instagram'] . '" alt="Instagram" style="height: 30px; width: auto; border: none; display: block;">
+                        </a>
+                    </td>
+                    <td style="text-align: center; padding: 5px;">
+                        <img src="' . $images['cyber'] . '" alt="Cyber Essentials Certified" style="height: 35px; width: auto; border: none; display: block;">
+                    </td>
+                    <td style="text-align: center; padding: 5px;">
+                        <img src="' . $images['rec'] . '" alt="REC Corporate Member" style="height: 35px; width: auto; border: none; display: block;">
                     </td>
                 </tr>
             </table>
         </div>
-
-        <div style="text-align: center; margin-bottom: 20px;">
-            <div style="font-size: 14px; color: #0066cc; margin-bottom: 5px;">
-                📍 <a href="https://maps.google.com/?q=Office+16,+321+High+Road,+RM6+6AX" style="color: #0066cc; text-decoration: none;">Nocturnal Recruitment, Office 16, 321 High Road, RM6 6AX</a>
-            </div>
-            <div style="font-size: 14px; color: #333333; margin-bottom: 5px;">
-                ☎️ <a href="tel:02080502708" style="color: #0066cc; text-decoration: none;">0208 050 2708</a>
-            </div>
-            <div style="font-size: 14px; color: #0066cc; margin-bottom: 5px;">
-                ✉️ <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #0066cc; text-decoration: none;">info@nocturnalrecruitment.co.uk</a>
-            </div>
-            <div style="font-size: 14px; color: #0066cc;">
-                🌐 <a href="https://www.nocturnalrecruitment.co.uk" style="color: #0066cc; text-decoration: none;">www.nocturnalrecruitment.co.uk</a>
-            </div>
-        </div>
-
-        <div style="text-align: center; color: #333333; font-size: 14px; font-weight: bold; margin: 20px 0;">
+        
+        <!-- Company Registration -->
+        <div style="text-align: center; color: #333333; font-size: 14px; font-weight: bold; margin-bottom: 20px;">
             Company Registration – 11817091
         </div>
 
-        <div style="font-size: 12px; color: #333333; line-height: 1.6; border-top: 1px solid #dddddd; padding-top: 15px; margin-top: 20px;">
-            <strong style="color: #c41e3a;">Disclaimer*</strong> This email is intended only for the use of the addressee named above and may be confidential or legally privileged. If you are not the addressee, you must not read it and must not use any information contained in nor copy it nor inform any person other than <a href="https://www.nocturnalrecruitment.co.uk" style="color: #c41e3a; text-decoration: none; font-weight: bold;">Nocturnal Recruitment</a> or the addressee of its existence or contents. If you have received this email in error, please delete it and notify our team at <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #0066cc; text-decoration: none;">info@nocturnalrecruitment.co.uk</a>
+        <!-- Disclaimer -->
+        <div style="font-size: 11px; color: #666666; line-height: 1.4; border-top: 1px solid #dddddd; padding-top: 15px; margin-top: 20px;">
+            <strong style="color: #c41e3a;">Disclaimer:</strong> This email is intended only for the use of the addressee named above and may be confidential or legally privileged. If you are not the addressee, you must not read it and must not use any information contained in nor copy it nor inform any person other than <a href="https://www.nocturnalrecruitment.co.uk" style="color: #c41e3a; text-decoration: none; font-weight: bold;">Nocturnal Recruitment</a> or the addressee of its existence or contents. If you have received this email in error, please delete it and notify our team at <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #0066cc; text-decoration: none;">info@nocturnalrecruitment.co.uk</a>
         </div>
     </div>';
 }
@@ -209,6 +196,28 @@ function getConsultantDetails($db_2, $USERID) {
 //         </div>
 //     </div>';
 // }
+
+// Simple text-only email footer function
+function getTextEmailFooter($consultantEmail, $consultantName, $consultantNumber = '', $consultantTitle = 'Consultant') {
+    return "\n\n" .
+        "---\n" .
+        "Best regards,\n" .
+        $consultantName . "\n" .
+        $consultantTitle . "\n\n" .
+        "NOCTURNAL RECRUITMENT SOLUTIONS\n" .
+        "Cyber Essentials Certified | REC Corporate Member\n\n" .
+        "Address: Nocturnal Recruitment, Office 16, 321 High Road, RM6 6AX\n" .
+        "Phone: 0208 050 2708\n" .
+        "Mobile: 07827 519020\n" .
+        "Email: info@nocturnalrecruitment.co.uk\n" .
+        "Website: www.nocturnalrecruitment.co.uk\n\n" .
+        "Connect with us:\n" .
+        "LinkedIn: https://www.linkedin.com/company/nocturnal-recruitment-solutions/\n" .
+        "Facebook: https://www.facebook.com/nocturnalrecruitment/\n" .
+        "Instagram: https://www.instagram.com/nocturnalrecruitment/\n\n" .
+        "Company Registration – 11817091\n\n" .
+        "Disclaimer: This email is intended only for the use of the addressee named above and may be confidential or legally privileged. If you are not the addressee, you must not read it and must not use any information contained in nor copy it nor inform any person other than Nocturnal Recruitment or the addressee of its existence or contents. If you have received this email in error, please delete it and notify our team at info@nocturnalrecruitment.co.uk";
+}
 
 function getSMTPConfig() {
     return [
@@ -309,10 +318,15 @@ function sendOptimizedEmail($recipientEmail, $recipientName, $subject, $htmlBody
         $mail->addCustomHeader('X-Consultant-Email', $consultantEmail);
         $mail->addCustomHeader('X-Consultant-Name', $consultantName);
         
-        $mail->isHTML(true);
+        $mail->isHTML(true); // Send as HTML to display images
         $mail->Subject = $subject;
-        $mail->Body = $htmlBody;
-        $mail->AltBody = $textBody;
+        
+        // If HTML body is provided, use it; otherwise convert text to HTML
+        if (!empty($htmlBody)) {
+            $mail->Body = $htmlBody;
+        } else {
+            $mail->Body = nl2br(htmlspecialchars($textBody));
+        }
 
      
         foreach ($attachments as $attachment) {
@@ -417,20 +431,12 @@ if (isset($_POST['send_mailshot']) && !isset($_SESSION['mailshot_processing'])) 
                     }
                     if ($client && filter_var($client->Email, FILTER_VALIDATE_EMAIL)) {
                         $personalized_message = str_replace('[CLIENT_NAME]', $client->Name, $mailshot_message);
-                        $html_body = '<!DOCTYPE html>
-                        <html lang="en"><head><meta charset="UTF-8"><title>' . htmlspecialchars($mailshot_subject) . '</title></head>
-                        <body style="font-family: Arial, sans-serif;">' .
-                        '<div style="background: #f9f9f9; padding: 20px; border-radius: 10px;">' .
-                        '<div style="background: white; padding: 30px; border-radius: 8px;">' .
-                        nl2br(htmlspecialchars($personalized_message)) .
-                        '</div></div>' .
-                        getEmailFooter($loggedInUserEmail, $consultant_name) .
-                        '</body></html>';
-                        $text_body = $personalized_message . "\n\n---\nBest regards,\n" .
-                                     $consultant_name . "\nNocturnal Recruitment\nEmail: " . $loggedInUserEmail;
+                        
+                        // Convert plain text message to HTML and add HTML footer
+                        $html_body = nl2br(htmlspecialchars($personalized_message)) . getEmailFooter($loggedInUserEmail, $consultant_name);
                        
                         $result = sendOptimizedEmail(
-                            $client->Email, $client->Name, $mailshot_subject, $html_body, $text_body,
+                            $client->Email, $client->Name, $mailshot_subject, $html_body, '',
                             $loggedInUserEmail, $consultant_name, $uploadedFiles
                         );
                         if ($result['success']) {
