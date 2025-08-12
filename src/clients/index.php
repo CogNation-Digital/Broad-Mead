@@ -421,22 +421,30 @@ if (isset($_POST['send_mailshot']) && !isset($_SESSION['mailshot_processing'])) 
             foreach ($selected_clients as $client_id) {
                 try {
                  
-                    $stmt = $db_2->prepare("SELECT Name, Email FROM _clients WHERE ClientID = ?");
+                    $stmt = $db_2->prepare("SELECT Name, Email, 
+                        COALESCE(first_name, SUBSTRING_INDEX(Name, ' ', 1)) as first_name,
+                        COALESCE(last_name, SUBSTRING_INDEX(Name, ' ', -1)) as last_name,
+                        CONCAT(COALESCE(first_name, SUBSTRING_INDEX(Name, ' ', 1)), ' ', COALESCE(last_name, SUBSTRING_INDEX(Name, ' ', -1))) as full_name
+                        FROM _clients WHERE ClientID = ?");
                     $stmt->execute([$client_id]);
                     $client = $stmt->fetch(PDO::FETCH_OBJ);
                     if (!$client && $db_1) {
-                        $stmt = $db_1->prepare("SELECT Name, Email FROM clients WHERE id = ?");
+                        $stmt = $db_1->prepare("SELECT Name, Email,
+                            COALESCE(first_name, SUBSTRING_INDEX(Name, ' ', 1)) as first_name,
+                            COALESCE(last_name, SUBSTRING_INDEX(Name, ' ', -1)) as last_name,
+                            CONCAT(COALESCE(first_name, SUBSTRING_INDEX(Name, ' ', 1)), ' ', COALESCE(last_name, SUBSTRING_INDEX(Name, ' ', -1))) as full_name
+                            FROM clients WHERE id = ?");
                         $stmt->execute([$client_id]);
                         $client = $stmt->fetch(PDO::FETCH_OBJ);
                     }
                     if ($client && filter_var($client->Email, FILTER_VALIDATE_EMAIL)) {
-                        $personalized_message = str_replace('[CLIENT_NAME]', $client->Name, $mailshot_message);
+                        $personalized_message = str_replace('[CLIENT_NAME]', $client->first_name, $mailshot_message);
                         
                         // Convert plain text message to HTML and add HTML footer
                         $html_body = nl2br(htmlspecialchars($personalized_message)) . getEmailFooter($loggedInUserEmail, $consultant_name);
                        
                         $result = sendOptimizedEmail(
-                            $client->Email, $client->Name, $mailshot_subject, $html_body, '',
+                            $client->Email, $client->full_name, $mailshot_subject, $html_body, '',
                             $loggedInUserEmail, $consultant_name, $uploadedFiles
                         );
                         if ($result['success']) {
@@ -590,7 +598,10 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
         }
 
         $export_where_clause = 'WHERE ' . implode(' AND ', $export_where_conditions);
-        $export_query = "SELECT ClientID, Name, Email, Number, Address, Postcode, City, ClientType, Status, CreatedBy, Date FROM `_clients` $export_where_clause ORDER BY Name ASC";
+        $export_query = "SELECT ClientID, Name, Email, Number, Address, Postcode, City, ClientType, Status, CreatedBy, Date,
+            COALESCE(first_name, SUBSTRING_INDEX(Name, ' ', 1)) as first_name,
+            COALESCE(last_name, SUBSTRING_INDEX(Name, ' ', -1)) as last_name
+            FROM `_clients` $export_where_clause ORDER BY Name ASC";
         $stmt = $db_2->prepare($export_query);
         $stmt->execute($export_params);
         $clients_data = $stmt->fetchAll(PDO::FETCH_ASSOC);

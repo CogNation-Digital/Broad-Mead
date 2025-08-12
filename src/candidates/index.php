@@ -348,14 +348,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
            
             foreach ($selected_candidates as $candidate_id) {
                 try {
-                    $stmt = $db_2->prepare("SELECT id, Name, Email FROM _candidates WHERE id = ?");
+                    // Updated query to use first_name and last_name with fallback to Name column
+                    $stmt = $db_2->prepare("
+                        SELECT id, 
+                               COALESCE(first_name, SUBSTRING_INDEX(Name, ' ', 1)) as first_name,
+                               COALESCE(CONCAT(first_name, ' ', last_name), Name) as full_name,
+                               Email 
+                        FROM _candidates 
+                        WHERE id = ?
+                    ");
                     $stmt->execute([$candidate_id]);
                     $candidate = $stmt->fetch(PDO::FETCH_OBJ);
-                   
+
                     if ($candidate && filter_var($candidate->Email, FILTER_VALIDATE_EMAIL)) {
-                        $personalized_message = str_replace(['[CANDIDATE_NAME]', '[Name]'], $candidate->Name, $mailshot_message);
-                       
-                        $mail = new PHPMailer(true);
+                        // Use only first name for more professional email communication
+                        $first_name = $candidate->first_name ?: 'Candidate';
+                        $personalized_message = str_replace(['[CANDIDATE_NAME]', '[Name]'], $first_name, $mailshot_message);                        $mail = new PHPMailer(true);
                         $mail->isSMTP();
                         $mail->Host = 'smtp.titan.email';
                         $mail->SMTPAuth = true;
@@ -366,7 +374,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                        
                         $mail->setFrom('learn@natec.icu', $consultant_name . ' - Nocturnal Recruitment');
                         $mail->addReplyTo($loggedInUserEmail, $consultant_name);
-                        $mail->addAddress($candidate->Email, $candidate->Name);
+                        $mail->addAddress($candidate->Email, $candidate->full_name);
                        
                         // Add anti-spam headers
                         $mail->addCustomHeader('Return-Path', 'learn@natec.icu');

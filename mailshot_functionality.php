@@ -173,19 +173,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
 
         foreach ($candidate_ids as $candidate_id) {
             try {
-                $stmt = $db_2->prepare("SELECT Name, Email FROM _candidates WHERE id = ?");
+                $stmt = $db_2->prepare("SELECT Name, Email,
+                    COALESCE(first_name, SUBSTRING_INDEX(Name, ' ', 1)) as first_name,
+                    COALESCE(last_name, SUBSTRING_INDEX(Name, ' ', -1)) as last_name,
+                    CONCAT(COALESCE(first_name, SUBSTRING_INDEX(Name, ' ', 1)), ' ', COALESCE(last_name, SUBSTRING_INDEX(Name, ' ', -1))) as full_name
+                    FROM _candidates WHERE id = ?");
                 $stmt->execute([$candidate_id]);
                 $candidate = $stmt->fetch(PDO::FETCH_OBJ);
 
                 if (!$candidate) {
-                    $stmt = $db_1->prepare("SELECT CONCAT(first_name, ' ', last_name) as Name, email as Email FROM _candidates WHERE id = ?");
+                    $stmt = $db_1->prepare("SELECT CONCAT(first_name, ' ', last_name) as Name, email as Email,
+                        first_name, last_name,
+                        CONCAT(first_name, ' ', last_name) as full_name
+                        FROM _candidates WHERE id = ?");
                     $stmt->execute([$candidate_id]);
                     $candidate = $stmt->fetch(PDO::FETCH_OBJ);
                 }
 
                 if ($candidate && filter_var($candidate->Email, FILTER_VALIDATE_EMAIL)) {
                     $to = $candidate->Email;
-                    $name = $candidate->Name ?: 'Candidate';
+                    $name = $candidate->first_name ?: 'Candidate';
 
                     $personalized_body = str_replace(
                         ['[Name]', '[LoginLink]', '[NewsletterLink]', '[EventLink]'],
