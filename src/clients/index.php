@@ -635,6 +635,17 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
                     // Map CreatedBy to readable name if possible
                     if ($header === 'CreatedBy') {
                         $exportRow[] = $createdByMapping[$row['CreatedBy']] ?? $row['CreatedBy'];
+                    } elseif ($header === 'Date') {
+                        // Format the date for Excel compatibility
+                        $dateValue = $row['Date'];
+                        if ($dateValue && $dateValue !== '0000-00-00 00:00:00') {
+                            $formattedDate = date('Y-m-d H:i:s', strtotime($dateValue));
+                            // Prefix with single quote for Excel display
+                            $formattedDate = "'" . $formattedDate;
+                        } else {
+                            $formattedDate = '';
+                        }
+                        $exportRow[] = $formattedDate;
                     } else {
                         $exportRow[] = $row[$header];
                     }
