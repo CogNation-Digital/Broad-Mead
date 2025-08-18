@@ -21,6 +21,8 @@ if ($ClientID !== "") {
 
 if (isset($_POST['submit'])) {
     $Name = $_POST['Name'];
+    $manager_first_name = $_POST['manager_first_name'] ?? '';
+    $manager_last_name = $_POST['manager_last_name'] ?? '';
     $ClientType = isset($_POST['ClientType']) ? $_POST['ClientType'] : '';
     $_client_id = $_POST['_client_id'];
     $EmailAddress = $_POST['EmailAddress'];
@@ -46,6 +48,8 @@ if (isset($_POST['submit'])) {
                         SET `_client_id` = :_client_id, 
                             `ClientType` = :ClientType, 
                             `Name` = :Name, 
+                            `manager_first_name` = :manager_first_name, 
+                            `manager_last_name` = :manager_last_name, 
                             `Email` = :Email, 
                             `Number` = :Number, 
                             `Address` = :Address, 
@@ -59,6 +63,8 @@ if (isset($_POST['submit'])) {
         $stmtUpdate->bindParam(':_client_id', $_client_id);
         $stmtUpdate->bindParam(':ClientType', $ClientType);
         $stmtUpdate->bindParam(':Name', $Name);
+        $stmtUpdate->bindParam(':manager_first_name', $manager_first_name);
+        $stmtUpdate->bindParam(':manager_last_name', $manager_last_name);
         $stmtUpdate->bindParam(':Email', $EmailAddress);
         $stmtUpdate->bindParam(':Number', $PhoneNumber);
         $stmtUpdate->bindParam(':Address', $Address);
@@ -117,6 +123,14 @@ $client_data = $conn->query("SELECT * FROM `_clients` WHERE ClientID = '$ID' ")-
                                             <div class="mb-3"><label class="form-label">Name</label>
                                                 <input type="text" value="<?php echo $client_data->Name ?>" name="Name" required class="form-control">
                                                 <small class="form-text text-muted">Please enter <?php echo $isName; ?>'s name</small>
+                                            </div>
+                                            <div class="mb-3"><label class="form-label">Manager First Name</label>
+                                                <input type="text" value="<?php echo $client_data->manager_first_name ?? '' ?>" name="manager_first_name" class="form-control">
+                                                <small class="form-text text-muted">Please enter manager's first name</small>
+                                            </div>
+                                            <div class="mb-3"><label class="form-label">Manager Last Name</label>
+                                                <input type="text" value="<?php echo $client_data->manager_last_name ?? '' ?>" name="manager_last_name" class="form-control">
+                                                <small class="form-text text-muted">Please enter manager's last name</small>
                                             </div>
                                         </div>
 

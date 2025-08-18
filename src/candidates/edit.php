@@ -15,6 +15,8 @@ $NextIDNumber = str_pad($LastID, 5, '0', STR_PAD_LEFT);
 
 if (isset($_POST['submit'])) {
     $name = $_POST['Name'];
+    $first_name = $_POST['first_name'] ?? '';
+    $last_name = $_POST['last_name'] ?? '';
     $IdentificationNumber = $_POST['IDNumber'];
     $birthDate = $_POST['BirthDate'];
     $jobTitle = $_POST['JobTitle'];
@@ -37,6 +39,8 @@ if (isset($_POST['submit'])) {
             `Status` = :Status, 
             `IdentificationNumber` = :IdentificationNumber, 
             `Name` = :name, 
+            `first_name` = :first_name, 
+            `last_name` = :last_name, 
             `Email` = :emailAddress, 
             `Number` = :phoneNumber, 
             `BirthDate` = :birthDate, 
@@ -50,6 +54,8 @@ if (isset($_POST['submit'])) {
         $stmt->bindParam(':candidateID', $CandidateID);
         $stmt->bindParam(':IdentificationNumber', $IdentificationNumber);
         $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':first_name', $first_name);
+        $stmt->bindParam(':last_name', $last_name);
         $stmt->bindParam(':emailAddress', $emailAddress);
         $stmt->bindParam(':phoneNumber', $phoneNumber);
         $stmt->bindParam(':birthDate', $birthDate);
@@ -72,13 +78,15 @@ if (isset($_POST['submit'])) {
         }
     } else {
         // Insert a new candidate record
-        $stmt = $conn->prepare("INSERT INTO `_candidates` (`ClientKeyID`, `CandidateID`, `Status`, `IdentificationNumber`, `Name`, `Gender`, `Email`, `Number`, `BirthDate`, `JobTitle`, `Address`, `Postcode`, `City`, `CreatedBy`, `Date`) VALUES (:clientKeyID, :candidateID, :status, :IdentificationNumber, :name, :Gender, :emailAddress, :phoneNumber, :birthDate, :jobTitle, :address, :postcode, :city, :createdBy, :date)");
+    $stmt = $conn->prepare("INSERT INTO `_candidates` (`ClientKeyID`, `CandidateID`, `Status`, `IdentificationNumber`, `Name`, `first_name`, `last_name`, `Gender`, `Email`, `Number`, `BirthDate`, `JobTitle`, `Address`, `Postcode`, `City`, `CreatedBy`, `Date`) VALUES (:clientKeyID, :candidateID, :status, :IdentificationNumber, :name, :first_name, :last_name, :Gender, :emailAddress, :phoneNumber, :birthDate, :jobTitle, :address, :postcode, :city, :createdBy, :date)");
 
-        $stmt->bindParam(':clientKeyID', $ClientKeyID);
-        $stmt->bindParam(':candidateID', $CandidateID);
-        $stmt->bindParam(':IdentificationNumber', $IdentificationNumber);
-        $stmt->bindParam(':name', $name);
-        $stmt->bindParam(':emailAddress', $emailAddress);
+    $stmt->bindParam(':clientKeyID', $ClientKeyID);
+    $stmt->bindParam(':candidateID', $CandidateID);
+    $stmt->bindParam(':IdentificationNumber', $IdentificationNumber);
+    $stmt->bindParam(':name', $name);
+    $stmt->bindParam(':first_name', $first_name);
+    $stmt->bindParam(':last_name', $last_name);
+    $stmt->bindParam(':emailAddress', $emailAddress);
         $stmt->bindParam(':phoneNumber', $phoneNumber);
         $stmt->bindParam(':birthDate', $birthDate);
         $stmt->bindParam(':jobTitle', $jobTitle);
@@ -253,6 +261,16 @@ if (isset($_POST['UpdateprofileImage'])) {
                                                     <label class="form-label">Name</label>
                                                     <input type="text" name="Name" value="<?php echo htmlspecialchars($Name); ?>" required class="form-control">
                                                     <small class="form-text text-muted">Please enter candidate's name</small>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">First Name</label>
+                                                    <input type="text" name="first_name" value="<?php echo htmlspecialchars($CandidateData->first_name ?? ''); ?>" class="form-control">
+                                                    <small class="form-text text-muted">Please enter candidate's first name</small>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Last Name</label>
+                                                    <input type="text" name="last_name" value="<?php echo htmlspecialchars($CandidateData->last_name ?? ''); ?>" class="form-control">
+                                                    <small class="form-text text-muted">Please enter candidate's last name</small>
                                                 </div>
                                             </div>
                                             <div class="col-lg-4">

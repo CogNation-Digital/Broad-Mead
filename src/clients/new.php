@@ -15,6 +15,8 @@ $ClientName = ($ClientID !== "") ? ($conn->query("SELECT Name FROM _clients WHER
 
 if (isset($_POST['submit'])) {
     $Name = $_POST['Name'];
+    $ManagerFirstName = isset($_POST['ManagerFirstName']) ? $_POST['ManagerFirstName'] : '';
+    $ManagerLastName = isset($_POST['ManagerLastName']) ? $_POST['ManagerLastName'] : '';
     $ClientType = isset($_POST['ClientType']) ? $_POST['ClientType'] : '';
     $_client_id = $_POST['_client_id'];
     $EmailAddress = $_POST['EmailAddress'];
@@ -45,28 +47,30 @@ if (isset($_POST['submit'])) {
     }
 
     if ($error !== true) {
-        $query = "INSERT INTO `_clients` (`ClientKeyID`, `ClientID`, `_client_id`, `isClient`, `isBranch`, `Name`, `Email`, `Number`, `Address`, `City`, `Postcode`, `RegistrationNumber`, `VatNo`, `HasBranch`, `Status`, `CreatedBy`, `Date`) 
-        VALUES (:ClientKeyID, :ClientID, :_client_id, :isClient, :isBranch, :Name, :Email, :Number, :Address, :City, :Postcode, :RegistrationNumber, :VatNo, :HasBranch, :Status, :CreatedBy, :Date)";
+    $query = "INSERT INTO `_clients` (`ClientKeyID`, `ClientID`, `_client_id`, `isClient`, `isBranch`, `Name`, `Email`, `Number`, `Address`, `City`, `Postcode`, `RegistrationNumber`, `VatNo`, `HasBranch`, `Status`, `CreatedBy`, `Date`, `manager_first_name`, `manager_last_name`) 
+    VALUES (:ClientKeyID, :ClientID, :_client_id, :isClient, :isBranch, :Name, :Email, :Number, :Address, :City, :Postcode, :RegistrationNumber, :VatNo, :HasBranch, :Status, :CreatedBy, :Date, :ManagerFirstName, :ManagerLastName)";
 
-        $stmt = $conn->prepare($query);
-        // Bind parameters
-        $stmt->bindParam(':ClientKeyID', $ClientKeyID);
-        $stmt->bindParam(':ClientID', $RandomID);
-        $stmt->bindParam(':_client_id', $_client_id);
-        $stmt->bindParam(':isClient', $ClientID);
-        $stmt->bindParam(':isBranch', $isBranch);
-        $stmt->bindParam(':Name', $Name);
-        $stmt->bindParam(':Email', $EmailAddress);
-        $stmt->bindParam(':Number', $PhoneNumber);
-        $stmt->bindParam(':Address', $Address);
-        $stmt->bindParam(':City', $City);
-        $stmt->bindParam(':Postcode', $Postcode);
-        $stmt->bindParam(':RegistrationNumber', $RegistrationNumber);
-        $stmt->bindParam(':VatNo', $VatNo);
-        $stmt->bindParam(':HasBranch', $HasBranches);
-        $stmt->bindParam(':Status', $Status);
-        $stmt->bindParam(':CreatedBy', $USERID);
-        $stmt->bindParam(':Date', $date);
+    $stmt = $conn->prepare($query);
+    // Bind parameters
+    $stmt->bindParam(':ClientKeyID', $ClientKeyID);
+    $stmt->bindParam(':ClientID', $RandomID);
+    $stmt->bindParam(':_client_id', $_client_id);
+    $stmt->bindParam(':isClient', $ClientID);
+    $stmt->bindParam(':isBranch', $isBranch);
+    $stmt->bindParam(':Name', $Name);
+    $stmt->bindParam(':Email', $EmailAddress);
+    $stmt->bindParam(':Number', $PhoneNumber);
+    $stmt->bindParam(':Address', $Address);
+    $stmt->bindParam(':City', $City);
+    $stmt->bindParam(':Postcode', $Postcode);
+    $stmt->bindParam(':RegistrationNumber', $RegistrationNumber);
+    $stmt->bindParam(':VatNo', $VatNo);
+    $stmt->bindParam(':HasBranch', $HasBranches);
+    $stmt->bindParam(':Status', $Status);
+    $stmt->bindParam(':CreatedBy', $USERID);
+    $stmt->bindParam(':Date', $date);
+    $stmt->bindParam(':ManagerFirstName', $ManagerFirstName);
+    $stmt->bindParam(':ManagerLastName', $ManagerLastName);
 
         if ($stmt->execute()) {
             $Modification = "Created $isName";
@@ -119,6 +123,14 @@ if (isset($_POST['submit'])) {
                                             <div class="mb-3"><label class="form-label">Name</label>
                                                 <input type="text" name="Name" required class="form-control">
                                                 <small class="form-text text-muted">Please enter <?php echo $isName; ?>'s name</small>
+                                            </div>
+                                            <div class="mb-3"><label class="form-label">Manager First Name</label>
+                                                <input type="text" name="ManagerFirstName" class="form-control" placeholder="Enter manager's first name">
+                                                <small class="form-text text-muted">Enter the manager's first name (for email personalization)</small>
+                                            </div>
+                                            <div class="mb-3"><label class="form-label">Manager Last Name</label>
+                                                <input type="text" name="ManagerLastName" class="form-control" placeholder="Enter manager's last name">
+                                                <small class="form-text text-muted">Enter the manager's last name</small>
                                             </div>
                                         </div>
                                         <?php if (isset($_GET['isBranch'])) : ?>

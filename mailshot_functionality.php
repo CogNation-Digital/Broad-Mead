@@ -111,7 +111,7 @@ function sendTitanMail($to, $subject, $body, $fromEmail, $fromName = 'Recruitmen
         $mail->Port = 587;
         $mail->setFrom($fromEmail, $fromName);
         $mail->addAddress($to);
-        $mail->addReplyTo('info@nocturnalrecruitment.co.uk', 'Information');
+        $mail->addReplyTo($fromEmail, $fromName);
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body = $body;
@@ -165,7 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'mailshot') {
 
         $final_subject = empty($subject) ? $template_details['subject'] : $subject;
         $base_body = $template_details['body'];
-        $from_email = "learn@natec.icu";
+        $from_email = $loggedInUserEmail ?? "info@nocturnalrecruitment.co.uk";
 
         $success_count = 0;
         $error_count = 0;

@@ -305,12 +305,12 @@ function sendOptimizedEmail($recipientEmail, $recipientName, $subject, $htmlBody
         $mail->Encoding = 'base64';
         $mail->SMTPDebug = 0;
         
-        $mail->setFrom($config['username'], $consultantName . ' - Nocturnal Recruitment');
+        $mail->setFrom($consultantEmail, $consultantName . ' - Nocturnal Recruitment');
         $mail->addReplyTo($consultantEmail, $consultantName);
         $mail->addAddress($recipientEmail, $recipientName);
         
        
-        $mail->addCustomHeader('Return-Path', $config['username']);
+        $mail->addCustomHeader('Return-Path', $consultantEmail);
         $mail->addCustomHeader('X-Mailer', 'BroadMead CRM v3.0');
         $mail->addCustomHeader('X-Priority', '3');
         $mail->addCustomHeader('X-MSMail-Priority', 'Normal');
@@ -598,7 +598,9 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
         }
 
         $export_where_clause = 'WHERE ' . implode(' AND ', $export_where_conditions);
-        $export_query = "SELECT ClientID, Name, Email, Number, Address, Postcode, City, ClientType, Status, CreatedBy, Date,
+        $export_query = "SELECT 
+            CONCAT('C', LPAD(ROW_NUMBER() OVER (ORDER BY Date ASC), 6, '0')) as SimpleClientID,
+            ClientID, Name, Email, Number, Address, Postcode, City, ClientType, Status, CreatedBy, Date,
             COALESCE(first_name, SUBSTRING_INDEX(Name, ' ', 1)) as first_name,
             COALESCE(last_name, SUBSTRING_INDEX(Name, ' ', -1)) as last_name
             FROM `_clients` $export_where_clause ORDER BY Name ASC";
@@ -619,10 +621,22 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
         $output = fopen('php://output', 'w');
 
         $headers = array_keys($clients_data[0]);
-        $createdByHeaderIndex = array_search('CreatedBy', $headers);
-        if ($createdByHeaderIndex !== false) {
-            $headers[$createdByHeaderIndex] = 'Created By Name';
+        
+        // Update header names for better readability
+        foreach ($headers as &$header) {
+            switch ($header) {
+                case 'SimpleClientID':
+                    $header = 'Client ID';
+                    break;
+                case 'ClientID':
+                    $header = 'System ID';
+                    break;
+                case 'CreatedBy':
+                    $header = 'Created By Name';
+                    break;
+            }
         }
+        
         fputcsv($output, $headers);
 
         foreach ($clients_data as $row) {
@@ -915,6 +929,8 @@ if (isset($_POST['send_email'])) {
                                                             <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
                                                         </th>
                                                     <?php endif; ?>
+                                                    <th>Manager First Name</th>
+                                                    <th>Manager Last Name</th>
                                                     <th>Client Name</th>
                                                     <th>Client ID</th>
                                                     <th>Client Type</th>
@@ -978,6 +994,8 @@ if (isset($_POST['send_email'])) {
                                                                        onchange="updateSelectedCount()">
                                                             </td>
                                                         <?php endif; ?>
+                                                        <td><?php echo htmlspecialchars($row->manager_first_name ?? ''); ?></td>
+                                                        <td><?php echo htmlspecialchars($row->manager_last_name ?? ''); ?></td>
                                                         <td><?php echo htmlspecialchars($row->Name); ?></td>
                                                         <td><?php echo htmlspecialchars($row->_client_id); ?></td>
                                                         <td><?php echo htmlspecialchars($row->ClientType); ?></td>

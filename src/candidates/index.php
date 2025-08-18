@@ -372,12 +372,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
                         $mail->Port = 587;
                        
-                        $mail->setFrom('learn@natec.icu', $consultant_name . ' - Nocturnal Recruitment');
+                        $mail->setFrom($loggedInUserEmail, $consultant_name . ' - Nocturnal Recruitment');
                         $mail->addReplyTo($loggedInUserEmail, $consultant_name);
                         $mail->addAddress($candidate->Email, $candidate->full_name);
                        
                         // Add anti-spam headers
-                        $mail->addCustomHeader('Return-Path', 'learn@natec.icu');
+                        $mail->addCustomHeader('Return-Path', $loggedInUserEmail);
                         $mail->addCustomHeader('X-Mailer', 'BroadMead CRM v3.0');
                         $mail->addCustomHeader('X-Priority', '3');
                         $mail->addCustomHeader('X-MSMail-Priority', 'Normal');
@@ -560,7 +560,12 @@ if (isset($_GET['export'])) {
                 $export_where_clause = 'WHERE ' . implode(' AND ', $export_where_conditions);
             }
            
-            $stmt = $db_2->prepare("SELECT id, Name, Email, JobTitle, Status, City, Postcode, Date, CreatedBy, ProfileImage FROM _candidates $export_where_clause ORDER BY Date DESC");
+            $stmt = $db_2->prepare("SELECT 
+                CONCAT('CAND', LPAD(ROW_NUMBER() OVER (ORDER BY Date ASC), 6, '0')) as SimpleCandidateID,
+                id, Name, Email, JobTitle, Status, City, Postcode, Date, CreatedBy, ProfileImage,
+                COALESCE(first_name, SUBSTRING_INDEX(Name, ' ', 1)) as first_name,
+                COALESCE(last_name, SUBSTRING_INDEX(Name, ' ', -1)) as last_name
+                FROM _candidates $export_where_clause ORDER BY Date DESC");
             $stmt->execute($export_params);
             $raw_data_to_export = $stmt->fetchAll(PDO::FETCH_ASSOC);
            
@@ -581,7 +586,7 @@ if (isset($_GET['export'])) {
            
             if (!empty($data_to_export)) {
                
-                $headers = ['ID', 'Name', 'Email', 'Job Title', 'Status', 'City', 'Postcode', 'Date Added', 'Added By', 'Profile Picture URL'];
+                $headers = ['Candidate ID', 'System ID', 'Full Name', 'First Name', 'Last Name', 'Email', 'Job Title', 'Status', 'City', 'Postcode', 'Date Added', 'Added By', 'Profile Picture URL'];
                
                 $temp_data = [];
                 foreach ($data_to_export as $row) {
@@ -690,6 +695,22 @@ $center_postcode = isset($_GET['center_postcode']) ? trim($_GET['center_postcode
 $distance_miles = isset($_GET['distance_miles']) ? (int)$_GET['distance_miles'] : 0;
 
 $kpi_period = isset($_GET['kpi_period']) ? $_GET['kpi_period'] : 'current_week';
+$week_offset = isset($_GET['week_offset']) ? (int)$_GET['week_offset'] : 0;
+
+// Handle week navigation
+if ($week_offset !== 0) {
+    if ($week_offset === -1) {
+        $kpi_period = 'last_week';
+    } else {
+        $kpi_period = 'custom_week';
+        // Calculate custom dates based on week offset
+        $current_week_start = date('Y-m-d', strtotime('monday this week'));
+        $custom_week_start = date('Y-m-d', strtotime($current_week_start . ' ' . ($week_offset * 7) . ' days'));
+        $custom_week_end = date('Y-m-d', strtotime($custom_week_start . ' +6 days'));
+        $kpi_start_date = $custom_week_start;
+        $kpi_end_date = $custom_week_end;
+    }
+}
 $kpi_start_date = isset($_GET['kpi_start_date']) ? $_GET['kpi_start_date'] : '';
 $kpi_end_date = isset($_GET['kpi_end_date']) ? $_GET['kpi_end_date'] : '';
 $kpi_status_filter = isset($_GET['kpi_status_filter']) ? $_GET['kpi_status_filter'] : 'all';
@@ -1645,6 +1666,33 @@ unset($_SESSION['error_message']);
             border: 1px solid #e9ecef;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
+        
+        /* Enhanced scrollbar styling for better visibility */
+        .table-responsive::-webkit-scrollbar {
+            height: 12px;
+        }
+        
+        .table-responsive::-webkit-scrollbar-track {
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin: 0 4px;
+        }
+        
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            border-radius: 6px;
+            border: 2px solid #f8f9fa;
+        }
+        
+        .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, #0056b3, #004085);
+        }
+        
+        /* Ensure table maintains minimum width for all columns */
+        .candidates-table {
+            min-width: 1200px; /* Ensures table doesn't compress too much */
         }
        
         .candidates-table, .kpi-detail-table {
@@ -1922,6 +1970,8 @@ unset($_SESSION['error_message']);
                                         <th><input type="checkbox" id="selectAll" onchange="toggleSelectAllCandidates()"> Select All</th>
                                     <?php endif; ?>
                                     <th>Picture</th>
+                                    <th>First Name</th>
+                                    <th>Last Name</th>
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Job Title</th>
@@ -1945,6 +1995,8 @@ unset($_SESSION['error_message']);
                                                 <?php $profile_pic_url = !empty($candidate['ProfileImage']) ? htmlspecialchars($candidate['ProfileImage']) : 'https://placehold.co/40x40/cccccc/333333?text=N/A'; ?>
                                                 <img src="<?= $profile_pic_url ?>" alt="Profile" class="profile-pic" onerror="this.onerror=null;this.src='https://placehold.co/40x40/cccccc/333333?text=N/A';">
                                             </td>
+                                            <td><?= htmlspecialchars($candidate['first_name'] ?? '') ?></td>
+                                            <td><?= htmlspecialchars($candidate['last_name'] ?? '') ?></td>
                                             <td><?= htmlspecialchars($candidate['Name'] ?? 'N/A') ?></td>
                                             <td><?= htmlspecialchars($candidate['Email'] ?? 'N/A') ?></td>
                                             <td><?= htmlspecialchars($candidate['JobTitle'] ?? 'N/A') ?></td>
@@ -2226,6 +2278,16 @@ unset($_SESSION['error_message']);
                                     <option value="current_year" <?= $kpi_period === 'current_year' ? 'selected' : '' ?>>Current Year</option>
                                     <option value="custom" <?= $kpi_period === 'custom' ? 'selected' : '' ?>>Custom Range</option>
                                 </select>
+                                
+                                <!-- Week Navigation Buttons -->
+                                <div class="week-navigation mt-2" id="weekNavigation" style="<?= in_array($kpi_period, ['current_week', 'last_week']) ? 'display: block;' : 'display: none;' ?>">
+                                    <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="navigateWeek(-1)" title="Previous Week">
+                                        <i class="fa fa-chevron-left"></i> Prev Week
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="navigateWeek(1)" title="Next Week">
+                                        Next Week <i class="fa fa-chevron-right"></i>
+                                    </button>
+                                </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="filter-label">Start Date</div>
@@ -2625,16 +2687,49 @@ unset($_SESSION['error_message']);
             const period = document.getElementById('kpi_period');
             const startDate = document.getElementById('kpi_start_date');
             const endDate = document.getElementById('kpi_end_date');
+            const weekNavigation = document.getElementById('weekNavigation');
            
             if (period && startDate && endDate) {
                 if (period.value === 'custom') {
                     startDate.disabled = false;
                     endDate.disabled = false;
+                    weekNavigation.style.display = 'none';
                 } else {
                     startDate.disabled = true;
                     endDate.disabled = true;
+                    // Show week navigation for weekly periods
+                    if (period.value === 'current_week' || period.value === 'last_week') {
+                        weekNavigation.style.display = 'block';
+                    } else {
+                        weekNavigation.style.display = 'none';
+                    }
                 }
             }
+        }
+        
+        // Week Navigation Function
+        function navigateWeek(direction) {
+            const period = document.getElementById('kpi_period');
+            const currentUrl = new URL(window.location.href);
+            
+            // Get current week offset or default to 0
+            let weekOffset = parseInt(currentUrl.searchParams.get('week_offset')) || 0;
+            weekOffset += direction;
+            
+            // Update URL parameters
+            if (weekOffset === 0) {
+                currentUrl.searchParams.delete('week_offset');
+                period.value = 'current_week';
+            } else if (weekOffset === -1) {
+                currentUrl.searchParams.set('week_offset', weekOffset);
+                period.value = 'last_week';
+            } else {
+                currentUrl.searchParams.set('week_offset', weekOffset);
+                period.value = 'custom_week';
+            }
+            
+            // Navigate to new URL
+            window.location.href = currentUrl.toString();
         }
        
        
