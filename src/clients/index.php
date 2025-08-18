@@ -599,10 +599,7 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
 
         $export_where_clause = 'WHERE ' . implode(' AND ', $export_where_conditions);
         $export_query = "SELECT 
-            CONCAT('C', LPAD(ROW_NUMBER() OVER (ORDER BY Date ASC), 6, '0')) as SimpleClientID,
-            ClientID, Name, Email, Number, Address, Postcode, City, ClientType, Status, CreatedBy, Date,
-            COALESCE(first_name, SUBSTRING_INDEX(Name, ' ', 1)) as first_name,
-            COALESCE(last_name, SUBSTRING_INDEX(Name, ' ', -1)) as last_name
+            _client_id, ClientID, Name, Email, Number, Address, Postcode, City, ClientType, Status, CreatedBy, Date
             FROM `_clients` $export_where_clause ORDER BY Name ASC";
         $stmt = $db_2->prepare($export_query);
         $stmt->execute($export_params);
@@ -613,40 +610,37 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
         }
 
         if (ob_get_level()) {
-            ob_end_clean();
         }
 
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="clients_filtered_' . date('Y-m-d') . '.csv"');
         $output = fopen('php://output', 'w');
 
+        // Build headers for export: include 'Client ID' (from _client_id), then all other columns except ClientID and _client_id
         $headers = array_keys($clients_data[0]);
-        
-        // Update header names for better readability
-        foreach ($headers as &$header) {
-            switch ($header) {
-                case 'SimpleClientID':
-                    $header = 'Client ID';
-                    break;
-                case 'ClientID':
-                    $header = 'System ID';
-                    break;
-                case 'CreatedBy':
-                    $header = 'Created By Name';
-                    break;
+        $exportHeaders = [];
+        $exportHeaders[] = 'Client ID';
+        foreach ($headers as $header) {
+            if ($header !== 'ClientID' && $header !== '_client_id') {
+                $exportHeaders[] = $header;
             }
         }
-        
-        fputcsv($output, $headers);
-
+        fputcsv($output, $exportHeaders);
         foreach ($clients_data as $row) {
-            if (isset($row['CreatedBy'])) {
-                $row['CreatedBy'] = $createdByMapping[$row['CreatedBy']] ?? 'Unknown';
+            $exportRow = [];
+            // Always use _client_id for 'Client ID' column
+            $exportRow[] = $row['_client_id'] ?? $row['ClientID'] ?? '';
+            foreach ($headers as $header) {
+                if ($header !== 'ClientID' && $header !== '_client_id') {
+                    // Map CreatedBy to readable name if possible
+                    if ($header === 'CreatedBy') {
+                        $exportRow[] = $createdByMapping[$row['CreatedBy']] ?? $row['CreatedBy'];
+                    } else {
+                        $exportRow[] = $row[$header];
+                    }
+                }
             }
-            if (isset($row['Date'])) {
-                $row['Date'] = date('Y-m-d H:i:s', strtotime($row['Date']));
-            }
-            fputcsv($output, $row);
+            fputcsv($output, $exportRow);
         }
 
         fclose($output);
