@@ -510,7 +510,7 @@ if (isset($_SESSION['mailshot_completed'])) {
 
 $SearchID = isset($_GET['q']) ? $_GET['q'] : "";
 $isTab = isset($_GET['isTab']) ? $_GET['isTab'] : "all";
-$clients_status = ['targeted', 'not updated', 'active', 'inactive', 'archived'];
+$clients_status = ['targeted', 'not updated'];
 
 $createdByMapping = [
     "1" => "Chax Shamwana",
@@ -761,9 +761,6 @@ if (isset($_POST['send_email'])) {
                                         <option value="">All Statuses</option>
                                         <option value="targeted">Targeted</option>
                                         <option value="not updated">Not Updated</option>
-                                        <option value="active">Active</option>
-                                        <option value="inactive">Inactive</option>
-                                        <option value="archived">Archived</option>
                                     </select>
                                 </div>
                                 <div class="col-md-3">
@@ -968,8 +965,12 @@ if (isset($_POST['send_email'])) {
                                                 }
 
                                                 if ($isTab !== "all") {
-                                                    $query_display .= " AND Status = :is_tab";
-                                                    $params_display[':is_tab'] = $isTab;
+                                                    if (strtolower(trim($isTab)) === 'not updated') {
+                                                        // Match all 'Not Updated' statuses regardless of case or whitespace
+                                                        $query_display .= " AND (TRIM(LOWER(Status)) = 'not updated')";
+                                                    } elseif (strtolower(trim($isTab)) === 'targeted') {
+                                                        $query_display .= " AND (TRIM(LOWER(Status)) = 'targeted')";
+                                                    }
                                                 }
 
                                                 $query_display .= " ORDER BY Name ASC";
@@ -979,7 +980,7 @@ if (isset($_POST['send_email'])) {
                                                 while ($row = $stmt_display->fetchObject()) { ?>
                                                     <?php
                                                     $CreatedBy = $createdByMapping[$row->CreatedBy] ?? 'Unknown';
-                                                    $status_class = strtolower($row->Status ?? 'not updated');
+                                                    $status_class = trim(strtolower($row->Status ?? 'not updated'));
                                                     ?>
                                                     <tr class="client-row"
                                                         data-name="<?php echo strtolower($row->Name); ?>"
@@ -1001,13 +1002,7 @@ if (isset($_POST['send_email'])) {
                                                         <td><?php echo htmlspecialchars($row->_client_id); ?></td>
                                                         <td><?php echo htmlspecialchars($row->ClientType); ?></td>
                                                         <td>
-                                                            <?php if ($row->Status == "Active") : ?>
-                                                                <span class="badge bg-success">Active</span>
-                                                            <?php elseif ($row->Status == "Archived") : ?>
-                                                                <span class="badge bg-warning">Archived</span>
-                                                            <?php elseif ($row->Status == "Inactive") : ?>
-                                                                <span class="badge bg-danger">Inactive</span>
-                                                            <?php elseif ($row->Status == "Targeted") : ?>
+                                                            <?php if (strtolower(trim($row->Status)) == "targeted") : ?>
                                                                 <span class="badge bg-info">Targeted</span>
                                                             <?php else : ?>
                                                                 <span class="badge bg-danger">Not Updated</span>
