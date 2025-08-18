@@ -966,7 +966,6 @@ if (isset($_POST['send_email'])) {
 
                                                 if ($isTab !== "all") {
                                                     if (strtolower(trim($isTab)) === 'not updated') {
-                                                        // Match all 'Not Updated' statuses regardless of case or whitespace
                                                         $query_display .= " AND (TRIM(LOWER(Status)) = 'not updated')";
                                                     } elseif (strtolower(trim($isTab)) === 'targeted') {
                                                         $query_display .= " AND (TRIM(LOWER(Status)) = 'targeted')";
@@ -1350,7 +1349,7 @@ if (isset($_POST['send_email'])) {
 
                     const nameMatch = name.includes(nameFilter);
                     const emailMatch = email.includes(emailFilter);
-                    const statusMatch = statusFilter === '' || status === statusFilter;
+                    const statusMatch = statusFilter === '' || status === statusFilter || (statusFilter === 'not updated' && status === 'not updated');
                     const clientTypeMatch = clientTypeFilter === '' || clientType === clientTypeFilter;
 
                     if (nameMatch && emailMatch && statusMatch && clientTypeMatch) {
