@@ -1666,38 +1666,44 @@ unset($_SESSION['error_message']);
        
         
         .table-responsive {
-            overflow-x: auto; /* Enable horizontal scrolling for small screens */
+            overflow-x: auto !important;
             margin-top: 20px;
             border: 1px solid #e9ecef;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            -webkit-overflow-scrolling: touch;
+            width: 100%;
         }
-        
-        /* Enhanced scrollbar styling for better visibility */
         .table-responsive::-webkit-scrollbar {
             height: 12px;
         }
-        
         .table-responsive::-webkit-scrollbar-track {
             background: #f8f9fa;
             border-radius: 6px;
             margin: 0 4px;
         }
-        
         .table-responsive::-webkit-scrollbar-thumb {
             background: linear-gradient(45deg, #007bff, #0056b3);
             border-radius: 6px;
             border: 2px solid #f8f9fa;
         }
-        
         .table-responsive::-webkit-scrollbar-thumb:hover {
             background: linear-gradient(45deg, #0056b3, #004085);
         }
-        
-        /* Ensure table maintains minimum width for all columns */
         .candidates-table {
-            min-width: 1200px; /* Ensures table doesn't compress too much */
+            min-width: 1400px;
+            width: 100%;
+        }
+        .candidates-table th, .candidates-table td {
+            white-space: nowrap;
+        }
+        /* Sticky Actions column for better usability */
+        .candidates-table th:last-child,
+        .candidates-table td:last-child {
+            position: sticky;
+            right: 0;
+            background: #fff;
+            z-index: 2;
         }
        
         .candidates-table, .kpi-detail-table {
