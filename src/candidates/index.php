@@ -1975,8 +1975,7 @@ unset($_SESSION['error_message']);
                                         <th><input type="checkbox" id="selectAll" onchange="toggleSelectAllCandidates()"> Select All</th>
                                     <?php endif; ?>
                                     <th>Picture</th>
-                                    <th>First Name</th>
-                                    <th>Last Name</th>
+
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Job Title</th>
@@ -2000,8 +1999,7 @@ unset($_SESSION['error_message']);
                                                 <?php $profile_pic_url = !empty($candidate['ProfileImage']) ? htmlspecialchars($candidate['ProfileImage']) : 'https://placehold.co/40x40/cccccc/333333?text=N/A'; ?>
                                                 <img src="<?= $profile_pic_url ?>" alt="Profile" class="profile-pic" onerror="this.onerror=null;this.src='https://placehold.co/40x40/cccccc/333333?text=N/A';">
                                             </td>
-                                            <td><?= htmlspecialchars($candidate['first_name'] ?? '') ?></td>
-                                            <td><?= htmlspecialchars($candidate['last_name'] ?? '') ?></td>
+
                                             <td><?= htmlspecialchars($candidate['Name'] ?? 'N/A') ?></td>
                                             <td><?= htmlspecialchars($candidate['Email'] ?? 'N/A') ?></td>
                                             <td><?= htmlspecialchars($candidate['JobTitle'] ?? 'N/A') ?></td>
@@ -2011,29 +2009,26 @@ unset($_SESSION['error_message']);
                                             <td><?= htmlspecialchars($createdByMapping[$candidate['CreatedBy']] ?? 'Unknown') ?></td>
                                             <td>
                                                 <div class="dropdown">
-                                                    <a class="avtar avtar-s btn-link-secondary dropdown-toggle arrow-none" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                        <i class="ti ti-dots-vertical f-18"></i>
+                                                    <a class="btn btn-link dropdown-toggle p-0" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="font-size: 1.5rem;">
+                                                        <i class="ti ti-dots-vertical"></i>
                                                     </a>
-                                                    <div class="dropdown-menu dropdown-menu-end">
-                                                        <a class="dropdown-item" href="<?php echo $LINK; ?>/edit_candidate/?CandidateID=<?php echo htmlspecialchars($candidate['id']); ?>">
-                                                            <span class="text-info">
-                                                                <i class="ti ti-edit"></i>
-                                                            </span>
-                                                            Edit
-                                                        </a>
-                                                        <a class="dropdown-item" href="<?php echo $LINK; ?>/view_candidate/?ID=<?php echo htmlspecialchars($candidate['id']); ?>">
-                                                            <span class="text-warning">
-                                                                <i class="ti ti-eye"></i>
-                                                            </span>
-                                                            View
-                                                        </a>
-                                                        <a class="dropdown-item delete-entry" href="#" data-bs-toggle="modal" data-bs-target="#DeleteCandidateModal" data-id="<?php echo htmlspecialchars($candidate['id']); ?>" data-name="<?php echo htmlspecialchars($candidate['Name']); ?>">
-                                                            <span class="text-danger">
-                                                                <i class="ti ti-trash"></i>
-                                                            </span>
-                                                            Delete
-                                                        </a>
-                                                    </div>
+                                                    <ul class="dropdown-menu dropdown-menu-end">
+                                                        <li>
+                                                            <a class="dropdown-item" href="<?php echo $LINK; ?>/edit_candidate/?CandidateID=<?php echo htmlspecialchars($candidate['id']); ?>">
+                                                                <i class="ti ti-edit text-info"></i> Edit
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item" href="<?php echo $LINK; ?>/view_candidate/?ID=<?php echo htmlspecialchars($candidate['id']); ?>">
+                                                                <i class="ti ti-eye text-warning"></i> View
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item delete-entry" href="#" data-bs-toggle="modal" data-bs-target="#DeleteCandidateModal" data-id="<?php echo htmlspecialchars($candidate['id']); ?>" data-name="<?php echo htmlspecialchars($candidate['Name']); ?>">
+                                                                <i class="ti ti-trash text-danger"></i> Delete
+                                                            </a>
+                                                        </li>
+                                                    </ul>
                                                 </div>
                                             </td>
                                         </tr>
@@ -2183,6 +2178,7 @@ unset($_SESSION['error_message']);
                                     <tr>
                                         <th><input type="checkbox" id="selectAllCandidates" onchange="toggleSelectAllCandidates()"> Select All</th>
                                         <th>Picture</th>
+                                        
                                         <th>Name</th>
                                         <th>Email</th>
                                         <th>Job Title</th>
@@ -2198,45 +2194,46 @@ unset($_SESSION['error_message']);
                                             <tr>
                                                 <td>
                                                     <input type="checkbox" name="selected_candidates[]" class="candidate-checkbox" value="<?= htmlspecialchars($candidate['id']) ?>" data-name="<?= htmlspecialchars($candidate['Name'] ?? '') ?>" onchange="updateSelectedCandidateCount()">
-                                                </td>
-                                                <td>
-                                                    <?php $profile_pic_url = !empty($candidate['ProfileImage']) ? htmlspecialchars($candidate['ProfileImage']) : 'https://placehold.co/40x40/cccccc/333333?text=N/A'; ?>
-                                                    <img src="<?= $profile_pic_url ?>" alt="Profile" class="profile-pic" onerror="this.onerror=null;this.src='https://placehold.co/40x40/cccccc/333333?text=N/A';">
-                                                </td>
-                                                <td><?= htmlspecialchars($candidate['Name'] ?? 'N/A') ?></td>
-                                                <td><?= htmlspecialchars($candidate['Email'] ?? 'N/A') ?></td>
-                                                <td><?= htmlspecialchars($candidate['JobTitle'] ?? 'N/A') ?></td>
-                                                <td><span class="status-badge <?= strtolower(htmlspecialchars($candidate['Status'] ?? '')) ?>"><?= htmlspecialchars($candidate['Status'] ?? 'N/A') ?></span></td>
-                                                <td><?= htmlspecialchars($candidate['City'] ?? 'N/A') ?> (<?= htmlspecialchars($candidate['Postcode'] ?? 'N/A') ?>)</td>
-                                                <td><?= htmlspecialchars(date('Y-m-d', strtotime($candidate['Date'] ?? ''))) ?></td>
-                                                <td>
-                                                    <div class="dropdown">
-                                                        <a class="avtar avtar-s btn-link-secondary dropdown-toggle arrow-none" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                            <i class="ti ti-dots-vertical f-18"></i>
-                                                        </a>
-                                                        <div class="dropdown-menu dropdown-menu-end">
-                                                            <a class="dropdown-item" href="<?php echo $LINK; ?>/edit_candidate/?CandidateID=<?php echo htmlspecialchars($candidate['id']); ?>">
-                                                                <span class="text-info">
-                                                                    <i class="ti ti-edit"></i>
-                                                                </span>
-                                                                Edit
+                                                <tr>
+                                                    <td>
+                                                        <?php $profile_pic_url = !empty($candidate['ProfileImage']) ? htmlspecialchars($candidate['ProfileImage']) : 'https://placehold.co/40x40/cccccc/333333?text=N/A'; ?>
+                                                        <img src="<?= $profile_pic_url ?>" alt="Profile" class="profile-pic" onerror="this.onerror=null;this.src='https://placehold.co/40x40/cccccc/333333?text=N/A';">
+                                                    </td>
+                                            
+                                                    <td><?= htmlspecialchars($candidate['Name'] ?? 'N/A') ?></td>
+                                                    <td><?= htmlspecialchars($candidate['Email'] ?? 'N/A') ?></td>
+                                                    <td><?= htmlspecialchars($candidate['JobTitle'] ?? 'N/A') ?></td>
+                                                    <td><span class="status-badge <?= strtolower(htmlspecialchars($candidate['Status'] ?? '')) ?>"><?= htmlspecialchars($candidate['Status'] ?? 'N/A') ?></span></td>
+                                                    <td><?= htmlspecialchars($candidate['City'] ?? 'N/A') ?> (<?= htmlspecialchars($candidate['Postcode'] ?? 'N/A') ?>)</td>
+                                                    <td><?= htmlspecialchars(date('Y-m-d', strtotime($candidate['Date'] ?? ''))) ?></td>
+                                                    <td>
+                                                        <div class="dropdown">
+                                                            <a class="avtar avtar-s btn-link-secondary dropdown-toggle arrow-none" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                                <i class="ti ti-dots-vertical f-18"></i>
                                                             </a>
-                                                            <a class="dropdown-item" href="<?php echo $LINK; ?>/view_candidate/?ID=<?php echo htmlspecialchars($candidate['id']); ?>">
-                                                                <span class="text-warning">
-                                                                    <i class="ti ti-eye"></i>
-                                                                </span>
-                                                                View
-                                                            </a>
-                                                            <a class="dropdown-item delete-entry" href="#" data-bs-toggle="modal" data-bs-target="#DeleteCandidateModal" data-id="<?php echo htmlspecialchars($candidate['id']); ?>" data-name="<?php echo htmlspecialchars($candidate['Name']); ?>">
-                                                                <span class="text-danger">
-                                                                    <i class="ti ti-trash"></i>
-                                                                </span>
-                                                                Delete
-                                                            </a>
+                                                            <div class="dropdown-menu dropdown-menu-end">
+                                                                <a class="dropdown-item" href="<?php echo $LINK; ?>/edit_candidate/?CandidateID=<?php echo htmlspecialchars($candidate['id']); ?>">
+                                                                    <span class="text-info">
+                                                                        <i class="ti ti-edit"></i>
+                                                                    </span>
+                                                                    Edit
+                                                                </a>
+                                                                <a class="dropdown-item" href="<?php echo $LINK; ?>/view_candidate/?ID=<?php echo htmlspecialchars($candidate['id']); ?>">
+                                                                    <span class="text-warning">
+                                                                        <i class="ti ti-eye"></i>
+                                                                    </span>
+                                                                    View
+                                                                </a>
+                                                                <a class="dropdown-item delete-entry" href="#" data-bs-toggle="modal" data-bs-target="#DeleteCandidateModal" data-id="<?php echo htmlspecialchars($candidate['id']); ?>" data-name="<?php echo htmlspecialchars($candidate['Name']); ?>">
+                                                                    <span class="text-danger">
+                                                                        <i class="ti ti-trash"></i>
+                                                                    </span>
+                                                                    Delete
+                                                                </a>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
+                                                    </td>
+                                                </tr>
                                         <?php endforeach; ?>
                                     <?php else: ?>
                                         <tr>
@@ -2449,29 +2446,26 @@ unset($_SESSION['error_message']);
                                             <td><?= htmlspecialchars($createdByMapping[$candidate['CreatedBy']] ?? 'Unknown') ?></td>
                                             <td>
                                                 <div class="dropdown">
-                                                    <a class="avtar avtar-s btn-link-secondary dropdown-toggle arrow-none" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                        <i class="ti ti-dots-vertical f-18"></i>
+                                                    <a class="btn btn-link dropdown-toggle p-0" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="font-size: 1.5rem;">
+                                                        <i class="ti ti-dots-vertical"></i>
                                                     </a>
-                                                    <div class="dropdown-menu dropdown-menu-end">
-                                                        <a class="dropdown-item" href="<?php echo $LINK; ?>/edit_candidate/?CandidateID=<?php echo htmlspecialchars($candidate['id']); ?>">
-                                                            <span class="text-info">
-                                                                <i class="ti ti-edit"></i>
-                                                            </span>
-                                                            Edit
-                                                        </a>
-                                                        <a class="dropdown-item" href="<?php echo $LINK; ?>/view_candidate/?ID=<?php echo htmlspecialchars($candidate['id']); ?>">
-                                                            <span class="text-warning">
-                                                                <i class="ti ti-eye"></i>
-                                                            </span>
-                                                            View
-                                                        </a>
-                                                        <a class="dropdown-item delete-entry" href="#" data-bs-toggle="modal" data-bs-target="#DeleteCandidateModal" data-id="<?php echo htmlspecialchars($candidate['id']); ?>" data-name="<?php echo htmlspecialchars($candidate['Name']); ?>">
-                                                            <span class="text-danger">
-                                                                <i class="ti ti-trash"></i>
-                                                            </span>
-                                                            Delete
-                                                        </a>
-                                                    </div>
+                                                    <ul class="dropdown-menu dropdown-menu-end">
+                                                        <li>
+                                                            <a class="dropdown-item" href="<?php echo $LINK; ?>/edit_candidate/?CandidateID=<?php echo htmlspecialchars($candidate['id']); ?>">
+                                                                <i class="ti ti-edit text-info"></i> Edit
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item" href="<?php echo $LINK; ?>/view_candidate/?ID=<?php echo htmlspecialchars($candidate['id']); ?>">
+                                                                <i class="ti ti-eye text-warning"></i> View
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item delete-entry" href="#" data-bs-toggle="modal" data-bs-target="#DeleteCandidateModal" data-id="<?php echo htmlspecialchars($candidate['id']); ?>" data-name="<?php echo htmlspecialchars($candidate['Name']); ?>">
+                                                                <i class="ti ti-trash text-danger"></i> Delete
+                                                            </a>
+                                                        </li>
+                                                    </ul>
                                                 </div>
                                             </td>
                                         </tr>
