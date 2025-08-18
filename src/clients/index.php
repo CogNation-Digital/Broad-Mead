@@ -600,9 +600,7 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
         $export_where_clause = 'WHERE ' . implode(' AND ', $export_where_conditions);
         $export_query = "SELECT 
             ClientID as 'Client ID',
-            Name, Email, Number, Address, Postcode, City, ClientType, Status, CreatedBy, Date,
-            COALESCE(first_name, SUBSTRING_INDEX(Name, ' ', 1)) as first_name,
-            COALESCE(last_name, SUBSTRING_INDEX(Name, ' ', -1)) as last_name
+            Name, Email, Number, Address, Postcode, City, ClientType, Status, CreatedBy, Date
             FROM `_clients` $export_where_clause ORDER BY Name ASC";
         $stmt = $db_2->prepare($export_query);
         $stmt->execute($export_params);
@@ -620,9 +618,12 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
         header('Content-Disposition: attachment; filename="clients_filtered_' . date('Y-m-d') . '.csv"');
         $output = fopen('php://output', 'w');
 
-    $headers = array_keys($clients_data[0]);
-    fputcsv($output, $headers);
+        // Add export date column to headers
+        $headers = array_keys($clients_data[0]);
+        $headers[] = 'Exported On';
+        fputcsv($output, $headers);
 
+        $exportedOn = date('Y-m-d H:i:s');
         foreach ($clients_data as $row) {
             if (isset($row['CreatedBy'])) {
                 $row['CreatedBy'] = $createdByMapping[$row['CreatedBy']] ?? 'Unknown';
@@ -630,6 +631,8 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
             if (isset($row['Date'])) {
                 $row['Date'] = date('Y-m-d H:i:s', strtotime($row['Date']));
             }
+            // Add export date to each row
+            $row['Exported On'] = $exportedOn;
             fputcsv($output, $row);
         }
 
@@ -913,8 +916,8 @@ if (isset($_POST['send_email'])) {
                                                             <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
                                                         </th>
                                                     <?php endif; ?>
-                                                    <th>Manager First Name</th>
-                                                    <th>Manager Last Name</th>
+                                                    <!-- <th>Manager First Name</th>
+                                                    <th>Manager Last Name</th> -->
                                                     <th>Client Name</th>
                                                     <th>Client ID</th>
                                                     <th>Client Type</th>

@@ -633,10 +633,12 @@ if (isset($_GET['export'])) {
             header("Content-Type: application/vnd.ms-excel");
             header("Content-Disposition: attachment; filename=\"$filename.xls\"");
            
+            // Add export date column to headers
+            $headers[] = 'Exported On';
             echo implode("\t", $headers) . "\r\n";
-           
+            $exportedOn = date('Y-m-d H:i:s');
             foreach ($data_to_export as $row) {
-               
+                $row['Exported On'] = $exportedOn;
                 echo implode("\t", array_values($row)) . "\r\n";
             }
             exit;
@@ -647,9 +649,12 @@ if (isset($_GET['export'])) {
             header("Content-Disposition: attachment; filename=\"$filename.csv\"");
             $output = fopen('php://output', 'w');
            
+            // Add export date column to headers
+            $headers[] = 'Exported On';
             fputcsv($output, $headers);
-           
+            $exportedOn = date('Y-m-d H:i:s');
             foreach ($data_to_export as $row) {
+                $row['Exported On'] = $exportedOn;
                 fputcsv($output, $row);
             }
             fclose($output);
