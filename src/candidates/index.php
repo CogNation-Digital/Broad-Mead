@@ -561,8 +561,8 @@ if (isset($_GET['export'])) {
             }
            
             $stmt = $db_2->prepare("SELECT 
-                CONCAT('CAND', LPAD(ROW_NUMBER() OVER (ORDER BY Date ASC), 6, '0')) as SimpleCandidateID,
-                id, Name, Email, JobTitle, Status, City, Postcode, Date, CreatedBy, ProfileImage,
+                id as 'Candidate ID',
+                Name, Email, JobTitle, Status, City, Postcode, Date, CreatedBy, ProfileImage,
                 COALESCE(first_name, SUBSTRING_INDEX(Name, ' ', 1)) as first_name,
                 COALESCE(last_name, SUBSTRING_INDEX(Name, ' ', -1)) as last_name
                 FROM _candidates $export_where_clause ORDER BY Date DESC");

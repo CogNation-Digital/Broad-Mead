@@ -599,8 +599,8 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
 
         $export_where_clause = 'WHERE ' . implode(' AND ', $export_where_conditions);
         $export_query = "SELECT 
-            CONCAT('C', LPAD(ROW_NUMBER() OVER (ORDER BY Date ASC), 6, '0')) as SimpleClientID,
-            ClientID, Name, Email, Number, Address, Postcode, City, ClientType, Status, CreatedBy, Date,
+            ClientID as 'Client ID',
+            Name, Email, Number, Address, Postcode, City, ClientType, Status, CreatedBy, Date,
             COALESCE(first_name, SUBSTRING_INDEX(Name, ' ', 1)) as first_name,
             COALESCE(last_name, SUBSTRING_INDEX(Name, ' ', -1)) as last_name
             FROM `_clients` $export_where_clause ORDER BY Name ASC";
@@ -620,24 +620,8 @@ if (isset($_GET['export_csv']) && $_GET['export_csv'] === 'true') {
         header('Content-Disposition: attachment; filename="clients_filtered_' . date('Y-m-d') . '.csv"');
         $output = fopen('php://output', 'w');
 
-        $headers = array_keys($clients_data[0]);
-        
-        // Update header names for better readability
-        foreach ($headers as &$header) {
-            switch ($header) {
-                case 'SimpleClientID':
-                    $header = 'Client ID';
-                    break;
-                case 'ClientID':
-                    $header = 'System ID';
-                    break;
-                case 'CreatedBy':
-                    $header = 'Created By Name';
-                    break;
-            }
-        }
-        
-        fputcsv($output, $headers);
+    $headers = array_keys($clients_data[0]);
+    fputcsv($output, $headers);
 
         foreach ($clients_data as $row) {
             if (isset($row['CreatedBy'])) {
