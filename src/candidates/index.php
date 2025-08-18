@@ -1911,11 +1911,15 @@ unset($_SESSION['error_message']);
                                 <div class="filter-label">Location (City, Address, Postcode)</div>
                                 <input type="text" name="location" class="filter-input" placeholder="Search by location..." value="<?php echo htmlspecialchars($location_filter); ?>">
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
+                                <div class="filter-label">Distance (in miles)</div>
+                                <input type="number" min="0" name="distance_miles" class="filter-input" placeholder="e.g. 10" value="<?php echo htmlspecialchars($distance_miles); ?>">
+                            </div>
+                            <div class="col-md-2">
                                 <div class="filter-label">Job Title/Position</div>
                                 <input type="text" name="position" class="filter-input" placeholder="Search by position..." value="<?php echo htmlspecialchars($position_filter); ?>">
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <div class="filter-label">Status</div>
                                 <select name="status" class="filter-select">
                                     <option value="all" <?= $status_filter === 'all' ? 'selected' : '' ?>>All</option>
