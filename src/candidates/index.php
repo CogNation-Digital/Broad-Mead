@@ -2426,6 +2426,7 @@ unset($_SESSION['error_message']);
                                     <th>Location</th>
                                     <th>Date Added</th>
                                     <th>Added By</th>
+                                    <th>Achieved</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -2444,6 +2445,9 @@ unset($_SESSION['error_message']);
                                             <td><?= htmlspecialchars($candidate['City'] ?? 'N/A') ?> (<?= htmlspecialchars($candidate['Postcode'] ?? 'N/A') ?>)</td>
                                             <td><?= htmlspecialchars(date('Y-m-d', strtotime($candidate['Date'] ?? ''))) ?></td>
                                             <td><?= htmlspecialchars($createdByMapping[$candidate['CreatedBy']] ?? 'Unknown') ?></td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm kpi-achieved-input" data-candidate-id="<?= $candidate['id'] ?>" value="<?= isset($candidate['Achieved']) ? htmlspecialchars($candidate['Achieved']) : '' ?>" placeholder="Enter result..." style="min-width:80px;">
+                                            </td>
                                             <td>
                                                 <div class="dropdown">
                                                     <a class="btn btn-link dropdown-toggle p-0" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="font-size: 1.5rem;">
@@ -2472,7 +2476,7 @@ unset($_SESSION['error_message']);
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
-                                        <td colspan="9" class="no-candidates-message">
+                                        <td colspan="10" class="no-candidates-message">
                                             No candidates found matching your KPI criteria.
                                         </td>
                                     </tr>
