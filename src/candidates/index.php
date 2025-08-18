@@ -1913,7 +1913,16 @@ unset($_SESSION['error_message']);
                             </div>
                             <div class="col-md-2">
                                 <div class="filter-label">Distance (in miles)</div>
-                                <input type="number" min="0" name="distance_miles" class="filter-input" placeholder="e.g. 10" value="<?php echo htmlspecialchars($distance_miles); ?>">
+                                <select name="distance_miles" class="filter-input">
+                                    <?php
+                                    $distanceOptions = [1, 2, 5, 7, 10, 15, 20, 35];
+                                    $selectedDistance = isset($distance_miles) ? (int)$distance_miles : 35;
+                                    foreach ($distanceOptions as $option) {
+                                        $selected = ($option == $selectedDistance) ? 'selected' : '';
+                                        echo "<option value=\"$option\" $selected>$option mile" . ($option > 1 ? 's' : '') . "</option>";
+                                    }
+                                    ?>
+                                </select>
                             </div>
                             <div class="col-md-2">
                                 <div class="filter-label">Job Title/Position</div>
