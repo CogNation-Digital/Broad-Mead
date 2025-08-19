@@ -70,35 +70,68 @@ if (isset($_POST['Search'])) {
         <div class="pc-content">
             <?php include "../../includes/breadcrumb.php"; ?>
 
-            <div class="row">
-                <div class="col-sm-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <h5 class="mb-0">Weekly KPIs</h5>
-                                <div class="dropdown"><a class="avtar avtar-s btn-link-secondary dropdown-toggle arrow-none" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="ti ti-dots-vertical f-18"></i></a>
-                                    <div class="dropdown-menu dropdown-menu-end">
-                                        <a class="dropdown-item" href="<?php echo $LINK; ?>/create_weekly_kpis/?ID=<?php echo $RandomID; ?>">
-                                            <span class="text-success">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-                                                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4" color="currentColor" />
-                                                </svg>
-                                            </span>
-                                            Create
-                                        </a>
-                                        <a type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target=".bd-example-modal-lg">
-                                            <span>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-                                                    <path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5A6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5S14 7.01 14 9.5S11.99 14 9.5 14" />
-                                                </svg>
-                                            </span>
-                                            Advanced Search
-                                        </a>
-
-                                    </div>
-                                </div>
+            <ul class="nav nav-tabs mb-3" id="kpiTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="weekly-kpi-tab" data-bs-toggle="tab" data-bs-target="#weekly-kpi" type="button" role="tab" aria-controls="weekly-kpi" aria-selected="true">Weekly KPI Search</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="all-kpi-tab" data-bs-toggle="tab" data-bs-target="#all-kpi" type="button" role="tab" aria-controls="all-kpi" aria-selected="false">All KPIs</button>
+                </li>
+            </ul>
+            <div class="tab-content" id="kpiTabContent">
+                <div class="tab-pane fade show active" id="weekly-kpi" role="tabpanel" aria-labelledby="weekly-kpi-tab">
+                    <form method="GET" class="row g-3 align-items-end mb-4">
+                        <div class="col-md-4">
+                            <label for="consultant" class="form-label">Consultant</label>
+                            <select class="form-select" id="consultant" name="consultant">
+                                <option value="">Select Consultant</option>
+                                <?php $users = $conn->query("SELECT UserID, Name FROM users WHERE ClientKeyID = '$ClientKeyID'");
+                                while ($u = $users->fetchObject()) {
+                                    $selected = (isset($_GET['consultant']) && $_GET['consultant'] == $u->UserID) ? 'selected' : '';
+                                    echo "<option value=\"{$u->UserID}\" $selected>{$u->Name}</option>";
+                                } ?>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="week" class="form-label">Week Starting</label>
+                            <?php
+                            $week = isset($_GET['week']) ? $_GET['week'] : date('Y-m-d', strtotime('monday this week'));
+                            $prevWeek = date('Y-m-d', strtotime($week . ' -7 days'));
+                            $nextWeek = date('Y-m-d', strtotime($week . ' +7 days'));
+                            ?>
+                            <div class="input-group">
+                                <a href="?consultant=<?php echo isset($_GET['consultant']) ? $_GET['consultant'] : ''; ?>&week=<?php echo $prevWeek; ?>" class="btn btn-outline-secondary">&lt;</a>
+                                <input type="date" class="form-control" id="week" name="week" value="<?php echo $week; ?>">
+                                <a href="?consultant=<?php echo isset($_GET['consultant']) ? $_GET['consultant'] : ''; ?>&week=<?php echo $nextWeek; ?>" class="btn btn-outline-secondary">&gt;</a>
                             </div>
                         </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary">Search</button>
+                        </div>
+                    </form>
+                    <?php
+                    if (isset($_GET['consultant']) && $_GET['consultant'] && isset($_GET['week']) && $_GET['week']) {
+                        $consultantID = $_GET['consultant'];
+                        $weekStart = $_GET['week'];
+                        $weekEnd = date('Y-m-d', strtotime($weekStart . ' +6 days'));
+                        $kpiQuery = $conn->prepare("SELECT * FROM _kpis WHERE ClientKeyID = ? AND UserID = ? AND StartDate >= ? AND EndDate <= ?");
+                        $kpiQuery->execute([$ClientKeyID, $consultantID, $weekStart, $weekEnd]);
+                        if ($kpiQuery->rowCount() > 0) {
+                            echo '<table class="table table-bordered"><thead><tr><th>#</th><th>Description</th><th>Start Date</th><th>End Date</th><th>Action</th></tr></thead><tbody>';
+                            $i = 1;
+                            while ($kpi = $kpiQuery->fetchObject()) {
+                                echo "<tr><td>{$i}</td><td>{$kpi->Description}</td><td>".FormatDate($kpi->StartDate)."</td><td>".FormatDate($kpi->EndDate)."</td><td><a href='$LINK/edit_weekly_kpis/?ID={$kpi->KpiID}' class='btn btn-sm btn-info'>Edit</a> <a href='$LINK/src/kpis/view.php?ID={$kpi->KpiID}' class='btn btn-sm btn-warning'>View</a></td></tr>";
+                                $i++;
+                            }
+                            echo '</tbody></table>';
+                        } else {
+                            echo '<div class="alert alert-info">No KPIs found for this consultant and week. <a href="' . $LINK . '/create_weekly_kpis/?UserID=' . $consultantID . '&StartDate=' . $weekStart . '&EndDate=' . $weekEnd . '" class="btn btn-success btn-sm ms-2">Create KPI</a></div>';
+                        }
+                    }
+                    ?>
+                </div>
+                <div class="tab-pane fade" id="all-kpi" role="tabpanel" aria-labelledby="all-kpi-tab">
+                    <!-- Existing All KPIs Table -->
                         <div class="card-body">
                             <div class="table-responsive dt-responsive">
 
@@ -192,7 +225,7 @@ if (isset($_POST['Search'])) {
                                                                         Delete</a>
                                                                 <?php endif; ?>
 
-                                                                <a class="dropdown-item" href="<?php echo $LINK; ?>/view_weekly_kpis/?ID=<?php echo $row->KpiID; ?>">
+                                                                <a class="dropdown-item" href="<?php echo $LINK; ?>/src/kpis/view.php?ID=<?php echo $row->KpiID; ?>">
                                                                     <span class="text-warning">
                                                                         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 20 20">
                                                                             <g fill="currentColor">

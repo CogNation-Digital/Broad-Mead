@@ -13,12 +13,27 @@ if (!isset($_COOKIE['USERID'])) {
     exit; 
 }
 
-$host = 'localhost';
-$user = 'root';
-$password = '';
-$dbname1 = 'broadmead';
-$dbname2 = 'broadmead_v3';
+$serverName = $_SERVER['SERVER_NAME'];
 
+
+if ($serverName === 'localhost') {
+   
+    $host = 'localhost';
+    $user = 'root';
+    $password = '';
+    $dbname1 = 'broadmead';
+    $dbname2 = 'broadmead_v3';
+} elseif ($serverName === 'broad-mead.com') {
+ 
+    $host = 'localhost';
+    $user = 'xuwl9qaw_mike';
+    $password = '@Michael1693250341';
+    $dbname1 = 'xuwl9qaw_v3';  
+    $dbname2 = 'xuwl9qaw_v3';
+} else {
+    echo "<b>Database Configuration Error: </b> Unknown server environment: " . $serverName;
+    exit;
+}
 try {
     $db_1 = new PDO('mysql:host=' . $host . ';dbname=' . $dbname1, $user, $password);
     $db_1->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);

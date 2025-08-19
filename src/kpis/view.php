@@ -3,12 +3,25 @@ if (!isset($_COOKIE['USERID'])) {
     # code...
     header("location: $LINK/login ");
 }
+
 $ID = $_GET['ID'];
 $data = $conn->query("SELECT * FROM _kpis WHERE KpiID = '$ID'")->fetchObject();
-$data_user = $conn->query("SELECT * FROM users WHERE UserID = '{$data->UserID}'")->fetchObject();
 if (!$data) {
     header("location: $LINK/weekly_kpis ");
+    exit();
 }
+$data_user = $conn->query("SELECT * FROM users WHERE UserID = '{$data->UserID}'")->fetchObject();
+
+// Week navigation logic
+$weekStart = isset($_GET['week']) ? $_GET['week'] : $data->StartDate;
+$weekStart = date('Y-m-d', strtotime($weekStart));
+$weekEnd = date('Y-m-d', strtotime($weekStart . ' +6 days'));
+$prevWeek = date('Y-m-d', strtotime($weekStart . ' -7 days'));
+$nextWeek = date('Y-m-d', strtotime($weekStart . ' +7 days'));
+
+$FromDate = $weekStart;
+$ToDate = $weekEnd;
+
 $view = isset($_GET['view']) ? $_GET['view'] : "details";
 
 if (isset($_POST['UpdateAchieved'])) {
@@ -69,11 +82,25 @@ if (isset($_POST['UpdateAchieved'])) {
                     <div class="card">
                         <div class="card-header">
                             <div class="d-flex align-items-center justify-content-between">
-                                <h5 class="mb-0"><?php echo $page; ?></h5>
-
+                                <h5 class="mb-0">Consultant KPI View</h5>
                             </div>
                         </div>
                         <div class="card-body">
+                            <!-- Week Navigation -->
+                            <form method="get" class="row g-3 align-items-end mb-4">
+                                <input type="hidden" name="ID" value="<?php echo $ID; ?>">
+                                <div class="col-md-6">
+                                    <label for="week" class="form-label">Week Starting</label>
+                                    <div class="input-group">
+                                        <a href="?ID=<?php echo $ID; ?>&week=<?php echo $prevWeek; ?>" class="btn btn-outline-secondary">&lt;</a>
+                                        <input type="date" class="form-control" id="week" name="week" value="<?php echo $weekStart; ?>">
+                                        <a href="?ID=<?php echo $ID; ?>&week=<?php echo $nextWeek; ?>" class="btn btn-outline-secondary">&gt;</a>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-primary">Go</button>
+                                </div>
+                            </form>
                             <?php if (IsCheckPermission($USERID, "VIEW_KPI")) : ?>
                                 <div style="padding-bottom: 10px;">
                                     <ul class="nav nav-tabs analytics-tab" id="myTab" role="tablist">
