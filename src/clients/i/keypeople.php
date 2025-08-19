@@ -1,4 +1,22 @@
 <?php if ($isTab == "KeyPeople") : ?>
+<?php
+// Handle create key person with first and last name
+if (isset($_POST['CreateKeyPeople'])) {
+    $firstName = trim($_POST['first_name']);
+    $lastName = trim($_POST['last_name']);
+    $name = $firstName . ' ' . $lastName;
+    $email = trim($_POST['email']);
+    $number = trim($_POST['number']);
+    $position = trim($_POST['position']);
+    $createdBy = $USERID;
+    $date = date('Y-m-d H:i:s');
+    $clientID = $ClientID;
+    $stmt = $conn->prepare("INSERT INTO `_clients_key_people` (ClientID, Name, Email, Number, Position, CreatedBy, Date) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$clientID, $name, $email, $number, $position, $createdBy, $date]);
+    echo '<script>window.location.reload();</script>';
+    exit();
+}
+?>
     <div class="card-body table-border-style">
         <div style="margin-bottom: 20px;" class="d-flex align-items-center justify-content-between">
             <h5 class="mb-0">Key People</h5>
@@ -103,8 +121,12 @@
                     <form method="POST" enctype="multipart/form-data">
                         <div class="modal-body">
                             <div class="mb-3">
-                                <label class="form-label" for="name">Name</label>
-                                <input required type="text" name="name" class="form-control" placeholder="Enter Name" required>
+                                <label class="form-label" for="first_name">First Name</label>
+                                <input required type="text" name="first_name" class="form-control" placeholder="Enter First Name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="last_name">Last Name</label>
+                                <input required type="text" name="last_name" class="form-control" placeholder="Enter Last Name" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label" for="email">Email address</label>
