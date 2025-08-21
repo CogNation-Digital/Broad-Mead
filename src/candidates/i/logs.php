@@ -1,4 +1,9 @@
-<?php if ($isTab == "CommunicationLog") : ?>
+<?php
+// Ensure $CandidateID is available from parent scope
+if (!isset($CandidateID) && isset($_GET['ID'])) {
+    $CandidateID = $_GET['ID'];
+}
+if ($isTab == "CommunicationLog") : ?>
     <div class="card-body table-border-style">
         <div style="margin-bottom: 20px;" class="d-flex align-items-center justify-content-between">
             <h5 class="mb-0">Communication Log</h5>
