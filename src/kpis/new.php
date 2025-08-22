@@ -142,8 +142,8 @@ if (isset($_POST['DeleteKPI'])) {
                                     <div class="card-header">
                                         <div class="d-flex align-items-center justify-content-between">
                                             <h6 class="mb-0">
-                                                                                            <label class="form-label">Date (any day, any year)</label>
-                                                                                            <input type="date" name="EndDate" class="form-control" id="weekendingDate" placeholder="Select Date" min="2021-01-01">
+                                                <?php
+                                                // Heading only, no input here
                                                 ?>
                                             </h6>
                                             <?php if (isset($_GET['Add_KPIs'])) : ?>
@@ -216,40 +216,21 @@ if (isset($_POST['DeleteKPI'])) {
                                                     </div>
                                                                             $weekending.val(today.toISOString().slice(0, 10));
                             <?php else : ?>
-                                                                        $weekending.attr('min', '2021-01-01');
-                                                    <div class="mb-3 mt-3"><label class="form-label">Search and select the consultant</label>
-                                                        <select name="user" class="select-input" style="padding: 20px;">
-                                                            <option value=""></option>
-                                                            <?php
-                                                            $q = $conn->query("SELECT * FROM `users` WHERE ClientKeyID = '$ClientKeyID' ");
-                                                            while ($r = $q->fetchObject()) {
-                                                                echo "<option value='$r->UserID'>$r->Name</option>";
-                                                            }
-                                                            ?>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="card shadow-none border mb-0 h-100">
-                                                <div class="card-body">
-                                                    <h6 class="mb-2">Date</h6>
-                                                    <div class="row">
-                                                        <div class="col-sm-12">
-                                                            <div class="mb-3">
-                                                                <label class="form-label">Weekending Date (Sundays only)</label>
-                                                                <div class="input-group">
-                                                                    <button type="button" class="btn btn-outline-secondary" id="prevWeekBtn">&lt;</button>
-                                                                    <input type="date" name="EndDate" class="form-control" id="weekendingDate" placeholder="Select Sunday">
-                                                                    <button type="button" class="btn btn-outline-secondary" id="nextWeekBtn">&gt;</button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                <div class="mb-3 mt-3"><label class="form-label">Search and select the consultant</label>
+                                    <select name="user" class="select-input" style="padding: 20px;">
+                                        <option value=""></option>
+                                        <?php
+                                        $q = $conn->query("SELECT * FROM `users` WHERE ClientKeyID = '$ClientKeyID' ");
+                                        while ($r = $q->fetchObject()) {
+                                            echo "<option value='$r->UserID'>$r->Name</option>";
+                                        }
+                                        ?>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Date (any day, any year)</label>
+                                    <input type="date" name="EndDate" class="form-control" id="weekendingDate" placeholder="Select Date" min="2021-01-01">
+                                </div>
                                         <div class="col-12">
                                             <div class="card shadow-none border mb-0">
                                                 <div class="card-body">
@@ -285,36 +266,15 @@ if (isset($_POST['DeleteKPI'])) {
 
 <script>
  
-    function getNextSunday(date) {
-        var d = new Date(date);
-        d.setDate(d.getDate() + 7);
-        return d.toISOString().slice(0, 10);
-    }
-    function getPrevSunday(date) {
-        var d = new Date(date);
-        d.setDate(d.getDate() - 7);
-        return d.toISOString().slice(0, 10);
-    }
+
     $(document).ready(function() {
-     
         var $weekending = $('#weekendingDate');
+        $weekending.attr('min', '2021-01-01');
+        // Set default to today if empty
         if (!$weekending.val()) {
             var today = new Date();
-            var day = today.getDay();
-            var diff = 7 - day;
-            var nextSunday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + diff);
-            $weekending.val(nextSunday.toISOString().slice(0, 10));
+            $weekending.val(today.toISOString().slice(0, 10));
         }
-      
-        $weekending.removeAttr('min');
-        $('#prevWeekBtn').click(function() {
-            var val = $weekending.val();
-            if (val) $weekending.val(getPrevSunday(val));
-        });
-        $('#nextWeekBtn').click(function() {
-            var val = $weekending.val();
-            if (val) $weekending.val(getNextSunday(val));
-        });
     });
 
   
@@ -370,3 +330,4 @@ if (isset($_POST['DeleteKPI'])) {
     });
 </script>
 </html>
+<?php endif; ?>
