@@ -1,6 +1,6 @@
 <?php include "../../includes/config.php";
 if (!isset($_COOKIE['USERID'])) {
-    # code...
+  
     header("location: $LINK/login ");
 }
 $KpiID = isset($_GET['ID']) && !empty($_GET['ID']) ? $_GET['ID'] : bin2hex(random_bytes(16));
@@ -14,7 +14,7 @@ if (isset($_POST['submit'])) {
 
     $endDateObj->modify('-7 days');
 
-    // Format the result to 'Y-m-d' (or whatever format you need)
+   
     $StartDate = $endDateObj->format('Y-m-d');
     $Description = $_POST['Description'];
 
