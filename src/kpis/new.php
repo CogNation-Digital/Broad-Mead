@@ -174,6 +174,23 @@ if (isset($_POST['DeleteKPI'])) {
                                         <?php if (isset($_GET['Add_KPIs'])) : ?>
                                             <div class="card-body">
                                                 <?php
+                                                // Fetch KPI info for context
+                                                $kpiInfo = $conn->query("SELECT * FROM `_kpis` WHERE KpiID = '$KpiID'")->fetch(PDO::FETCH_OBJ);
+                                                $consultantName = '';
+                                                $weekStart = '';
+                                                $weekEnd = '';
+                                                if ($kpiInfo) {
+                                                    $consultant = $conn->query("SELECT Name FROM users WHERE UserID = '{$kpiInfo->UserID}'")->fetchColumn();
+                                                    $consultantName = $consultant ? $consultant : $kpiInfo->UserID;
+                                                    $weekStart = $kpiInfo->StartDate;
+                                                    $weekEnd = $kpiInfo->EndDate;
+                                                }
+                                                ?>
+                                                <div class="alert alert-info mb-4">
+                                                    <strong>Consultant:</strong> <?php echo htmlspecialchars($consultantName); ?><br>
+                                                    <strong>Week:</strong> <?php echo htmlspecialchars($weekStart); ?> to <?php echo htmlspecialchars($weekEnd); ?>
+                                                </div>
+                                                <?php
                                                 $q = $conn->query("SELECT * FROM `_kpis_targets` WHERE _kpi_id = '$KpiID' ");
                                                 while ($r = $q->fetchObject()) { ?>
                                                     <div class="card CardKPI" data-id="<?php echo $r->KpiID; ?>">
