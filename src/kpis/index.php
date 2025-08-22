@@ -117,10 +117,19 @@ if (isset($_POST['Search'])) {
                         $kpiQuery = $conn->prepare("SELECT * FROM _kpis WHERE ClientKeyID = ? AND UserID = ? AND StartDate >= ? AND EndDate <= ?");
                         $kpiQuery->execute([$ClientKeyID, $consultantID, $weekStart, $weekEnd]);
                         if ($kpiQuery->rowCount() > 0) {
-                            echo '<table class="table table-bordered"><thead><tr><th>#</th><th>Description</th><th>Start Date</th><th>End Date</th><th>Action</th></tr></thead><tbody>';
+                            echo '<table class="table table-bordered"><thead><tr><th>#</th><th>Description</th><th>Start Date</th><th>End Date</th><th>Achieved</th><th>Action</th></tr></thead><tbody>';
                             $i = 1;
                             while ($kpi = $kpiQuery->fetchObject()) {
-                                echo "<tr><td>{$i}</td><td>{$kpi->Description}</td><td>".FormatDate($kpi->StartDate)."</td><td>".FormatDate($kpi->EndDate)."</td><td><a href='$LINK/edit_weekly_kpis/?ID={$kpi->KpiID}' class='btn btn-sm btn-info'>Edit</a> <a href='$LINK/src/kpis/view.php?ID={$kpi->KpiID}' class='btn btn-sm btn-warning'>View</a></td></tr>";
+                                // Fetch achieved value for this KPI (assuming _kpis_achieved table)
+                                $achieved = '';
+                                $achievedStmt = $conn->prepare("SELECT Achieved FROM _kpis_achieved WHERE KpiID = ? ORDER BY Date DESC LIMIT 1");
+                                $achievedStmt->execute([$kpi->KpiID]);
+                                if ($row = $achievedStmt->fetch(PDO::FETCH_ASSOC)) {
+                                    $achieved = htmlspecialchars($row['Achieved']);
+                                }
+                                echo "<tr><td>{$i}</td><td>{$kpi->Description}</td><td>".FormatDate($kpi->StartDate)."</td><td>".FormatDate($kpi->EndDate)."</td>";
+                                echo "<td><input type='number' class='form-control achieved-input' data-kpiid='{$kpi->KpiID}' value='{$achieved}' style='width:100px;'></td>";
+                                echo "<td><a href='$LINK/edit_weekly_kpis/?ID={$kpi->KpiID}' class='btn btn-sm btn-info'>Edit</a> <a href='$LINK/src/kpis/view.php?ID={$kpi->KpiID}' class='btn btn-sm btn-warning'>View</a></td></tr>";
                                 $i++;
                             }
                             echo '</tbody></table>';
@@ -340,11 +349,9 @@ if (isset($_POST['Search'])) {
     document.getElementById('confirmDelete').addEventListener('click', function() {
         let checkboxes = document.querySelectorAll('.checkbox-item:checked');
         let ids = [];
-
         checkboxes.forEach(function(checkbox) {
             ids.push(checkbox.value);
         });
-
         if (ids.length > 0) {
             $("#confirmDelete").text("Deleting...");
             ids.forEach(function(id) {
@@ -361,15 +368,56 @@ if (isset($_POST['Search'])) {
                         }, 2000);
                     }
                 });
-
             });
-
-
         } else {
             ShowToast('Error 102: Something went wrong.');
-
         }
     });
+
+    // Inline Achieved Save
+    $(document).on('change', '.achieved-input', function() {
+        var kpiID = $(this).data('kpiid');
+        var achieved = $(this).val();
+        var input = $(this);
+        input.prop('disabled', true);
+        $.ajax({
+            url: '',
+            type: 'POST',
+            data: {
+                update_achieved: true,
+                kpi_id: kpiID,
+                achieved: achieved
+            },
+            success: function(response) {
+                input.prop('disabled', false);
+                ShowToast('Achieved value updated!');
+            },
+            error: function() {
+                input.prop('disabled', false);
+                ShowToast('Error updating achieved value.');
+            }
+        });
+    });
 </script>
+// Handle inline achieved update
+if (isset($_POST['update_achieved']) && isset($_POST['kpi_id']) && isset($_POST['achieved'])) {
+    $kpi_id = $_POST['kpi_id'];
+    $achieved = $_POST['achieved'];
+    $user_id = $USERID;
+    $date = date('Y-m-d');
+    // Check if record exists for this KPI and date
+    $stmt = $conn->prepare("SELECT * FROM _kpis_achieved WHERE KpiID = ? AND Date = ?");
+    $stmt->execute([$kpi_id, $date]);
+    if ($stmt->rowCount() > 0) {
+        // Update
+        $update = $conn->prepare("UPDATE _kpis_achieved SET Achieved = ? WHERE KpiID = ? AND Date = ?");
+        $update->execute([$achieved, $kpi_id, $date]);
+    } else {
+        // Insert
+        $insert = $conn->prepare("INSERT INTO _kpis_achieved (KpiID, Achieved, UserID, Date) VALUES (?, ?, ?, ?)");
+        $insert->execute([$kpi_id, $achieved, $user_id, $date]);
+    }
+    exit;
+}
 
 </html>
