@@ -333,7 +333,7 @@ if (isset($_POST['DeleteKPI'])) {
         });
     });
 
-    // Existing KPI/target AJAX
+  
     $(document).ready(function() {
         $('.kpi, .target').on('keyup', function() {
             var dataId = $(this).data('id');
