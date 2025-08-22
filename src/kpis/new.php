@@ -3,7 +3,7 @@ if (!isset($_COOKIE['USERID'])) {
     # code...
     header("location: $LINK/login ");
 }
-$KpiID = $_GET['ID'];
+$KpiID = isset($_GET['ID']) && !empty($_GET['ID']) ? $_GET['ID'] : bin2hex(random_bytes(16));
 if (isset($_POST['submit'])) {
     $user = $_POST['user'];
     $EndDate = $_POST['EndDate']; // Assuming this is in 'Y-m-d' format or another valid date format

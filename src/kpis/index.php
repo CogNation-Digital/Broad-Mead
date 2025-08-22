@@ -140,7 +140,7 @@ if (isset($_POST['Search'])) {
                     ?>
                 </div>
                 <div class="tab-pane fade" id="all-kpi" role="tabpanel" aria-labelledby="all-kpi-tab">
-                    <!-- Existing All KPIs Table -->
+       
                         <div class="card-body">
                             <div class="table-responsive dt-responsive">
 
