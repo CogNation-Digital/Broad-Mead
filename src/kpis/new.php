@@ -300,7 +300,7 @@ if (isset($_POST['DeleteKPI'])) {
 <?php include "../../includes/js.php"; ?>
 
 <script>
-    // Weekending navigation
+ 
     function getNextSunday(date) {
         var d = new Date(date);
         d.setDate(d.getDate() + 7);
@@ -312,7 +312,7 @@ if (isset($_POST['DeleteKPI'])) {
         return d.toISOString().slice(0, 10);
     }
     $(document).ready(function() {
-        // Set default to next Sunday if empty
+     
         var $weekending = $('#weekendingDate');
         if (!$weekending.val()) {
             var today = new Date();
@@ -321,7 +321,7 @@ if (isset($_POST['DeleteKPI'])) {
             var nextSunday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + diff);
             $weekending.val(nextSunday.toISOString().slice(0, 10));
         }
-        // Remove min attribute to allow navigation to previous years
+      
         $weekending.removeAttr('min');
         $('#prevWeekBtn').click(function() {
             var val = $weekending.val();
