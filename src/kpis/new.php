@@ -142,12 +142,8 @@ if (isset($_POST['DeleteKPI'])) {
                                     <div class="card-header">
                                         <div class="d-flex align-items-center justify-content-between">
                                             <h6 class="mb-0">
-                                                <?php
-                                                if (isset($_GET['Add_KPIs'])) {
-                                                    echo "Create KPIs";
-                                                } else {
-                                                    echo "Weekly KPIs Details";
-                                                }
+                                                                                            <label class="form-label">Date (any day, any year)</label>
+                                                                                            <input type="date" name="EndDate" class="form-control" id="weekendingDate" placeholder="Select Date" min="2021-01-01">
                                                 ?>
                                             </h6>
                                             <?php if (isset($_GET['Add_KPIs'])) : ?>
@@ -218,21 +214,9 @@ if (isset($_POST['DeleteKPI'])) {
                                                     <div class="alert alert-danger">
                                                         No KPIs found. Please create KPIs first.
                                                     </div>
-                                            </div>
-                                        <?php endif; ?>
-
-                                </div>
+                                                                            $weekending.val(today.toISOString().slice(0, 10));
                             <?php else : ?>
-                                <div class="card-body">
-                                    <div class="row g-3">
-                                        <div class="col-md-6">
-                                            <div class="card shadow-none border mb-0 h-100">
-                                                <div class="card-body">
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="flex-grow-1 me-3">
-                                                            <h6 class="mb-0">Consultant</h6>
-                                                        </div>
-                                                    </div>
+                                                                        $weekending.attr('min', '2021-01-01');
                                                     <div class="mb-3 mt-3"><label class="form-label">Search and select the consultant</label>
                                                         <select name="user" class="select-input" style="padding: 20px;">
                                                             <option value=""></option>

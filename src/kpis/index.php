@@ -10,7 +10,7 @@ if (isset($_POST['delete'])) {
     $stmt = $conn->prepare("DELETE FROM `_kpis` WHERE KpiID = :ID");
     $stmt->bindParam(':ID', $ID, PDO::PARAM_STR);
     if ($stmt->execute()) {
-        // Delete from `_kpis_targets` table
+     
         $q = $conn->query("SELECT KpiID FROM `_kpis_targets` WHERE _kpi_id = '$ID'");
         while ($d = $q->fetchObject()) {
             $delete_kpis_achieved = $conn->prepare("DELETE FROM `_kpis_achieved` WHERE KpiID = :ID");
@@ -23,7 +23,7 @@ if (isset($_POST['delete'])) {
         $delete_kpis_achieved->bindParam(':ID', $ID, PDO::PARAM_STR);
         $delete_kpis_achieved->execute();
 
-        // Notify the user
+       
         $NOTIFICATION = "$NAME successfully deleted a KPI";
         Notify($USERID, $ClientKeyID, $NOTIFICATION);
 
@@ -120,7 +120,7 @@ if (isset($_POST['Search'])) {
                             echo '<table class="table table-bordered"><thead><tr><th>#</th><th>Description</th><th>Start Date</th><th>End Date</th><th>Achieved</th><th>Action</th></tr></thead><tbody>';
                             $i = 1;
                             while ($kpi = $kpiQuery->fetchObject()) {
-                                // Fetch achieved value for this KPI (assuming _kpis_achieved table)
+                              
                                 $achieved = '';
                                 $achievedStmt = $conn->prepare("SELECT Achieved FROM _kpis_achieved WHERE KpiID = ? ORDER BY Date DESC LIMIT 1");
                                 $achievedStmt->execute([$kpi->KpiID]);
