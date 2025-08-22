@@ -317,10 +317,12 @@ if (isset($_POST['DeleteKPI'])) {
         if (!$weekending.val()) {
             var today = new Date();
             var day = today.getDay();
-            var diff = 7 - day; // days until next Sunday
+            var diff = 7 - day;
             var nextSunday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + diff);
             $weekending.val(nextSunday.toISOString().slice(0, 10));
         }
+        // Remove min attribute to allow navigation to previous years
+        $weekending.removeAttr('min');
         $('#prevWeekBtn').click(function() {
             var val = $weekending.val();
             if (val) $weekending.val(getPrevSunday(val));
