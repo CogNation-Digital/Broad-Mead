@@ -5,7 +5,7 @@ if (!isset($_COOKIE['USERID'])) {
 }
 
 if (isset($_POST['delete'])) {
-    // Retrieve the 'ID' parameter from the POST request
+ 
     $ID = $_POST['ID'];
     $stmt = $conn->prepare("DELETE FROM `_kpis` WHERE KpiID = :ID");
     $stmt->bindParam(':ID', $ID, PDO::PARAM_STR);
