@@ -255,7 +255,11 @@ if (isset($_POST['DeleteKPI'])) {
                                                         <div class="col-sm-12">
                                                             <div class="mb-3">
                                                                 <label class="form-label">Weekending Date (Sundays only)</label>
-                                                                <input type="text"  name="EndDate" class="form-control" id="weekendingDate" placeholder="Select Sunday">
+                                                                <div class="input-group">
+                                                                    <button type="button" class="btn btn-outline-secondary" id="prevWeekBtn">&lt;</button>
+                                                                    <input type="date" name="EndDate" class="form-control" id="weekendingDate" placeholder="Select Sunday">
+                                                                    <button type="button" class="btn btn-outline-secondary" id="nextWeekBtn">&gt;</button>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -292,15 +296,47 @@ if (isset($_POST['DeleteKPI'])) {
     </div>
     </div>
 </body>
+
 <?php include "../../includes/js.php"; ?>
 
 <script>
+    // Weekending navigation
+    function getNextSunday(date) {
+        var d = new Date(date);
+        d.setDate(d.getDate() + 7);
+        return d.toISOString().slice(0, 10);
+    }
+    function getPrevSunday(date) {
+        var d = new Date(date);
+        d.setDate(d.getDate() - 7);
+        return d.toISOString().slice(0, 10);
+    }
+    $(document).ready(function() {
+        // Set default to next Sunday if empty
+        var $weekending = $('#weekendingDate');
+        if (!$weekending.val()) {
+            var today = new Date();
+            var day = today.getDay();
+            var diff = 7 - day; // days until next Sunday
+            var nextSunday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + diff);
+            $weekending.val(nextSunday.toISOString().slice(0, 10));
+        }
+        $('#prevWeekBtn').click(function() {
+            var val = $weekending.val();
+            if (val) $weekending.val(getPrevSunday(val));
+        });
+        $('#nextWeekBtn').click(function() {
+            var val = $weekending.val();
+            if (val) $weekending.val(getNextSunday(val));
+        });
+    });
+
+    // Existing KPI/target AJAX
     $(document).ready(function() {
         $('.kpi, .target').on('keyup', function() {
             var dataId = $(this).data('id');
             var kpiValue = $('.kpi[data-id="' + dataId + '"]').val();
             var targetValue = $('.target[data-id="' + dataId + '"]').val();
-
             $.ajax({
                 url: window.location.href,
                 type: 'POST',
@@ -313,7 +349,6 @@ if (isset($_POST['DeleteKPI'])) {
                 success: function(response) {},
                 error: function(xhr, status, error) {
                     ShowToast('Something went wrong. Please try again later');
-
                 }
             });
         });
@@ -324,14 +359,12 @@ if (isset($_POST['DeleteKPI'])) {
             $('.checkbox-item:checked').each(function() {
                 selectedIds.push($(this).val());
             });
-
             if (selectedIds.length > 0) {
                 $.each(selectedIds, function(index, kpiId) {
                     var Data = {
                         'id': kpiId,
                         'DeleteKPI': true
                     };
-
                     $.ajax({
                         url: window.location.href,
                         type: 'POST',
