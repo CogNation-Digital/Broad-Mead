@@ -6,12 +6,12 @@ if (!isset($_COOKIE['USERID'])) {
 $KpiID = isset($_GET['ID']) && !empty($_GET['ID']) ? $_GET['ID'] : bin2hex(random_bytes(16));
 if (isset($_POST['submit'])) {
     $user = $_POST['user'];
-    $EndDate = $_POST['EndDate']; // Assuming this is in 'Y-m-d' format or another valid date format
+    $EndDate = $_POST['EndDate']; 
 
-    // Create a DateTime object from the $EndDate
+
     $endDateObj = new DateTime($EndDate);
 
-    // Subtract 7 days from the $EndDate
+
     $endDateObj->modify('-7 days');
 
     // Format the result to 'Y-m-d' (or whatever format you need)
