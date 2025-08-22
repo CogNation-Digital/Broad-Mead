@@ -333,5 +333,4 @@ if (isset($_POST['DeleteKPI'])) {
         });
     });
 </script>
-
 </html>
