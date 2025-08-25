@@ -80,15 +80,17 @@ function getConsultantDetails($db_2, $USERID) {
         'title' => $user->Position ?? 'Consultant'
     ];
 }function getEmailFooter($consultantEmail, $consultantName, $consultantNumber = '', $consultantTitle = 'Consultant') {
-    // Direct Google Drive URLs for email images
-    $driveBaseUrl = 'https://drive.google.com/uc?export=view&id=';
+    // HostGator-hosted images in your "images" folder
+    $baseUrl = 'https://nocturnalrecruitment.co.uk/images/';
+    // Images will be accessible at: https://yoursite.com/images/imagename.png
+    
     $images = [
-        'logo' => $driveBaseUrl . '1nTWBGbLYzj6XxxkFZwvPAQgBsuFFCVbD',        // Nocturnal logo
-        'linkedin' => $driveBaseUrl . '10bVdFqZdGSloE2DoavlBzm5IXNTm7qBj',    // LinkedIn badge
-        'facebook' => $driveBaseUrl . '1SR3INbhT1SC0CXmKG-1EFRlSOe3QDULC',    // Facebook logo
-        'instagram' => $driveBaseUrl . '1t8o-XT-w9xphxzCfaHN9VimI6zhXrXRJ',   // Instagram badge
-        'cyber' => $driveBaseUrl . '1_HUGtuMrnmuw6WPvhOHHLuqMZKwaXdqr',       // Cyber Essentials
-        'rec' => $driveBaseUrl . '1kck0O1jAvG6QlahYJC_oPeWCAuApsqKI'          // REC Corporate
+        'logo' => $baseUrl . 'image001.jpg',           // Main Nocturnal logo
+        'linkedin' => $baseUrl . 'image009.jpg',       // LinkedIn icon
+        'facebook' => $baseUrl . 'Facebook logo.jpg',  // Facebook logo
+        'instagram' => $baseUrl . 'image011.jpg',      // Instagram icon  
+        'cyber' => $baseUrl . 'image008.png',          // Cyber Essentials badge
+        'rec' => $baseUrl . 'image012.jpg'             // REC Corporate badge
     ];
     
     return '
@@ -162,77 +164,24 @@ function getConsultantDetails($db_2, $USERID) {
         </div>
     </div>';
 }
-// function getEmailFooter($consultantEmail, $consultantName) {
-//     return '
-//     <div style="margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: #ffffff; font-family: Arial, sans-serif; border-radius: 8px; max-width: 600px;">
-//         <div style="text-align: center; margin-bottom: 20px;">
-//             <h3 style="margin: 0; color: #ffffff; font-size: 18px; font-weight: bold;">Nocturnal Recruitment</h3>
-//             <p style="margin: 5px 0 0 0; color: #b8d4ff; font-size: 14px;">Your Trusted Recruitment Partner</p>
-//         </div>
-       
-//         <table style="width: 100%; margin-bottom: 20px;" cellpadding="5" cellspacing="0">
-//             <tr>
-//                 <td style="text-align: center; vertical-align: top; width: 33%;">
-//                     <div style="color: #6daffb; font-size: 12px; margin-bottom: 3px;">📍 Address</div>
-//                     <div style="color: #ffffff; font-size: 11px;">Office 16, 321 High Road, RM6 6AX</div>
-//                 </td>
-//                 <td style="text-align: center; vertical-align: top; width: 33%;">
-//                     <div style="color: #6daffb; font-size: 12px; margin-bottom: 3px;">📞 Phone</div>
-//                     <div style="color: #ffffff; font-size: 11px;">0208 050 2708</div>
-//                 </td>
-//                 <td style="text-align: center; vertical-align: top; width: 33%;">
-//                     <div style="color: #6daffb; font-size: 12px; margin-bottom: 3px;">📱 Mobile</div>
-//                     <div style="color: #ffffff; font-size: 11px;">0755 357 0871</div>
-//                 </td>
-//             </tr>
-//         </table>
-       
-//         <div style="text-align: center; margin-bottom: 20px;">
-//             <div style="color: #6daffb; font-size: 12px; margin-bottom: 3px;">✉️ Your Consultant</div>
-//             <div style="color: #ffffff; font-size: 13px; font-weight: bold;">' . htmlspecialchars($consultantName) . '</div>
-//             <div style="color: #b8d4ff; font-size: 11px;">
-//                 <a href="mailto:' . htmlspecialchars($consultantEmail) . '" style="color: #6daffb; text-decoration: none;">' . htmlspecialchars($consultantEmail) . '</a>
-//             </div>
-//         </div>
-       
-//         <div style="text-align: center; margin-bottom: 20px;">
-//             <div style="color: #6daffb; font-size: 12px; margin-bottom: 8px;">🌐 Connect With Us</div>
-//             <div>
-//                 <a href="https://www.nocturnalrecruitment.co.uk" target="_blank" style="color: #6daffb; text-decoration: none; margin: 0 5px; font-size: 11px;">Website</a> |
-//                 <a href
-//             <div style="color: #8bb3e8; font-size: 9px; line-height: 1.3;">
-//                 This email is confidential and intended only for the addressee. If you are not the intended recipient,
-//                 please delete this email and notify us at <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #6daffb;">info@nocturnalrecruitment.co.uk</a>
-//             </div>
-//         </div>
-       
-//         <div style="text-align: center; margin-top: 10px; font-size: 9px; color: #8bb3e8;">
-//             BroadMead 3.0 &copy; 2025 - Powered by <a href="https://www.cog-nation.com" target="_blank" style="color: #E1AD01; text-decoration: none; font-weight: bold;">CogNation Digital</a>
-//         </div>
-//     </div>';
-// }
 
-// Simple text-only email footer function
-function getTextEmailFooter($consultantEmail, $consultantName, $consultantNumber = '', $consultantTitle = 'Consultant') {
-    return "\n\n" .
-        "---\n" .
-        "Best regards,\n" .
-        $consultantName . "\n" .
-        $consultantTitle . "\n\n" .
-        "NOCTURNAL RECRUITMENT SOLUTIONS\n" .
-        "Cyber Essentials Certified | REC Corporate Member\n\n" .
-        "Address: Nocturnal Recruitment, Office 16, 321 High Road, RM6 6AX\n" .
-        "Phone: 0208 050 2708\n" .
-        "Mobile: 07827 519020\n" .
-        "Email: info@nocturnalrecruitment.co.uk\n" .
-        "Website: www.nocturnalrecruitment.co.uk\n\n" .
-        "Connect with us:\n" .
-        "LinkedIn: https://www.linkedin.com/company/nocturnal-recruitment-solutions/\n" .
-        "Facebook: https://www.facebook.com/nocturnalrecruitment/\n" .
-        "Instagram: https://www.instagram.com/nocturnalrecruitment/\n\n" .
-        "Company Registration – 11817091\n\n" .
-        "Disclaimer: This email is intended only for the use of the addressee named above and may be confidential or legally privileged. If you are not the addressee, you must not read it and must not use any information contained in nor copy it nor inform any person other than Nocturnal Recruitment or the addressee of its existence or contents. If you have received this email in error, please delete it and notify our team at info@nocturnalrecruitment.co.uk";
+// Helper function to convert images to base64
+function convertImageToBase64($imagePath) {
+    if (file_exists($imagePath)) {
+        $imageData = base64_encode(file_get_contents($imagePath));
+        $imageType = pathinfo($imagePath, PATHINFO_EXTENSION);
+        return 'data:image/' . $imageType . ';base64,' . $imageData;
+    }
+    return false;
 }
+
+// Example usage to convert your existing images
+/*
+// Download your images from Google Drive first, then use:
+$logoBase64 = convertImageToBase64('path/to/your/logo.png');
+$linkedinBase64 = convertImageToBase64('path/to/your/linkedin.png');
+// etc...
+*/
 
 function getSMTPConfig() {
     return [
@@ -435,36 +384,27 @@ if (isset($_POST['send_mailshot']) && !isset($_SESSION['mailshot_processing'])) 
             $error_details = [];
             foreach ($selected_clients as $client_id) {
                 try {
-                 
-                    $stmt = $db_2->prepare("SELECT Name, Email, 
-                        COALESCE(first_name, SUBSTRING_INDEX(Name, ' ', 1)) as first_name,
-                        COALESCE(last_name, SUBSTRING_INDEX(Name, ' ', -1)) as last_name,
-                        CONCAT(COALESCE(first_name, SUBSTRING_INDEX(Name, ' ', 1)), ' ', COALESCE(last_name, SUBSTRING_INDEX(Name, ' ', -1))) as full_name
-                        FROM _clients WHERE ClientID = ?");
+                    $stmt = $db_2->prepare("SELECT Name, Email FROM _clients WHERE ClientID = ?");
                     $stmt->execute([$client_id]);
                     $client = $stmt->fetch(PDO::FETCH_OBJ);
                     if (!$client && $db_1) {
-                        $stmt = $db_1->prepare("SELECT Name, Email,
-                            COALESCE(first_name, SUBSTRING_INDEX(Name, ' ', 1)) as first_name,
-                            COALESCE(last_name, SUBSTRING_INDEX(Name, ' ', -1)) as last_name,
-                            CONCAT(COALESCE(first_name, SUBSTRING_INDEX(Name, ' ', 1)), ' ', COALESCE(last_name, SUBSTRING_INDEX(Name, ' ', -1))) as full_name
-                            FROM clients WHERE id = ?");
+                        $stmt = $db_1->prepare("SELECT Name, Email FROM clients WHERE id = ?");
                         $stmt->execute([$client_id]);
                         $client = $stmt->fetch(PDO::FETCH_OBJ);
                     }
                     if ($client && filter_var($client->Email, FILTER_VALIDATE_EMAIL)) {
-                        $personalized_message = str_replace('[CLIENT_NAME]', $client->first_name, $mailshot_message);
-                        
+                        // Use first word of Name as first name, and full Name for full_name
+                        $first_name = strtok($client->Name, ' ');
+                        $full_name = $client->Name;
+                        $personalized_message = str_replace('[CLIENT_NAME]', $first_name, $mailshot_message);
                         // Convert plain text message to HTML and add HTML footer
                         $html_body = nl2br(htmlspecialchars($personalized_message)) . getEmailFooter($loggedInUserEmail, $consultant_name);
-                       
                         $result = sendOptimizedEmail(
-                            $client->Email, $client->full_name, $mailshot_subject, $html_body, '',
+                            $client->Email, $full_name, $mailshot_subject, $html_body, '',
                             $loggedInUserEmail, $consultant_name, $uploadedFiles
                         );
                         if ($result['success']) {
                             $successful_sends++;
-                          
                             $tracking_stmt = $db_2->prepare("
                                 INSERT INTO email_tracking (id, client_id, consultant_email, consultant_name, subject, sent_date, status)
                                 VALUES (?, ?, ?, ?, ?, NOW(), 'sent')
