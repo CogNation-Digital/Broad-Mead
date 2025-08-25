@@ -96,15 +96,14 @@ $canExport = in_array($loggedInUserEmail, array_map('strtolower', $allowedExport
 
 
 function getEmailFooter($consultantEmail, $consultantName, $consultantNumber = '', $consultantTitle = 'Consultant') {
-    // Direct Google Drive URLs for email images
-    $driveBaseUrl = 'https://drive.google.com/uc?export=view&id=';
+    $baseUrl = 'https://broad-mead.com/images/';
     $images = [
-        'logo' => $driveBaseUrl . '1nTWBGbLYzj6XxxkFZwvPAQgBsuFFCVbD',        // Nocturnal logo
-        'linkedin' => $driveBaseUrl . '10bVdFqZdGSloE2DoavlBzm5IXNTm7qBj',    // LinkedIn badge
-        'facebook' => $driveBaseUrl . '1SR3INbhT1SC0CXmKG-1EFRlSOe3QDULC',    // Facebook logo
-        'instagram' => $driveBaseUrl . '1t8o-XT-w9xphxzCfaHN9VimI6zhXrXRJ',   // Instagram badge
-        'cyber' => $driveBaseUrl . '1_HUGtuMrnmuw6WPvhOHHLuqMZKwaXdqr',       // Cyber Essentials
-        'rec' => $driveBaseUrl . '1kck0O1jAvG6QlahYJC_oPeWCAuApsqKI'          // REC Corporate
+        'logo' => $baseUrl . 'image001.jpg',
+        'linkedin' => $baseUrl . 'image009.jpg',
+        'facebook' => $baseUrl . 'Facebook logo.jpg',
+        'instagram' => $baseUrl . 'image011.jpg',
+        'cyber' => $baseUrl . 'image008.png',
+        'rec' => $baseUrl . 'image012.jpg'
     ];
     
     return '
