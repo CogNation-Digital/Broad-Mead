@@ -268,23 +268,24 @@ function sendOptimizedEmail($recipientEmail, $recipientName, $subject, $htmlBody
         $mail->CharSet = 'UTF-8';
         $mail->Encoding = 'base64';
         $mail->SMTPDebug = 0;
-        
-        $mail->setFrom($consultantEmail, $consultantName . ' - Nocturnal Recruitment');
+
+        // Always use the authenticated SMTP address as the sender
+        $mail->setFrom($config['username'], $consultantName . ' - Nocturnal Recruitment');
+        // Set consultant as Reply-To so replies go to them
         $mail->addReplyTo($consultantEmail, $consultantName);
         $mail->addAddress($recipientEmail, $recipientName);
-        
-       
-        $mail->addCustomHeader('Return-Path', $consultantEmail);
+
+        $mail->addCustomHeader('Return-Path', $config['username']);
         $mail->addCustomHeader('X-Mailer', 'BroadMead CRM v3.0');
         $mail->addCustomHeader('X-Priority', '3');
         $mail->addCustomHeader('X-MSMail-Priority', 'Normal');
         $mail->addCustomHeader('Importance', 'Normal');
         $mail->addCustomHeader('X-Consultant-Email', $consultantEmail);
         $mail->addCustomHeader('X-Consultant-Name', $consultantName);
-        
+
         $mail->isHTML(true); // Send as HTML to display images
         $mail->Subject = $subject;
-        
+
         // If HTML body is provided, use it; otherwise convert text to HTML
         if (!empty($htmlBody)) {
             $mail->Body = $htmlBody;
@@ -292,15 +293,13 @@ function sendOptimizedEmail($recipientEmail, $recipientName, $subject, $htmlBody
             $mail->Body = nl2br(htmlspecialchars($textBody));
         }
 
-     
         foreach ($attachments as $attachment) {
             $mail->addAttachment($attachment['path'], $attachment['name']);
         }
 
-     
         $maxRetries = 3;
         $retryDelay = 2;
-        
+
         for ($i = 0; $i < $maxRetries; $i++) {
             try {
                 if ($mail->send()) {
@@ -311,7 +310,7 @@ function sendOptimizedEmail($recipientEmail, $recipientName, $subject, $htmlBody
                 sleep($retryDelay);
             }
         }
-        
+
         return ['success' => false, 'message' => 'Failed after retries'];
     } catch (Exception $e) {
         error_log("Email error: " . $e->getMessage());
