@@ -79,6 +79,7 @@ function getConsultantDetails($db_2, $USERID) {
         'number' => $user->Number ?? '',
         'title' => $user->Position ?? 'Consultant'
     ];
+}
 function getEmailFooter($consultantEmail, $consultantName, $consultantNumber = '', $consultantTitle = 'Consultant') {
     $baseUrl = 'https://broad-mead.com/images/';
     $images = [
@@ -148,6 +149,7 @@ function getEmailFooter($consultantEmail, $consultantName, $consultantNumber = '
         </div>
     </div>';
 }
+
 
 // Helper function to convert images to base64
 function convertImageToBase64($imagePath) {
@@ -1385,4 +1387,4 @@ if (isset($_POST['send_email'])) {
     }
     ?>
 </body>
-</html>
+ </html>
