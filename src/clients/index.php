@@ -79,36 +79,26 @@ function getConsultantDetails($db_2, $USERID) {
         'number' => $user->Number ?? '',
         'title' => $user->Position ?? 'Consultant'
     ];
-}function getEmailFooter($consultantEmail, $consultantName, $consultantNumber = '', $consultantTitle = 'Consultant') {
-    // HostGator-hosted images in your "images" folder
-    $baseUrl = 'https://nocturnalrecruitment.co.uk/images/';
-    // Images will be accessible at: https://yoursite.com/images/imagename.png
-    
+function getEmailFooter($consultantEmail, $consultantName, $consultantNumber = '', $consultantTitle = 'Consultant') {
+    $baseUrl = 'https://broad-mead.com/images/';
     $images = [
-        'logo' => $baseUrl . 'image001.jpg',           // Main Nocturnal logo
-        'linkedin' => $baseUrl . 'image009.jpg',       // LinkedIn icon
-        'facebook' => $baseUrl . 'Facebook logo.jpg',  // Facebook logo
-        'instagram' => $baseUrl . 'image011.jpg',      // Instagram icon  
-        'cyber' => $baseUrl . 'image008.png',          // Cyber Essentials badge
-        'rec' => $baseUrl . 'image012.jpg'             // REC Corporate badge
+        'logo' => $baseUrl . 'image001.jpg',
+        'linkedin' => $baseUrl . 'image009.jpg',
+        'facebook' => $baseUrl . 'Facebook logo.jpg',
+        'instagram' => $baseUrl . 'image011.jpg',
+        'cyber' => $baseUrl . 'image008.png',
+        'rec' => $baseUrl . 'image012.jpg'
     ];
-    
     return '
     <div style="max-width: 600px; font-family: Arial, sans-serif; line-height: 1.4; margin: auto; border-top: 2px solid #333; padding-top: 20px; margin-top: 30px;">
-        
-        <!-- Signature Line -->
         <div style="margin-bottom: 20px;">
             <p style="margin: 0; color: #333; font-size: 14px;">Best regards,<br>
             <strong>' . htmlspecialchars($consultantName) . '</strong><br>
             ' . htmlspecialchars($consultantTitle) . '</p>
         </div>
-        
-        <!-- Nocturnal Logo -->
         <div style="text-align: center; margin-bottom: 20px;">
             <img src="' . $images['logo'] . '" alt="Nocturnal Recruitment Solutions" style="max-width: 280px; height: auto; display: block; margin: 0 auto;">
         </div>
-
-        <!-- Contact Information -->
         <div style="text-align: center; margin-bottom: 20px; font-size: 14px; color: #333;">
             <div style="margin-bottom: 8px;">
                 <span style="color: #666;">📍</span>
@@ -123,8 +113,6 @@ function getConsultantDetails($db_2, $USERID) {
                 <span style="margin-left: 20px; color: #666;">🌐</span> <a href="https://www.nocturnalrecruitment.co.uk" style="color: #0066cc; text-decoration: none;">www.nocturnalrecruitment.co.uk</a>
             </div>
         </div>
-
-        <!-- Social Media and Certifications -->
         <div style="text-align: center; margin-bottom: 20px;">
             <table style="margin: 0 auto; border-collapse: collapse;">
                 <tr>
@@ -152,13 +140,9 @@ function getConsultantDetails($db_2, $USERID) {
                 </tr>
             </table>
         </div>
-        
-        <!-- Company Registration -->
         <div style="text-align: center; color: #333333; font-size: 14px; font-weight: bold; margin-bottom: 20px;">
             Company Registration – 11817091
         </div>
-
-        <!-- Disclaimer -->
         <div style="font-size: 11px; color: #666666; line-height: 1.4; border-top: 1px solid #dddddd; padding-top: 15px; margin-top: 20px;">
             <strong style="color: #c41e3a;">Disclaimer:</strong> This email is intended only for the use of the addressee named above and may be confidential or legally privileged. If you are not the addressee, you must not read it and must not use any information contained in nor copy it nor inform any person other than <a href="https://www.nocturnalrecruitment.co.uk" style="color: #c41e3a; text-decoration: none; font-weight: bold;">Nocturnal Recruitment</a> or the addressee of its existence or contents. If you have received this email in error, please delete it and notify our team at <a href="mailto:info@nocturnalrecruitment.co.uk" style="color: #0066cc; text-decoration: none;">info@nocturnalrecruitment.co.uk</a>
         </div>
