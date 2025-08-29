@@ -1,3 +1,14 @@
+// Handle Achieved save POST (must be before any HTML output)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['kpi_id'], $_POST['achieved'])) {
+    $kpiId = $_POST['kpi_id'];
+    $achievedVal = $_POST['achieved'];
+    $stmt = $conn->prepare("INSERT INTO _kpis_achieved (KpiID, Achieved, Date) VALUES (?, ?, NOW())");
+    $stmt->execute([$kpiId, $achievedVal]);
+    // Redirect to avoid resubmission
+    $redirectUrl = strtok($_SERVER['REQUEST_URI'], '?') . '?' . http_build_query($_GET);
+    header("Location: $redirectUrl");
+    exit;
+}
 <?php include "../../includes/config.php";
 if (!isset($_COOKIE['USERID'])) {
     # code...
@@ -93,9 +104,10 @@ if (isset($_POST['Search'])) {
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label for="week" class="form-label">Week Starting</label>
+                            <label for="week" class="form-label">Week Ending (Sunday)</label>
                             <?php
-                            $week = isset($_GET['week']) ? $_GET['week'] : date('Y-m-d', strtotime('monday this week'));
+                            // Default to this coming Sunday
+                            $week = isset($_GET['week']) ? $_GET['week'] : date('Y-m-d', strtotime('sunday this week'));
                             $prevWeek = date('Y-m-d', strtotime($week . ' -7 days'));
                             $nextWeek = date('Y-m-d', strtotime($week . ' +7 days'));
                             ?>
@@ -112,8 +124,8 @@ if (isset($_POST['Search'])) {
                     <?php
                     if (isset($_GET['consultant']) && $_GET['consultant'] && isset($_GET['week']) && $_GET['week']) {
                         $consultantID = $_GET['consultant'];
-                        $weekStart = $_GET['week'];
-                        $weekEnd = date('Y-m-d', strtotime($weekStart . ' +6 days'));
+                        $weekEnd = $_GET['week'];
+                        $weekStart = date('Y-m-d', strtotime($weekEnd . ' -6 days'));
                         $kpiQuery = $conn->prepare("SELECT * FROM _kpis WHERE ClientKeyID = ? AND UserID = ? AND StartDate >= ? AND EndDate <= ?");
                         $kpiQuery->execute([$ClientKeyID, $consultantID, $weekStart, $weekEnd]);
                         if ($kpiQuery->rowCount() > 0) {
@@ -128,7 +140,11 @@ if (isset($_POST['Search'])) {
                                     $achieved = htmlspecialchars($row['Achieved']);
                                 }
                                 echo "<tr><td>{$i}</td><td>{$kpi->Description}</td><td>".FormatDate($kpi->StartDate)."</td><td>".FormatDate($kpi->EndDate)."</td>";
-                                echo "<td><input type='number' class='form-control achieved-input' data-kpiid='{$kpi->KpiID}' value='{$achieved}' style='width:100px;'></td>";
+                                echo "<td><form method='post' class='d-flex align-items-center kpi-achieved-form' style='gap:4px;'>"
+                                    ."<input type='hidden' name='kpi_id' value='{$kpi->KpiID}'>"
+                                    ."<input type='number' name='achieved' class='form-control achieved-input' value='{$achieved}' style='width:100px;' min='0' required>"
+                                    ."<button type='submit' class='btn btn-success btn-sm save-achieved-btn' title='Save'><i class='bi bi-check-lg'></i> Save</button>"
+                                    ."</form></td>";
                                 echo "<td><a href='$LINK/edit_weekly_kpis/?ID={$kpi->KpiID}' class='btn btn-sm btn-info'>Edit</a> <a href='$LINK/src/kpis/view.php?ID={$kpi->KpiID}' class='btn btn-sm btn-warning'>View</a></td></tr>";
                                 $i++;
                             }
