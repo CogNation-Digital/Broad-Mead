@@ -67,6 +67,8 @@ echo '</div>';
                         <?php endif; ?>
                     </div>
                 </div>
+            // Get CandidateID from URL or parent scope
+            $candidateNumericId = null;
             <?php endif; ?>
 
         </div>
@@ -105,6 +107,22 @@ echo '</div>';
                             echo '<td>' . $row->Name . '</td>';
                             echo '<td><div class="flex-shrink-0"><a href="' . $row->Path . '" target="_blank" class="btn btn-sm btn-light-secondary">'
                                 .'<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M19.92 12.08L12 20l-7.92-7.92l1.42-1.41l5.5 5.5V2h2v14.17l5.5-5.51zM12 20H2v2h20v-2z" /></svg> Download</a></div></td>';
+            foreach ($docFolders as $i => $docFolder) {
+                $candidateFiles = [];
+                if ($candidateNumericId) {
+                    $candidateFiles = glob($docFolder . $candidateNumericId . '.*');
+                }
+                echo 'Checking folder: ' . $docFolder . '<br>';
+                if ($candidateFiles) {
+                    echo 'Found files:<ul>';
+                    foreach ($candidateFiles as $filePath) {
+                        echo '<li>' . htmlspecialchars($filePath) . '</li>';
+                    }
+                    echo '</ul>';
+                } else {
+                    echo 'No files found.<br>';
+                }
+            }
                             $currentDate = new DateTime();
                             $expiryDate = DateTime::createFromFormat('Y-m-d', $row->ExpiryDate);
                             $isExpired = $expiryDate && $expiryDate < $currentDate;
@@ -139,9 +157,9 @@ echo '</div>';
                         }
                     }
 
-                    // Fallback: If no DB docs, show all files in CandidatesDocuments folders
                     if (!$hasDbDocs) {
                         $docFolders = [
+           
                             $_SERVER['DOCUMENT_ROOT'] . '/CandidatesDocuments/',
                             $_SERVER['DOCUMENT_ROOT'] . '/CandidatesDocuments/CandidatesDocuments/'
                         ];
