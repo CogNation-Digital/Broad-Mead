@@ -6,7 +6,6 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once '../../includes/config.php';
 
-
 require_once '../../vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
